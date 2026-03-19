@@ -1,0 +1,44 @@
+{
+  "skill_name": "git-worktree",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "You are Claude Code with the git-worktree skill loaded. You are working in /Users/dong.wyt/Documents/dev-projects/labor-law-guardian on branch `main`. The repo has a standard layout with backend/ and a docker-compose.yml.\n\nThe user says:\n> 幫我建一個 worktree 來做 retriever 的 refactor，大概會動到 8 個檔案\n\nRespond exactly as you would. Follow the git-worktree skill instructions. Do NOT actually execute any commands — just show what you WOULD say and do (including any detection commands you'd run first).",
+      "expected_output": "Agent should: 1) Run Phase 0 detection (check .git, list worktrees, determine base branch), 2) Propose a branch like refactor/retriever-xxx from main or dev, 3) Explain why isolation helps for 8-file refactor, 4) Show the exact create command, 5) Ask for confirmation and optional flags",
+      "files": [],
+      "expectations": [
+        "Response includes Phase 0 detection step (checking .git type or listing worktrees)",
+        "Proposed branch name follows naming convention (refactor/xxx pattern)",
+        "Response mentions base branch explicitly",
+        "Response includes the exact manage_worktree.sh create command",
+        "Response asks for user confirmation before creating",
+        "Response mentions optional flags (--install-deps, --start-docker, --no-env-copy)"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "You are Claude Code with the git-worktree skill loaded. You are working inside a worktree at /Users/dong.wyt/Documents/dev-projects/labor-law-guardian-wt-feature-api-auth on branch `feature/api-auth`. The .git in this directory is a file (linked worktree), not a directory. All changes are committed.\n\nThe user says:\n> 都做完了，commit 也 push 了。幫我清掉這個 worktree 然後回到 main\n\nRespond exactly as you would. Follow the git-worktree skill instructions. Do NOT actually execute any commands — just show what you WOULD say and do.",
+      "expected_output": "Agent should: 1) Recognize it's inside a linked worktree (Phase 0), 2) Use finish command with --switch, 3) Report expected outcome, 4) Suggest next step (PR)",
+      "files": [],
+      "expectations": [
+        "Response acknowledges being inside a linked worktree",
+        "Response uses the finish command (not remove)",
+        "The finish command includes --switch flag",
+        "Response mentions expected outcome (worktree removed, switched to branch)",
+        "Response suggests a next step like opening a PR or merging"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "You are Claude Code with the git-worktree skill loaded. You are working in /Users/dong.wyt/Documents/dev-projects/labor-law-guardian on branch `main`.\n\nThe user says:\n> 幫我改一下 README.md 的 typo，第 15 行 'retreival' 要改成 'retrieval'\n\nRespond exactly as you would. Follow the git-worktree skill instructions. Do NOT actually execute any commands — just show what you WOULD say and do.",
+      "expected_output": "Agent should NOT suggest a worktree for a single-file typo fix. Should proceed directly with the edit without worktree overhead.",
+      "files": [],
+      "expectations": [
+        "Response does NOT propose creating a worktree",
+        "Response proceeds directly to fix the typo or describes how it would fix it",
+        "Response does NOT mention manage_worktree.sh",
+        "Response is concise and proportional to the trivial task"
+      ]
+    }
+  ]
+}

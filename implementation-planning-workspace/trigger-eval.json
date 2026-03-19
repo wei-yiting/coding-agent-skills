@@ -1,0 +1,82 @@
+[
+  {
+    "query": "我們上次 brainstorming 已經決定好方向了，design.md 也寫好了。現在幫我把它拆成 implementation plan，我想讓 junior 可以直接照著做",
+    "should_trigger": true
+  },
+  {
+    "query": "I need to add a webhook handler for Stripe payment events in our Next.js app. The endpoint should verify signatures, handle checkout.session.completed and invoice.payment_failed events, and update our Postgres orders table. Please plan this out step by step so I can hand it off to my teammate.",
+    "should_trigger": true
+  },
+  {
+    "query": "幫我規劃實作步驟。我要在現有的 FastAPI backend 加一個 /api/v2/search endpoint，用 Elasticsearch 做全文搜尋，支援 pagination 跟 filter。design doc 在 .artifacts/current/design.md 裡面",
+    "should_trigger": true
+  },
+  {
+    "query": "ok so we already decided on the approach in the last session — we're going with Redis pub/sub for the real-time notifications. Can you write the plan? break it into small tasks with test cases, I want to make sure nothing gets missed during implementation",
+    "should_trigger": true
+  },
+  {
+    "query": "read design.md and plan the implementation. the design covers adding OAuth2 login with Google and GitHub providers to our existing session-based auth system. we're using Passport.js",
+    "should_trigger": true
+  },
+  {
+    "query": "把這個 approved design 轉成 implementation tasks。我們要做一個 CLI tool 用 Go 寫，功能是 parse YAML config files 然後 generate Terraform modules。scope 已經定好了，就是 design.md 裡寫的那些",
+    "should_trigger": true
+  },
+  {
+    "query": "I have a clear feature spec: add CSV export to the admin dashboard's user management page. Users click export, it generates a CSV with columns: email, role, created_at, last_login. Need a plan with all the files to touch, tests to write, the whole thing.",
+    "should_trigger": true
+  },
+  {
+    "query": "plan this — we need to migrate our MongoDB user collection to add a 'preferences' subdocument with notification settings. There's about 2M documents. The schema is decided, I just need the execution steps: migration script, backward compatibility, rollback plan, validation.",
+    "should_trigger": true
+  },
+  {
+    "query": "寫計畫。我們要把目前用 REST polling 的 dashboard 改成用 WebSocket 做 real-time updates。技術選型已經決定用 Socket.io，scope 就是 dashboard 頁面上的 5 個 widget",
+    "should_trigger": true
+  },
+  {
+    "query": "turn this into an execution checklist: we agreed to add rate limiting to our public API using express-rate-limit, with per-IP and per-API-key limits, stored in Redis. need to handle the 429 responses gracefully on the frontend too",
+    "should_trigger": true
+  },
+  {
+    "query": "我在想我們的 notification system 要怎麼設計比較好，是用 polling 還是 WebSocket？還是 SSE？各有什麼 trade-off？我們的 user base 大概 5000 DAU",
+    "should_trigger": false
+  },
+  {
+    "query": "implementation.md 已經寫好了，plan 也 review 過了。現在幫我開始執行第一個 task，先把 database migration 跑起來",
+    "should_trigger": false
+  },
+  {
+    "query": "I just finished implementing the authentication module based on our plan. Can you review the code changes? I want to make sure I didn't miss anything before I open a PR. The diff is in the current branch.",
+    "should_trigger": false
+  },
+  {
+    "query": "幫我更新一下 briefing.md，因為剛剛 implementation.md 有改過一些 task 的順序",
+    "should_trigger": false
+  },
+  {
+    "query": "we're not sure yet whether to build this as a monolith or split into microservices. the team is 4 people, we have about 3 months, and the product is a B2B SaaS for inventory management. what are the options and what would you recommend?",
+    "should_trigger": false
+  },
+  {
+    "query": "there's a bug in our payment flow — sometimes the checkout succeeds but the order status stays as 'pending'. I've been looking at the logs and it seems like the webhook handler is timing out. can you help me debug this?",
+    "should_trigger": false
+  },
+  {
+    "query": "can you write unit tests for the UserService class in src/services/user.ts? it currently has zero test coverage and I want to add tests for createUser, updateProfile, and deleteAccount methods",
+    "should_trigger": false
+  },
+  {
+    "query": "我想要做一個很大的 platform，包含 user management、billing、analytics dashboard、notification system、還有 API gateway。全部都要從頭寫。幫我 plan 一下",
+    "should_trigger": false
+  },
+  {
+    "query": "hey can you just rename the variable 'usr' to 'user' across all files in src/models/? it's been bugging me",
+    "should_trigger": false
+  },
+  {
+    "query": "I want to explore different approaches for implementing full-text search in our app. Should we use Postgres full-text search, Elasticsearch, or Typesense? Our dataset is about 500k documents, mostly product listings with descriptions.",
+    "should_trigger": false
+  }
+]

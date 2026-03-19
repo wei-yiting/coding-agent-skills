@@ -1,0 +1,151 @@
+[
+  {
+    "id": "handoff-20250318-143022",
+    "status": "open",
+    "created_at": "2025-03-18T14:30:22+08:00",
+    "updated_at": "2025-03-18T14:30:22+08:00",
+    "resolved_at": null,
+    "environment": {
+      "cli_tool": "claude-code",
+      "project_root": "/Users/dong/projects/lexlab-x",
+      "branch": "feature/etl-pipeline",
+      "is_worktree": true,
+      "last_commit": {
+        "hash": "a1b2c3d",
+        "message": "feat: add SEC filing downloader",
+        "timestamp": "2025-03-18T13:45:00+08:00"
+      }
+    },
+    "task": {
+      "description": "實作 SEC 10-K filing 的 PDF parsing pipeline",
+      "workflow_stage": "implementation",
+      "progress": {
+        "briefing": "建立一條從 SEC EDGAR 下載 10-K filing PDF，經過 parsing、chunking 後存入 Qdrant 的 pipeline。",
+        "file_changes": {
+          "git_status_summary": "2 files with uncommitted changes, 1 untracked file",
+          "files": [
+            "src/etl/chunker.py",
+            "tests/test_chunker.py",
+            "src/etl/experimental_splitter.py"
+          ],
+          "description": "正在實作 table-aware splitting 功能，包含跨頁表格的 merge 邏輯和對應的 test case，另外也在實驗 layout-based splitting 作為替代方案。"
+        },
+        "cowork": {
+          "confirmed": [
+            "確定使用 pdfplumber 作為 PDF parsing library（而非 PyMuPDF）",
+            "chunking 策略確定用 semantic splitting + section boundary"
+          ],
+          "in_discussion": [
+            "正在討論 chunk overlap 策略：固定 token overlap vs. sentence-boundary overlap，傾向 sentence-boundary 但還沒跑 benchmark",
+            "正在研究 PDF 表格跨頁時的 merge 策略，目前有兩個候選方案"
+          ],
+          "blockers": [
+            "PDF 表格跨頁時 pdfplumber 會把表格拆成兩個獨立 table，需要研究 merge 策略"
+          ]
+        }
+      },
+      "is_human_reviewing": false,
+      "human_review_target": "",
+      "human_review_summary": "",
+      "next_steps": [
+        "完成 chunker.py 的 table-aware splitting（處理 nested table edge case）",
+        "跑 test_chunker.py 確認新增的 test case 通過",
+        "跑一次 end-to-end test 確認 parser → chunker 串接正常"
+      ]
+    }
+  },
+  {
+    "id": "handoff-20250315-091500",
+    "status": "pending",
+    "created_at": "2025-03-15T09:15:00+08:00",
+    "updated_at": "2025-03-16T11:30:00+08:00",
+    "resolved_at": null,
+    "environment": {
+      "cli_tool": "claude-code",
+      "project_root": "/Users/dong/projects/lexlab-x",
+      "branch": "feature/qdrant-setup",
+      "is_worktree": false,
+      "last_commit": {
+        "hash": "e5f6g7h",
+        "message": "chore: add qdrant docker-compose",
+        "timestamp": "2025-03-15T09:00:00+08:00"
+      }
+    },
+    "task": {
+      "description": "設定 Qdrant vector store 的 collection schema 和 indexing config",
+      "workflow_stage": "planning",
+      "progress": {
+        "briefing": "為 RAG pipeline 設定 Qdrant 作為 vector store，需要決定 collection schema、embedding dimension、distance metric 等。",
+        "file_changes": {
+          "git_status_summary": "clean",
+          "files": [
+            "docker-compose.yml"
+          ],
+          "description": "新增了 Qdrant 的 docker-compose 設定。"
+        },
+        "cowork": {
+          "confirmed": [
+            "使用 Qdrant（而非 Pinecone 或 Weaviate）"
+          ],
+          "in_discussion": [
+            "collection schema 要用 single collection + metadata filter，還是 multi-collection by document type"
+          ],
+          "blockers": []
+        }
+      },
+      "is_human_reviewing": false,
+      "human_review_target": "",
+      "human_review_summary": "",
+      "next_steps": [
+        "決定 collection schema 策略",
+        "撰寫 Qdrant client wrapper",
+        "整合進 ETL pipeline"
+      ]
+    }
+  },
+  {
+    "id": "handoff-20250310-160000",
+    "status": "resolved",
+    "created_at": "2025-03-10T16:00:00+08:00",
+    "updated_at": "2025-03-12T10:30:00+08:00",
+    "resolved_at": "2025-03-12T10:30:00+08:00",
+    "environment": {
+      "cli_tool": "claude-code",
+      "project_root": "/Users/dong/projects/lexlab-x",
+      "branch": "feature/sec-downloader",
+      "is_worktree": false,
+      "last_commit": {
+        "hash": "i8j9k0l",
+        "message": "feat: complete SEC EDGAR filing downloader",
+        "timestamp": "2025-03-12T10:20:00+08:00"
+      }
+    },
+    "task": {
+      "description": "實作 SEC EDGAR filing 的自動下載器",
+      "workflow_stage": "implementation",
+      "progress": {
+        "briefing": "建立一個自動從 SEC EDGAR 下載指定公司 10-K filing 的工具。",
+        "file_changes": {
+          "git_status_summary": "clean",
+          "files": [
+            "src/etl/sec_downloader.py",
+            "tests/test_sec_downloader.py"
+          ],
+          "description": "完成了 SEC EDGAR downloader 的實作和測試。"
+        },
+        "cowork": {
+          "confirmed": [
+            "使用 SEC EDGAR full-text search API",
+            "下載後存為原始 PDF + metadata JSON"
+          ],
+          "in_discussion": [],
+          "blockers": []
+        }
+      },
+      "is_human_reviewing": false,
+      "human_review_target": "",
+      "human_review_summary": "",
+      "next_steps": []
+    }
+  }
+]
