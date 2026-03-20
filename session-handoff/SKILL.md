@@ -23,13 +23,13 @@ Storage file: `~/.config/session-handoff/handoff.json` (JSON array of records).
 
 ## Operation Selection
 
-| User Intent | Operation | Example Phrases |
-|---|---|---|
-| Stop working, save progress | **Save** | "記錄進度", "save handoff", "明天繼續", "session handoff" |
-| Check what was left incomplete | **Report** | "昨天做到哪", "report handoff", "show sessions" |
-| Mark a handoff as done | **Close** | "close handoff", "這個完成了", "關掉 handoff" |
-| Change a handoff's status | **Status Update** | "改成 pending", "abandon 掉", "撿回來" |
-| List shelved items | **Query Pending** | "show pending", "還有什麼在 pending" |
+| User Intent                    | Operation         | Example Phrases                                           |
+| ------------------------------ | ----------------- | --------------------------------------------------------- |
+| Stop working, save progress    | **Save**          | "記錄進度", "save handoff", "明天繼續", "session handoff" |
+| Check what was left incomplete | **Report**        | "昨天做到哪", "report handoff", "show sessions"           |
+| Mark a handoff as done         | **Close**         | "close handoff", "這個完成了", "關掉 handoff"             |
+| Change a handoff's status      | **Status Update** | "改成 pending", "abandon 掉", "撿回來"                    |
+| List shelved items             | **Query Pending** | "show pending", "還有什麼在 pending"                      |
 
 ---
 
@@ -132,17 +132,9 @@ The script automatically cleans up expired records (resolved/abandoned with `upd
 
 ### Step 6: Confirm to User
 
-Present a summary after saving:
+Read `resources/report-template.md` and follow the `Save Confirmation Format` section.
 
-```
-已儲存 session handoff [handoff-20250318-143022]
-- 任務：實作 SEC 10-K filing 的 PDF parsing pipeline
-- 階段：Implementation
-- 下一步：
-  1. 完成 chunker.py 的 table-aware splitting
-  2. 跑 test_chunker.py 確認新增的 test case 通過
-  3. End-to-end test
-```
+Use the single-save example or the multi-save example as appropriate. Treat `report-template.md` as the source of truth for save confirmation wording and layout.
 
 ---
 
@@ -164,7 +156,10 @@ For each open record, check if `updated_at` is more than 5 days ago. If so, flag
 
 Stale records only show basic info (project, task, stage, last update) and the stale warning prompt — no need to display full File Changes, Cowork, or detailed next steps. The user needs to resolve the stale status first before diving into details.
 
+When rendering stale warnings, follow the `Stale Warning` format in `resources/report-template.md`.
+
 Handle the response:
+
 - "繼續" → run `status_update.py --id <id> --status open` to refresh `updated_at`
 - "完成了" → run Close flow
 - "先放著" → run Status Update to change to `pending`
@@ -173,15 +168,17 @@ If all open records are stale, skip the "要接手哪一個？" question — foc
 
 ### Step 3: Present Report
 
-Read `resources/report-template.md` (in this skill's directory) for the full format reference.
+Read `resources/report-template.md` (in this skill's directory) and treat it as the single source of truth for output formatting.
 
-Key formatting rules:
+Use its canonical sections for:
 
-- **Emoji usage**: Only use emoji for cowork status items (✅ confirmed, 💬 in discussion, 🚧 blocker) and ⚠️ for stale warnings. No emoji on section headers like "File Changes", "Cowork", "下一步".
-- **File Changes section**: Always include the git status summary (clean/dirty), file list, and change description.
-- **Pending hint**: At the bottom, if any `status: "pending"` records exist, add: "另外還有 N 筆 pending 項目，輸入 'show pending' 查看。"
-- **Human review**: If `is_human_reviewing: true`, emphasize review status (target, summary) over file changes.
-- **Project name**: Derive from the last path segment of `project_root`. Append "（worktree）" if `is_worktree` is true.
+- `Standard Report (open sessions)`
+- `Stale Warning`
+- `Human Review Session`
+- `Query Pending Format`
+- `Save Confirmation Format`
+
+Keep `SKILL.md` focused on workflow and decision logic. Do not re-specify formatting rules here when the template already defines them.
 
 ### Step 4: User Picks Up
 
@@ -234,7 +231,7 @@ Valid status values: `open`, `pending`, `abandoned`.
 ## Query Pending
 
 1. Read `~/.config/session-handoff/handoff.json`, filter for `status: "pending"`.
-2. Present using the same report format, but with the title "你有 N 個暫時擱置的 session".
+2. Present using the `Query Pending Format` in `resources/report-template.md`.
 3. If no pending records exist, say "目前沒有擱置中的項目。"
 
 ---
@@ -245,12 +242,12 @@ Each record in `handoff.json` follows this structure. Read `resources/example-re
 
 ### Identification
 
-| Field | Type | Description |
-|---|---|---|
-| `id` | string | `handoff-{YYYYMMDD}-{HHmmss}` from current local time |
-| `status` | string | `"open"` ·  `"resolved"` · `"pending"` · `"abandoned"` |
-| `created_at` | string | ISO 8601 with timezone offset. Set on creation |
-| `updated_at` | string | ISO 8601 with timezone offset. Updated on every save/update/status change |
+| Field         | Type           | Description                                                                         |
+| ------------- | -------------- | ----------------------------------------------------------------------------------- |
+| `id`          | string         | `handoff-{YYYYMMDD}-{HHmmss}` from current local time                               |
+| `status`      | string         | `"open"` · `"resolved"` · `"pending"` · `"abandoned"`                               |
+| `created_at`  | string         | ISO 8601 with timezone offset. Set on creation                                      |
+| `updated_at`  | string         | ISO 8601 with timezone offset. Updated on every save/update/status change           |
 | `resolved_at` | string or null | Set when status becomes `resolved` or `abandoned`; cleared when returning to `open` |
 
 **Status definitions:**
@@ -262,45 +259,45 @@ Each record in `handoff.json` follows this structure. Read `resources/example-re
 
 ### Environment (auto-collected)
 
-| Field | Type | Description |
-|---|---|---|
-| `environment.cli_tool` | string | `"claude-code"` / `"opencode"` / `"codex-cli"` — detect from runtime |
-| `environment.project_root` | string | From `git rev-parse --show-toplevel` |
-| `environment.branch` | string | From `git branch --show-current` |
-| `environment.is_worktree` | boolean | `true` if git-dir ≠ git-common-dir |
-| `environment.last_commit.hash` | string | Short commit hash |
-| `environment.last_commit.message` | string | Commit message subject line |
-| `environment.last_commit.timestamp` | string | ISO 8601 |
+| Field                               | Type    | Description                                                          |
+| ----------------------------------- | ------- | -------------------------------------------------------------------- |
+| `environment.cli_tool`              | string  | `"claude-code"` / `"opencode"` / `"codex-cli"` — detect from runtime |
+| `environment.project_root`          | string  | From `git rev-parse --show-toplevel`                                 |
+| `environment.branch`                | string  | From `git branch --show-current`                                     |
+| `environment.is_worktree`           | boolean | `true` if git-dir ≠ git-common-dir                                   |
+| `environment.last_commit.hash`      | string  | Short commit hash                                                    |
+| `environment.last_commit.message`   | string  | Commit message subject line                                          |
+| `environment.last_commit.timestamp` | string  | ISO 8601                                                             |
 
 ### Task (written from session context)
 
-| Field | Type | Description |
-|---|---|---|
-| `task.description` | string | One-line summary of the task |
-| `task.workflow_stage` | string | Current stage (see values below) |
-| `task.progress.briefing` | string | Background context paragraph |
-| `task.progress.file_changes.git_status_summary` | string | Git state: `"clean"`, `"2 uncommitted, 1 untracked"`, etc. |
-| `task.progress.file_changes.files` | string[] | File paths involved |
-| `task.progress.file_changes.description` | string | Unified summary of what the changes do |
-| `task.progress.cowork.confirmed` | string[] | Decisions and conclusions reached |
-| `task.progress.cowork.in_discussion` | string[] | Ongoing discussions, options being explored |
-| `task.progress.cowork.blockers` | string[] | Issues preventing progress |
-| `task.is_human_reviewing` | boolean | Whether human review is currently happening |
-| `task.human_review_target` | string | See values below. Empty string when not reviewing |
-| `task.human_review_summary` | string | What's being reviewed and current state. Empty when not reviewing |
-| `task.next_steps` | string[] | Ordered list of what to do next |
+| Field                                           | Type     | Description                                                       |
+| ----------------------------------------------- | -------- | ----------------------------------------------------------------- |
+| `task.description`                              | string   | One-line summary of the task                                      |
+| `task.workflow_stage`                           | string   | Current stage (see values below)                                  |
+| `task.progress.briefing`                        | string   | Background context paragraph                                      |
+| `task.progress.file_changes.git_status_summary` | string   | Git state: `"clean"`, `"2 uncommitted, 1 untracked"`, etc.        |
+| `task.progress.file_changes.files`              | string[] | File paths involved                                               |
+| `task.progress.file_changes.description`        | string   | Unified summary of what the changes do                            |
+| `task.progress.cowork.confirmed`                | string[] | Decisions and conclusions reached                                 |
+| `task.progress.cowork.in_discussion`            | string[] | Ongoing discussions, options being explored                       |
+| `task.progress.cowork.blockers`                 | string[] | Issues preventing progress                                        |
+| `task.is_human_reviewing`                       | boolean  | Whether human review is currently happening                       |
+| `task.human_review_target`                      | string   | See values below. Empty string when not reviewing                 |
+| `task.human_review_summary`                     | string   | What's being reviewed and current state. Empty when not reviewing |
+| `task.next_steps`                               | string[] | Ordered list of what to do next                                   |
 
 **`workflow_stage` values:**
 
-| Value | Meaning |
-|---|---|
-| `discussion` | Discussing a topic without clear direction |
-| `research` | Investigating, reading docs, comparing options |
-| `brainstorming` | Generating ideas, listing approaches |
-| `planning` | Direction set, planning concrete steps |
-| `implementation` | Writing code, running tests, deploying |
-| `agent_review` | Agent running code-review loop |
-| `human_review` | Human reviewing / giving feedback |
+| Value            | Meaning                                        |
+| ---------------- | ---------------------------------------------- |
+| `discussion`     | Discussing a topic without clear direction     |
+| `research`       | Investigating, reading docs, comparing options |
+| `brainstorming`  | Generating ideas, listing approaches           |
+| `planning`       | Direction set, planning concrete steps         |
+| `implementation` | Writing code, running tests, deploying         |
+| `agent_review`   | Agent running code-review loop                 |
+| `human_review`   | Human reviewing / giving feedback              |
 
 **`human_review_target` values** (only when `is_human_reviewing` is true):
 
