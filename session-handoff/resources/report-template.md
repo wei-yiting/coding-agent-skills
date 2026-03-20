@@ -111,6 +111,7 @@ A. [handoff-20250315-091500] feature/qdrant-setup
 - `CLI Tool` is optional in stale warnings and save confirmations.
 - Render the project name from the last path segment of `project_root`; append `（worktree）` when `is_worktree` is true.
 - If `is_human_reviewing` is true, prioritize `Review 對象` and `Review 狀態` over `File Changes`.
+- In `Multi-Save Planning Format`, explicitly state that nothing has been saved yet and that user confirmation is required before persisting.
 - Within a session block, keep `File Changes`, `Cowork`, and similar sections as label + `-` bullets.
 - Reserve `1. 2. 3.` numbering for `下一步`.
 
@@ -144,6 +145,37 @@ Branch：feature/etl-pipeline
 
 3. 跑一次 end-to-end test 確認 parser → chunker 串接正常
    → 用 tests/fixtures/ 裡面的 sample PDF 跑完整 pipeline。
+```
+
+## Multi-Save Planning Format
+
+Use this before any multi-save write. This is a split-confirmation step only — nothing has been saved yet.
+
+```
+目前看起來可以拆成 2 筆 session handoff，但我還沒儲存，先跟你確認切分：
+
+A. 暫定任務：調整 Session Handoff skill 的 multi-save workflow
+   - 階段：Planning
+   - 範圍：補 `SKILL.md` 的 split-review 規則，以及 `report-template.md` 的 pre-save confirmation format
+   - 檔案 / 討論重點：session-handoff/SKILL.md、session-handoff/resources/report-template.md；重點是 multi-save 要先確認再儲存
+   - 下一步：
+     1. 確認 split review wording
+     2. 修改 skill 與 template
+   - 待確認：這筆是否只涵蓋 workflow，不包含 script 變更
+
+------------------------------
+
+B. 暫定任務：補 multi-save 的驗證案例
+   - 階段：Planning
+   - 範圍：整理 explicit multi-save、single-save、overlap edge case 的 pressure scenarios
+   - 檔案 / 討論重點：eval prompts 與 acceptance criteria
+   - 下一步：
+     1. 確認要保留哪些 pressure scenarios
+     2. 再決定是否寫成 evals
+   - 待確認：這筆要不要獨立成 handoff，還是併回 A
+
+如果這樣切沒問題，我再正式儲存。
+如果要調整任務名稱、範圍、內容邊界或順序，直接告訴我。
 ```
 
 ## Save Confirmation Format

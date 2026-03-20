@@ -1,6 +1,6 @@
 ---
 name: session-handoff
-description: "Record, report, and manage interrupted work sessions for seamless handoff. Use this skill whenever the user wants to save current progress before stopping, asks what they were working on previously, wants to close a completed handoff, change a handoff status, or check pending items. Trigger on phrases like 'save handoff', 'session handoff', '記錄進度', '明天繼續', '昨天做到哪', 'report handoff', 'close handoff', 'show pending', '改成 pending', or any variation about saving, resuming, or managing interrupted work sessions. Also trigger when user mentions checking yesterday's progress, abandoning a task, or picking up where they left off."
+description: "Use when the user wants to save current progress before stopping, resume or report an interrupted session, split one current session into multiple handoffs before saving, close a completed handoff, change handoff status, or list pending sessions. Trigger on phrases like 'save handoff', 'session handoff', '記錄進度', '明天繼續', '昨天做到哪', 'report handoff', 'close handoff', 'show pending', '改成 pending', '拆成兩個 handoff', '分成多個 session', or similar requests about saving, resuming, or managing interrupted work sessions."
 ---
 
 # Session Handoff
@@ -23,13 +23,13 @@ Storage file: `~/.config/session-handoff/handoff.json` (JSON array of records).
 
 ## Operation Selection
 
-| User Intent                    | Operation         | Example Phrases                                           |
-| ------------------------------ | ----------------- | --------------------------------------------------------- |
-| Stop working, save progress    | **Save**          | "記錄進度", "save handoff", "明天繼續", "session handoff" |
-| Check what was left incomplete | **Report**        | "昨天做到哪", "report handoff", "show sessions"           |
-| Mark a handoff as done         | **Close**         | "close handoff", "這個完成了", "關掉 handoff"             |
-| Change a handoff's status      | **Status Update** | "改成 pending", "abandon 掉", "撿回來"                    |
-| List shelved items             | **Query Pending** | "show pending", "還有什麼在 pending"                      |
+| User Intent                    | Operation         | Example Phrases                                                              |
+| ------------------------------ | ----------------- | ---------------------------------------------------------------------------- |
+| Stop working, save progress    | **Save**          | "記錄進度", "save handoff", "明天繼續", "session handoff", "拆成兩個 handoff" |
+| Check what was left incomplete | **Report**        | "昨天做到哪", "report handoff", "show sessions"                              |
+| Mark a handoff as done         | **Close**         | "close handoff", "這個完成了", "關掉 handoff"                                |
+| Change a handoff's status      | **Status Update** | "改成 pending", "abandon 掉", "撿回來"                                       |
+| List shelved items             | **Query Pending** | "show pending", "還有什麼在 pending"                                         |
 
 ---
 
@@ -86,7 +86,36 @@ From the diff content and session conversation, produce:
 - `files`: List of relevant file paths
 - `description`: A unified summary of what these changes accomplish (not per-file)
 
-### Step 3: Dedup Check
+### Step 3: Review Save Shape
+
+Decide whether the current session should be stored as one handoff or multiple handoffs.
+
+**Single handoff:** If the work is clearly one coherent task, continue to Step 4.
+
+**Multi-handoff review required:** If the user explicitly wants multiple handoffs, or if there are multiple plausible handoff boundaries and you are not confident which split is correct, stop before saving and discuss the split with the user.
+
+Even if the user already proposed the split, restate it in a structured way and ask for explicit confirmation before saving.
+
+For each proposed handoff, present:
+
+- `task.description`
+- `task.workflow_stage`
+- scope summary: what file changes, discussion threads, and next steps belong to this handoff
+- any overlap, ambiguity, or boundary that still needs confirmation
+
+Read `resources/report-template.md` and follow the `Multi-Save Planning Format` section.
+
+Rules for this step:
+
+- Do not run `save.py`
+- Do not generate final record IDs yet
+- Do not claim anything has been saved
+- Wait for explicit user confirmation before continuing
+
+If the user adjusts the split, update the proposal and ask again.
+If most file changes, cowork context, and next steps overlap heavily, recommend a single handoff unless the user still wants separate records.
+
+### Step 4: Dedup Check
 
 Read existing handoff records:
 
@@ -94,47 +123,52 @@ Read existing handoff records:
 cat ~/.config/session-handoff/handoff.json 2>/dev/null
 ```
 
-Check if any `status: "open"` record matches the current work:
+Check each confirmed handoff candidate against existing `status: "open"` records:
 
 1. Same `environment.project_root` **AND** `environment.branch`
 2. `task.description` is semantically similar (same task, possibly at a different stage)
 
 If both match → same task. Note the old record's `id` for replacement.
 If same branch but clearly different task description → keep both, no replacement.
+If one existing open record appears broader than multiple confirmed candidates, ask the user whether to keep it, close it, or replace it with one of the narrower records. Do not guess.
 If uncertain → ask the user.
 
-### Step 4: Build the Record
+### Step 5: Build the Record
 
-Construct the full JSON record following the **Record Structure** section below.
+Construct one full JSON record per confirmed handoff following the **Record Structure** section below.
 
 Key filling guidance:
 
-- `id`: Format `handoff-{YYYYMMDD}-{HHmmss}` using current local time
+- `id`: Format `handoff-{YYYYMMDD}-{HHmmss}` using current local time. If you are generating multiple records in one save flow, ensure each `id` is unique, for example by incrementing seconds while preserving order
 - `status`: Always `"open"` for new saves
 - `created_at` / `updated_at`: Current local time in ISO 8601 with timezone offset
 - `task.workflow_stage`: Judge from session context which stage applies
 - `task.progress.briefing`: One-paragraph background of what this task is about
-- `task.progress.file_changes`: From Step 2
-- `task.progress.cowork`: Synthesize from conversation history — decisions made, ongoing discussions, blockers. Sessions with few code changes but extensive discussion should have rich cowork content
+- `task.progress.file_changes`: Scope this to the specific confirmed handoff using Step 2 plus the confirmed split boundaries
+- `task.progress.cowork`: Synthesize from conversation history for this handoff only — decisions made, ongoing discussions, blockers. Sessions with few code changes but extensive discussion should have rich cowork content
 - `task.next_steps`: Ordered list of what to do when picking this up
 
-If you are uncertain about any aspect (whether something is confirmed, which stage applies, whether a blocker still exists), ask the user rather than guessing.
+If you are uncertain about any aspect (whether something is confirmed, which stage applies, whether a blocker still exists, whether a file should belong to more than one handoff), ask the user rather than guessing.
 
-### Step 5: Execute Save
+### Step 6: Execute Save
 
 ```bash
 echo '<json_record>' | python3 <skill-base-dir>/scripts/save.py [--replace-id <old-id>]
 ```
 
-Use `--replace-id` when Step 3 found a matching record to replace.
+For multiple confirmed handoffs, run `save.py` once per record only after all split/content confirmation is complete.
+
+Use `--replace-id` when Step 4 found a matching record to replace.
+
+If any save command fails, stop immediately and tell the user which records were already written and which ones were not.
 
 The script automatically cleans up expired records (resolved/abandoned with `updated_at` > 7 days). Pending records are never auto-cleaned.
 
-### Step 6: Confirm to User
+### Step 7: Confirm to User
 
 Read `resources/report-template.md` and follow the `Save Confirmation Format` section.
 
-Use the single-save example or the multi-save example as appropriate. Treat `report-template.md` as the source of truth for save confirmation wording and layout.
+Use the single-save example or the multi-save example as appropriate. Use `Multi-Save Planning Format` only for the pre-save confirmation step. Treat `report-template.md` as the source of truth for wording and layout.
 
 ---
 
@@ -175,6 +209,7 @@ Use its canonical sections for:
 - `Standard Report (open sessions)`
 - `Stale Warning`
 - `Human Review Session`
+- `Multi-Save Planning Format`
 - `Query Pending Format`
 - `Save Confirmation Format`
 
@@ -244,7 +279,7 @@ Each record in `handoff.json` follows this structure. Read `resources/example-re
 
 | Field         | Type           | Description                                                                         |
 | ------------- | -------------- | ----------------------------------------------------------------------------------- |
-| `id`          | string         | `handoff-{YYYYMMDD}-{HHmmss}` from current local time                               |
+| `id`          | string         | `handoff-{YYYYMMDD}-{HHmmss}` from current local time. Ensure uniqueness if creating multiple records in one flow |
 | `status`      | string         | `"open"` · `"resolved"` · `"pending"` · `"abandoned"`                               |
 | `created_at`  | string         | ISO 8601 with timezone offset. Set on creation                                      |
 | `updated_at`  | string         | ISO 8601 with timezone offset. Updated on every save/update/status change           |
@@ -318,3 +353,9 @@ Each record in `handoff.json` follows this structure. Read `resources/example-re
 4. **Ambiguous match for close/update**: If no exact match by ID or current branch, list all candidates and let the user choose.
 
 5. **Environment mismatch on pickup**: When the user picks up a handoff but is in a different project or branch, always warn and wait for confirmation before proceeding.
+
+6. **Explicit multi-save request**: If the user wants to save the current session as multiple handoffs, discuss and confirm the split first. Do not save anything until the user confirms the boundaries and content.
+
+7. **Heavy overlap between proposed handoffs**: If most files, cowork notes, and next steps would be duplicated across records, recommend a single handoff or ask the user to clarify the boundary.
+
+8. **Multiple records created in the same second**: Keep the `handoff-{YYYYMMDD}-{HHmmss}` shape, but ensure each ID is unique before saving.
