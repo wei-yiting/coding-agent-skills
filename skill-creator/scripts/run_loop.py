@@ -62,6 +62,7 @@ def run_loop(
     log_dir: Path | None = None,
 ) -> dict:
     """Run the eval + improvement loop."""
+    client = anthropic.Anthropic()
     project_root = find_project_root()
     name, original_description, content = parse_skill_md(skill_path)
     current_description = description_override or original_description
@@ -95,6 +96,7 @@ def run_loop(
             num_workers=num_workers,
             timeout=timeout,
             project_root=project_root,
+            skill_path=skill_path,
             runs_per_query=runs_per_query,
             trigger_threshold=trigger_threshold,
             model=model,
@@ -137,6 +139,10 @@ def run_loop(
             "total": train_summary["total"],
             "results": train_results["results"],
         })
+
+        if log_dir:
+            log_dir.mkdir(parents=True, exist_ok=True)
+            (log_dir / f"description_iter_{iteration}.txt").write_text(current_description)
 
         # Write live report if path provided
         if live_report_path:
@@ -199,6 +205,7 @@ def run_loop(
             for h in history
         ]
         new_description = improve_description(
+            client=client,
             skill_name=name,
             skill_content=content,
             current_description=current_description,
