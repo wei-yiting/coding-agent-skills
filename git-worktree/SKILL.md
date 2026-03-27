@@ -253,15 +253,16 @@ chmod +x <skill-base-dir>/scripts/manage_worktree.sh
 
 ```bash
 <skill-base-dir>/scripts/manage_worktree.sh create <branch> [--base <branch>] [--install-deps] [--start-docker] [--no-env-copy]
-<skill-base-dir>/scripts/manage_worktree.sh finish <branch> [--switch] [--no-remove]
+<skill-base-dir>/scripts/manage_worktree.sh finish <branch> [--switch] [--no-remove] [--no-env-sync-back]
 <skill-base-dir>/scripts/manage_worktree.sh list
-<skill-base-dir>/scripts/manage_worktree.sh remove <branch> [--force]
+<skill-base-dir>/scripts/manage_worktree.sh remove <branch> [--force] [--no-env-sync-back]
 <skill-base-dir>/scripts/manage_worktree.sh sync-env <branch>
 ```
 
 Script behavior worth remembering:
 - `create` defaults `--base` to current branch when omitted,
 - `create` copies `.env*` files unless `--no-env-copy` is set,
+- `finish` and `remove` sync `.env*` files back to main repo before removal (skip with `--no-env-sync-back`),
 - `finish` expects clean worktree state,
 - `remove --force` bypasses cleanliness checks.
 
@@ -269,7 +270,7 @@ Script behavior worth remembering:
 
 1. Ask for explicit consent before using `--force` on remove.
 2. Uncommitted changes block normal finish/remove; resolve by commit/stash or forced remove with consent.
-3. `.env` files are copied one-way from main repo to worktree. Changes made in a worktree do not sync back automatically.
+3. `.env` files are synced bidirectionally — copied to worktree on create, synced back to main repo on finish/remove. Use `--no-env-sync-back` to skip the reverse sync.
 4. Docker services may conflict on host ports when multiple worktrees start the same stack.
 5. `node_modules` and `.venv` are separate per worktree by design; isolation improves safety but increases disk/time cost.
 6. IDE settings (for example `.vscode` / `.idea`) are per-worktree, which is useful for task-specific configuration.

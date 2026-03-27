@@ -50,6 +50,7 @@ Commands:
       Options:
         --switch             Switch main worktree to branch after finishing
         --no-remove          Keep worktree directory
+        --no-env-sync-back   Skip syncing .env* files back to main repo
 
   list
       List active worktrees.
@@ -58,6 +59,7 @@ Commands:
       Remove a worktree.
       Options:
         --force              Remove even with uncommitted changes
+        --no-env-sync-back   Skip syncing .env* files back to main repo
 
   sync-env <branch-name>
       Sync .env* files from main repository to target worktree.
@@ -199,6 +201,36 @@ sync_env_files_to_worktree() {
         log_warn "No .env* files found in root/common subdirectories/apps/*"
     else
         log_success "Synced $copied env file(s)"
+    fi
+}
+
+sync_env_files_from_worktree() {
+    local worktree_path="$1"
+    local copied=0
+    local src
+    local rel
+    local dst
+
+    log_info "Syncing .env* files from worktree back to main repo..."
+
+    while IFS= read -r src; do
+        if [ -z "$src" ]; then
+            continue
+        fi
+
+        rel="${src#"$worktree_path"/}"
+        dst="$PROJECT_ROOT/$rel"
+
+        mkdir -p "$(dirname "$dst")"
+        cp "$src" "$dst"
+        copied=$((copied + 1))
+        log_success "Synced back $rel"
+    done < <(collect_env_files "$worktree_path")
+
+    if [ "$copied" -eq 0 ]; then
+        log_info "No .env* files to sync back"
+    else
+        log_success "Synced $copied env file(s) back to main repo"
     fi
 }
 
@@ -509,6 +541,7 @@ cmd_finish() {
     local branch_name=""
     local should_switch=false
     local should_remove=true
+    local no_env_sync_back=false
 
     while [ $# -gt 0 ]; do
         case "$1" in
@@ -518,6 +551,10 @@ cmd_finish() {
                 ;;
             --no-remove)
                 should_remove=false
+                shift
+                ;;
+            --no-env-sync-back)
+                no_env_sync_back=true
                 shift
                 ;;
             --help|-h)
@@ -557,6 +594,12 @@ cmd_finish() {
 
     log_success "Worktree is clean for branch '$branch_name'"
 
+    if [ "$no_env_sync_back" = false ]; then
+        sync_env_files_from_worktree "$worktree_path"
+    else
+        log_info "Skipping env sync-back (--no-env-sync-back)"
+    fi
+
     if [ "$should_remove" = true ]; then
         git -C "$PROJECT_ROOT" worktree remove "$worktree_path"
         log_success "Removed worktree: $worktree_path"
@@ -581,11 +624,16 @@ cmd_list() {
 cmd_remove() {
     local branch_name=""
     local force=false
+    local no_env_sync_back=false
 
     while [ $# -gt 0 ]; do
         case "$1" in
             --force)
                 force=true
+                shift
+                ;;
+            --no-env-sync-back)
+                no_env_sync_back=true
                 shift
                 ;;
             --help|-h)
@@ -621,6 +669,12 @@ cmd_remove() {
     if [ "$force" = false ] && has_uncommitted_changes "$worktree_path"; then
         log_error "Worktree has uncommitted/untracked changes. Use --force to remove anyway."
         return 1
+    fi
+
+    if [ "$no_env_sync_back" = false ]; then
+        sync_env_files_from_worktree "$worktree_path"
+    else
+        log_info "Skipping env sync-back (--no-env-sync-back)"
     fi
 
     if [ "$force" = true ]; then
