@@ -1,0 +1,53 @@
+{
+  "skill_name": "session-handoff",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "昨天做到哪",
+      "expected_output": "Overview report listing all open handoff sessions in the correct format with A/B/C lettering, task descriptions, workflow stages, relative time, cowork summaries, next step summaries, and handoff IDs. Ends with '要接手哪一個？'",
+      "files": [],
+      "expectations": [
+        "Output contains overview header mentioning the count of open sessions (e.g., '你有 N 個進行中的 session')",
+        "Uses A./B./C. lettering for session blocks",
+        "Each session block contains '任務：' line with task description",
+        "Each session block contains '階段：' line with workflow stage AND relative time (e.g., '約 3 天前')",
+        "Each session block ends with handoff ID in brackets [handoff-YYYYMMDD-HHmmss]",
+        "Uses divider lines (at least 20 hyphens) between session blocks",
+        "Output ends with '要接手哪一個？' prompt",
+        "Each block has a CodeChange line summarizing file changes",
+        "Confirmed items use ✅ emoji, in-discussion items use 💬 emoji",
+        "Mentions pending count (1 pending item) at the end"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "幫我記一下進度。我們在 evaluate session-handoff 這個 skill，已經設計好 3 個 eval test cases，準備跑 subagent runs。",
+      "expected_output": "Save workflow: collects git environment info, gathers file changes, builds a proper handoff record, executes save.py, and shows confirmation in the save template format.",
+      "files": [],
+      "expectations": [
+        "Collects git environment info (project root, branch, last commit) via shell commands",
+        "Runs git status/diff commands to gather file changes",
+        "Constructs a handoff record with id, status, environment, and task fields",
+        "Uses save.py script to persist the record (not writing directly to handoff.json)",
+        "Save confirmation output includes '已儲存 session handoff [handoff-...]'",
+        "Confirmation includes 任務 description line",
+        "Confirmation includes 階段 (workflow stage)",
+        "Confirmation includes CodeChange section with file list",
+        "Confirmation includes 下一步 with next steps"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "show pending",
+      "expected_output": "Pending query showing the 1 pending handoff record (Langfuse async generator) in the pending template format.",
+      "files": [],
+      "expectations": [
+        "Output uses pending format header (e.g., '你有 1 個暫時擱置的 session')",
+        "Shows the Langfuse async generator TypeError handoff",
+        "Includes the handoff ID [handoff-20260320-104648]",
+        "Uses the pending template format with project, task, stage, cowork summary",
+        "Output is in Traditional Chinese (Taiwan) style"
+      ]
+    }
+  ]
+}

@@ -8,6 +8,7 @@
     "environment": {
       "cli_tool": "claude-code",
       "project_root": "/Users/dong/projects/lexlab-x",
+      "repo_name": "lexlab-x",
       "branch": "feature/etl-pipeline",
       "is_worktree": true,
       "last_commit": {
@@ -42,7 +43,11 @@
           "blockers": [
             "PDF 表格跨頁時 pdfplumber 會把表格拆成兩個獨立 table，需要研究 merge 策略"
           ]
-        }
+        },
+        "memo": [
+          "pdfplumber 在 nested table 會回傳內外層，需要過濾內層才不會重複 chunk",
+          "experimental_splitter.py 是用 layout-based splitting 做的 POC，尚未整合進主流程"
+        ]
       },
       "is_human_reviewing": false,
       "human_review_target": "",
@@ -63,6 +68,7 @@
     "environment": {
       "cli_tool": "claude-code",
       "project_root": "/Users/dong/projects/lexlab-x",
+      "repo_name": "lexlab-x",
       "branch": "feature/qdrant-setup",
       "is_worktree": false,
       "last_commit": {
@@ -91,7 +97,8 @@
             "collection schema 要用 single collection + metadata filter，還是 multi-collection by document type"
           ],
           "blockers": []
-        }
+        },
+        "memo": []
       },
       "is_human_reviewing": false,
       "human_review_target": "",
@@ -112,6 +119,7 @@
     "environment": {
       "cli_tool": "claude-code",
       "project_root": "/Users/dong/projects/lexlab-x",
+      "repo_name": "lexlab-x",
       "branch": "feature/sec-downloader",
       "is_worktree": false,
       "last_commit": {
@@ -140,7 +148,8 @@
           ],
           "in_discussion": [],
           "blockers": []
-        }
+        },
+        "memo": []
       },
       "is_human_reviewing": false,
       "human_review_target": "",

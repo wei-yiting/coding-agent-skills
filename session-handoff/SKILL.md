@@ -52,9 +52,14 @@ git rev-parse --git-common-dir 2>/dev/null
 
 # Last commit
 git log -1 --format='{"hash":"%h","message":"%s","timestamp":"%aI"}' 2>/dev/null
+
+# GitHub repo name (empty string if not a GitHub repo)
+gh repo view --json name -q .name 2>/dev/null || echo ""
 ```
 
 For `cli_tool`: determine from the execution environment (e.g., Claude Code → `"claude-code"`). If you genuinely cannot determine it, ask the user — never guess.
+
+For `repo_name`: use the GitHub repo name from `gh repo view`. If the command fails (not a GitHub repo, no `gh` CLI), fall back to the last path segment of `project_root`.
 
 ### Step 2: Gather File Changes
 
@@ -103,7 +108,7 @@ For each proposed handoff, present:
 - scope summary: what file changes, discussion threads, and next steps belong to this handoff
 - any overlap, ambiguity, or boundary that still needs confirmation
 
-Read `resources/report-template.md` and follow the `Multi-Save Planning Format` section.
+Read `resources/template-save.md` and follow the `Multi-Save Planning Format` section.
 
 Rules for this step:
 
@@ -146,6 +151,7 @@ Key filling guidance:
 - `task.progress.briefing`: One-paragraph background of what this task is about
 - `task.progress.file_changes`: Scope this to the specific confirmed handoff using Step 2 plus the confirmed split boundaries
 - `task.progress.cowork`: Synthesize from conversation history for this handoff only — decisions made, ongoing discussions, blockers. Sessions with few code changes but extensive discussion should have rich cowork content
+- `task.progress.memo`: Extract noteworthy observations, technical details, or context from the conversation that don't fit into confirmed/in_discussion/blockers but are worth preserving for future sessions. Leave empty if nothing qualifies
 - `task.next_steps`: Ordered list of what to do when picking this up
 
 If you are uncertain about any aspect (whether something is confirmed, which stage applies, whether a blocker still exists, whether a file should belong to more than one handoff), ask the user rather than guessing.
@@ -166,9 +172,9 @@ The script automatically cleans up expired records (resolved/abandoned with `upd
 
 ### Step 7: Confirm to User
 
-Read `resources/report-template.md` and follow the `Save Confirmation Format` section.
+Read `resources/template-save.md` and follow the `Save Confirmation Format` section.
 
-Use the single-save example or the multi-save example as appropriate. Use `Multi-Save Planning Format` only for the pre-save confirmation step. Treat `report-template.md` as the source of truth for wording and layout.
+Use the single-save example or the multi-save example as appropriate. Use `Multi-Save Planning Format` only for the pre-save confirmation step.
 
 ---
 
@@ -190,7 +196,7 @@ For each open record, check if `updated_at` is more than 5 days ago. If so, flag
 
 Stale records only show basic info (project, task, stage, last update) and the stale warning prompt — no need to display full File Changes, Cowork, or detailed next steps. The user needs to resolve the stale status first before diving into details.
 
-When rendering stale warnings, follow the `Stale Warning` format in `resources/report-template.md`.
+When rendering stale warnings, follow the `Stale Warning` format in `resources/template-overview.md`.
 
 Handle the response:
 
@@ -200,22 +206,20 @@ Handle the response:
 
 If all open records are stale, skip the "要接手哪一個？" question — focus on resolving the stale records first.
 
-### Step 3: Present Report
+### Step 3: Present Overview (Stage 1)
 
-Read `resources/report-template.md` (in this skill's directory) and treat it as the single source of truth for output formatting.
+Read `resources/template-overview.md` as the formatting source of truth.
 
-Use its canonical sections for:
+The report is a **two-stage flow**:
 
-- `Standard Report (open sessions)`
-- `Stale Warning`
-- `Human Review Session`
-- `Multi-Save Planning Format`
-- `Query Pending Format`
-- `Save Confirmation Format`
+1. **Overview** — concise list of all open sessions, enough to identify and pick one
+2. **Detail** — full context for the selected session, shown only after user picks one
 
-Keep `SKILL.md` focused on workflow and decision logic. Do not re-specify formatting rules here when the template already defines them.
+In the Overview, condense each record's cowork and next steps into single summary lines. See the `Overview Field Rules` table in the template for exact rules.
 
-### Step 4: User Picks Up
+End the Overview with "要接手哪一個？" to prompt the user to select.
+
+### Step 4: Present Detail (Stage 2)
 
 When the user selects a handoff to resume, check environment consistency:
 
@@ -235,7 +239,14 @@ Compare with the handoff's `environment.project_root` and `environment.branch`.
 
 Wait for confirmation before continuing.
 
-**If match (or user confirms)**, present the handoff details with expanded next steps. Each next step should include enough context (drawn from the task's briefing, file_changes, and cowork) so the user can jump right in without re-reading code or old conversations.
+**If match (or user confirms)**, present the full Detail view using `resources/template-detail.md`. This includes:
+
+- Full CodeChange with file list (labeled Uncommitted/Committed)
+- Full Cowork with all items
+- Memo (if non-empty)
+- Expanded next steps with context drawn from briefing, file_changes, and cowork
+
+Each next step should include enough context so the user can jump right in without re-reading code or old conversations.
 
 ---
 
@@ -266,7 +277,7 @@ Valid status values: `open`, `pending`, `abandoned`.
 ## Query Pending
 
 1. Read `~/.config/session-handoff/handoff.json`, filter for `status: "pending"`.
-2. Present using the `Query Pending Format` in `resources/report-template.md`.
+2. Present using `resources/template-pending.md`.
 3. If no pending records exist, say "目前沒有擱置中的項目。"
 
 ---
@@ -298,6 +309,7 @@ Each record in `handoff.json` follows this structure. Read `resources/example-re
 | ----------------------------------- | ------- | -------------------------------------------------------------------- |
 | `environment.cli_tool`              | string  | `"claude-code"` / `"opencode"` / `"codex-cli"` — detect from runtime |
 | `environment.project_root`          | string  | From `git rev-parse --show-toplevel`                                 |
+| `environment.repo_name`             | string  | GitHub repo name from `gh repo view --json name -q .name`; fall back to last path segment of `project_root` |
 | `environment.branch`                | string  | From `git branch --show-current`                                     |
 | `environment.is_worktree`           | boolean | `true` if git-dir ≠ git-common-dir                                   |
 | `environment.last_commit.hash`      | string  | Short commit hash                                                    |
@@ -317,6 +329,7 @@ Each record in `handoff.json` follows this structure. Read `resources/example-re
 | `task.progress.cowork.confirmed`                | string[] | Decisions and conclusions reached                                 |
 | `task.progress.cowork.in_discussion`            | string[] | Ongoing discussions, options being explored                       |
 | `task.progress.cowork.blockers`                 | string[] | Issues preventing progress                                        |
+| `task.progress.memo`                            | string[] | Noteworthy observations, technical details, or context not covered by cowork fields |
 | `task.is_human_reviewing`                       | boolean  | Whether human review is currently happening                       |
 | `task.human_review_target`                      | string   | See values below. Empty string when not reviewing                 |
 | `task.human_review_summary`                     | string   | What's being reviewed and current state. Empty when not reviewing |
@@ -339,6 +352,29 @@ Each record in `handoff.json` follows this structure. Read `resources/example-re
 `brainstorm_design` · `implementation_planning` · `implementation_result` · `agent_review_result` · `manual_validation`
 
 **Empty field defaults:** strings → `""`, arrays → `[]`, booleans → `false`, nullable fields → `null`.
+
+---
+
+## Output Contract
+
+- Use `A.`, `B.`, `C.` for session blocks in multi-session outputs.
+- In Overview, separate session blocks with a dash line + handoff ID on the same line: `------------------------------------------- [handoff-YYYYMMDD-HHmmss]`. The line immediately follows the last content line (no blank line above) and the next block starts on the very next line (no blank line below).
+- **Overview (Stage 1):** `A.` line shows `repo_name ｜ branch`. No CLI Tool.
+- **Detail (Stage 2):** 專案 line shows `repo_name ｜ branch ｜ cli_tool`.
+- Render the project name from `environment.repo_name`; fall back to last path segment of `project_root`. Append `（worktree）` after branch when `is_worktree` is true.
+- If `is_human_reviewing` is true, show `Review 狀態` in both Overview and Detail.
+- In `Multi-Save Planning Format`, explicitly state that nothing has been saved yet.
+- Within Detail, keep `CodeChange`, `Cowork`, `Memo` as label + `-` bullets.
+- Reserve `1. 2. 3.` numbering for `詳細下一步` in Detail only.
+- Display `updated_at` as relative time in both Overview and Detail.
+
+## Emoji Rules
+
+- ✅ for confirmed items in cowork
+- 💬 for in-discussion items in cowork
+- 🚧 for blockers in cowork
+- ⚠️ for stale warnings (open records > 5 days without update)
+- No emoji on section headers (CodeChange, Cowork, Memo, 下一步, etc.)
 
 ---
 
