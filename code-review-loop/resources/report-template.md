@@ -1,14 +1,14 @@
 # Code Review Improvement Report Template
 
 Use this template in Step 5 to produce the final report.
-Replace all `{variables}` with actual data collected across rounds.
+Replace all `{variables}` with actual data from all rounds.
 
-**Keep it proportional:**
-- **Clean reviews (0-2 issues):** Only include Summary, Final Verification Results,
-  and All Changed Files.
-- **Reviews with issues:** Keep all section headings. For sections that were reviewed but
-  had no findings, write "None" under the heading — this confirms the area was checked.
-  Only omit a section entirely if it was not applicable to this review.
+**Output language:** Traditional Chinese (zh-TW) with English technical terms (`file paths`, `function names`, `CLI commands`, `issue IDs`).
+
+**Readability rule (important):**
+- The report must be understandable without reading round files.
+- Every fixed issue must include: **Problem / Fix / Impact / Verification**.
+- Do not only provide round-level summaries.
 
 ---
 
@@ -21,93 +21,83 @@ Replace all `{variables}` with actual data collected across rounds.
 > **Reviewer model:** {reviewer_model}
 > **Fixer model:** {fixer_model}
 
+## 架構影響摘要
+
+- {architecture_change_1}
+- {architecture_change_2}
+- {architecture_change_3}
+
+如果沒有架構層級變更，寫：
+`本次 review 無架構層面的變更，所有修正皆為 correctness / stability / documentation。`
+
 ## Summary
 
-| Metric                         | Value                                     |
-| ------------------------------ | ----------------------------------------- |
-| Total rounds                   | {N}                                       |
-| Total issues found             | {total}                                   |
-| Blocking                       | {blocking_count} (all resolved)           |
-| Major                          | {major_count} (all resolved)              |
-| Minor                          | {minor_fixed}/{minor_total}               |
-| Suggestions                    | {suggestions_adopted}/{suggestions_total} |
-| Library corrections (Context7) | {library_corrections}                     |
-| Documentation gaps addressed   | {doc_fixes}                               |
+| 指標 | 數值 |
+| --- | --- |
+| 總輪數 | {n} |
+| 發現 issues 總數 | {total_issues} |
+| Blocking | {blocking_fixed}/{blocking_total} fixed |
+| Major | {major_fixed}/{major_total} fixed |
+| Minor | {minor_fixed}/{minor_total} fixed |
+| Suggestion | {suggestion_adopted}/{suggestion_total} adopted |
+| 文件修正 | {doc_fix_count} |
 
-## Round-by-Round Summary
+## 所有修正問題詳解
 
-### Round 1
+> 必填。每個 issue 都要用同一格式，避免 reviewer 需要回頭看 round artifacts。
 
-- **Found:** {n} issues (Blocking: {n}, Major: {n}, Minor: {n}, Suggestion: {n})
-- **Key findings:**
-  1. {finding_1}
-  2. {finding_2}
+### {ISSUE_ID}（{severity}）
+- **問題：** {what_was_wrong}
+- **修法：** {what_changed}
+- **影響：** {why_it_matters}
+- **驗證：** {tests/commands/evidence}
 
-### Round 2
+{repeat for every fixed issue, including verification-discovered issues}
 
-- **Previous fixes confirmed:** {confirmed}/{total_from_round_1}
-- **New issues found:** {n}
-- **Key findings:**
-  1. {finding}
+## 文件修正
 
-{repeat for each round}
+| 目錄 | 修正內容 |
+| --- | --- |
+| `{path}` | {doc_change_summary} |
 
-## Critical Fixes
+如果沒有文件修正，寫 `無`。
 
-The most impactful changes made during the review loop:
+## 未處理項目
 
-| #   | Severity   | File     | Problem   | Fix   | Impact                                |
-| --- | ---------- | -------- | --------- | ----- | ------------------------------------- |
-| 1   | {severity} | `{file}` | {problem} | {fix} | {impact on correctness/security/perf} |
+| 類型 | 內容 | 原因 | 建議後續 |
+| --- | --- | --- | --- |
+| Suggestion / Design issue / Env-blocked | {item} | {reason} | {next_step} |
 
-## Library Usage Corrections
-
-Issues where the code deviated from official library documentation:
-
-| #   | Library | Original Approach   | Correct Approach    | Context7 Source |
-| --- | ------- | ------------------- | ------------------- | --------------- |
-| 1   | {lib}   | {what the code did} | {what it should do} | {doc reference} |
-
-## Documentation Improvements
-
-Folders where README.md was added or improved:
-
-| Folder   | What Was Added/Fixed                                                       |
-| -------- | -------------------------------------------------------------------------- |
-| `{path}` | {description — e.g., "Added README with Scope, Map, Extension Guidelines"} |
-
-## Unaddressed Suggestions
-
-Suggestions from the reviewer that were not implemented, with rationale:
-
-| #   | Content      | Reason Not Addressed                                          |
-| --- | ------------ | ------------------------------------------------------------- |
-| 1   | {suggestion} | {reason — e.g., "Out of scope", "Requires design discussion"} |
+若全部處理完成，寫：`無`。
 
 ## Final Verification Results
 
 ### Code Level
 
-- [ ] Unit Tests: {pass}/{total}
-- [ ] Integration Tests: {pass}/{total}
-- [ ] Lint: {errors} errors, {warnings} warnings
-- [ ] Type Check: {pass/fail}
+- [ ] Unit Tests: {result}
+- [ ] Lint: {result}
+- [ ] Type Check: {result}
 
-### Behavior Level (BDD)
+### Behavior Level
 
-- [ ] {scenario_name}: {pass/fail}
-- [ ] {scenario_name}: {pass/fail}
+- [ ] {behavior_check_1}: {result}
+- [ ] {behavior_check_2}: {result}
 
-### Observable Level (E2E)
+### Runtime / Observable Level
 
-- [ ] {verification_description}: {actual_result}
-- [ ] {verification_description}: {actual_result}
+- [ ] {runtime_or_e2e_check}: {result}
 
 ## All Changed Files
 
-Complete manifest of every file touched during implementation and review fixes:
-
-| File     | Implementation Change                | Review Fix                           |
-| -------- | ------------------------------------ | ------------------------------------ |
-| `{path}` | {what changed during implementation} | {what changed during review, or "—"} |
+| 檔案 | Review 修正摘要 |
+| --- | --- |
+| `{path}` | {review_fix_summary} |
 ```
+
+---
+
+## Authoring Notes
+
+- Prefer issue-first readability over chronology.
+- If an issue was reopened in later rounds, present it once in final form and mention "re-opened" in the **問題** line.
+- Include real verification evidence (command + result), not "expected pass" wording.

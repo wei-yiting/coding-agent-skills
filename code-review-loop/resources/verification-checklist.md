@@ -76,11 +76,11 @@ These are automated checks. Run each command and record the result.
 
 ## Level 2: Behavior Level (BDD)
 
-These come from the BDD scenarios defined in `implementation.md`. If no implementation
-plan exists, observe the codebase for clear, obvious behaviors that should be tested —
-propose specific test cases to the user and proceed only after confirmation.
+BDD scenario source priority:
 
-Each scenario describes a user-facing behavior that the implementation should achieve.
+1. `.artifacts/current/bdd-validation.md` (produced by the `bdd-test-planning` skill) — authoritative, cross-validates with the implementation plan.
+2. BDD scenarios in `implementation.md` — fallback if `bdd-validation.md` does not exist.
+3. **Self-derived** — if neither source exists, warn the user that no behavioral verification is available, then derive scenarios from the codebase yourself. Propose them to the user, proceed after confirmation, and record all proposed and executed scenarios in the report (see report template's "Behavioral Validation" section).
 
 For each scenario:
 
@@ -102,12 +102,11 @@ Scenario: {scenario_name}
 
 ## Level 3: Observable Level (E2E)
 
-These are the human-verifiable checks from the "Verification" section of
-`implementation.md`. If no implementation plan exists, observe the codebase for clear
-end-to-end flows that should be validated — propose specific verification steps to the
-user and proceed only after confirmation.
+E2E verification step source priority:
 
-They represent end-to-end validation that a human reviewer would perform.
+1. Observable Verification section of `.artifacts/current/bdd-validation.md`.
+2. E2E verification steps in `implementation.md`.
+3. **Self-derived** — if neither source exists, warn the user, derive verification steps from the codebase, propose them, and proceed after confirmation. Record in the report.
 
 For each verification step:
 

@@ -16,6 +16,11 @@ A multi-round orchestrated review-fix cycle that achieves zero-issue code qualit
 **epistemic isolation** — the reviewer and fixer are separate subagents that never share
 session context, preventing the bias that occurs when the same agent reviews its own work.
 
+## Output Language Convention
+
+- **Reviewer and fixer subagents** produce output in English. Their round files (`code-review-round-*.md`, `code-fix-round-*.md`) are intermediate artifacts consumed by the orchestrator — no translation needed.
+- **Final report** (`code-review-improvement-report.md`) and **user-facing chat notifications** (Step 6) use Traditional Chinese (zh-TW) with English technical terms (file paths, function names, CLI commands, code snippets, issue IDs, severity labels).
+
 ## Why Epistemic Isolation Matters
 
 When the same session that wrote code also reviews it, the agent has full memory of its
@@ -33,10 +38,10 @@ This skill promotes isolation at two levels:
 
 ## Relationship to Other Review Skills
 
-| Skill                                | When                            | Scope                             |
-| ------------------------------------ | ------------------------------- | --------------------------------- |
-| `superpowers/requesting-code-review` | During implementation, per-task | Single task, quick feedback       |
-| **This skill** (`code-review-loop`)  | After ALL tasks complete        | Holistic, multi-round, exhaustive |
+| Skill                               | When                            | Scope                             |
+| ----------------------------------- | ------------------------------- | --------------------------------- |
+| `requesting-code-review`            | During implementation, per-task | Single task, quick feedback       |
+| **This skill** (`code-review-loop`) | After ALL tasks complete        | Holistic, multi-round, exhaustive |
 
 They are complementary. Per-task reviews catch issues early; this loop catches cross-cutting
 concerns, documentation gaps, and library misuse that only become visible when viewing the
@@ -209,7 +214,12 @@ After fixer completes:
 ### Step 4: Final Verification
 
 Run the verification levels yourself (the orchestrator). Read `resources/verification-checklist.md`
-for the full checklist structure and all verification levels (Code, BDD, E2E).
+for the full checklist structure.
+
+**BDD and E2E verification source** (priority order):
+1. `.artifacts/current/bdd-validation.md` — authoritative if it exists.
+2. BDD/E2E steps in `implementation.md` — fallback.
+3. **Self-derived** — if neither exists, warn the user, derive behavioral validations from the codebase, propose them, proceed after confirmation. Record all proposed and executed validations in the report's "Behavioral Validation" section.
 
 **Any failure** →
 
@@ -241,25 +251,41 @@ Fill in all sections with data collected across rounds:
 
 Write to `.artifacts/current/code-review-improvement-report.md`.
 
+### Step 5.5: BDD Behavioral Verification
+
+If `.artifacts/current/bdd-scenarios.md` and `.artifacts/current/verification-plan.md` both exist, invoke the `bdd-e2e-loop` skill to run full BDD verification against the reviewed code. Review fixes can introduce behavioral regressions — this step catches them before the user sees the final result.
+
+If BDD verification finds failures, they are handled within the BDD E2E Loop's own fix cycle (separate from this skill's review rounds). Once BDD verification completes (pass or stop), proceed to Step 6.
+
+If neither BDD file exists, skip this step.
+
 ### Step 6: Notify User
 
-Present a concise summary:
+Present the **架構影響摘要** (from the report's first section) directly in chat:
 
 ```
-Code Review Loop complete.
+Code Review Loop 完成。
 
-{ROUND} round(s) | {total} issues found and fixed
+{ROUND} 輪 | 共發現並修正 {total} 個 issues
   Blocking: {n} | Major: {n} | Minor: {n}
-  Library corrections: {n} | Documentation fixes: {n}
-  All verification passed ✓
+  Library 修正: {n} | 文件修正: {n}
+  所有 verification 通過 ✓
 
-Report: .artifacts/current/code-review-improvement-report.md
-Round details: .artifacts/current/code-review-round-{1..N}.md
-Fix details: .artifacts/current/code-fix-round-{1..N}.md
+## 你需要知道的變更
 
-Please do your own final verification.
-After confirming, say "done" to archive all artifacts.
+{architecture_impact_summary — 架構影響摘要的內容}
+
+完整 report：.artifacts/current/code-review-improvement-report.md
+
+有任何不清楚的地方請隨時問我。
+確認 OK 後說「發 PR」，我會建立 PR 並附上 report 摘要和 Manual Validation checklist。
 ```
+
+Wait for the user to ask questions and confirm. After confirmation, create a PR with:
+
+- Report 摘要 in PR description
+- Manual Validation checklist (from `.artifacts/current/bdd-validation.md` if available)
+- Link to full report file
 
 ---
 
