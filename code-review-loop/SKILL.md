@@ -28,13 +28,16 @@ reasoning and intentions. This creates blind spots — it "knows what it meant" 
 over ambiguity, missing documentation, unclear naming, or subtle logic errors. A fresh
 reviewer, seeing the code for the first time, catches what the author cannot.
 
-This skill promotes isolation at two levels:
+This skill promotes isolation at three levels:
 
 1. **Session isolation (recommended)**: Ideally, the orchestrator (you) runs in a fresh
    session. If not, ask the user and warn about potential bias — but do not hard-block.
    The human makes the final call.
-2. **Subagent isolation (enforced)**: The reviewer and fixer are separate Task dispatches.
+2. **Subagent isolation (enforced)**: The reviewer and fixer are dispatched independently.
    The reviewer never sees the fixer's context, and vice versa. This level is always enforced.
+3. **Model isolation (preferred)**: When Codex is available, the reviewer (Codex/GPT) and
+   fixer (Claude) use different model providers. Different training distributions produce
+   different blind spots, making the review more thorough than same-model isolation alone.
 
 ## Relationship to Other Review Skills
 
@@ -75,12 +78,17 @@ Before triggering this skill, confirm:
 
 ## Subagent Profiles
 
-This skill uses two subagents:
+This skill uses two subagents with different providers for **cross-model isolation**:
 
-- **`code-reviewer`** — Read-only. Can read files, run queries (bash, MCP), but
-  cannot write or edit. This prevents scope creep — the reviewer observes and reports,
-  never "helpfully" fixes things itself.
-- **`code-fixer`** — Has full write/edit/bash/MCP access. Fixes issues and runs tests.
+- **`code-reviewer`** — **Codex** (preferred) or Claude (fallback). Read-only.
+  - **Codex mode:** Dispatched via `codex:rescue` (default read-only sandbox). Cannot
+    write or edit files — enforced at sandbox level.
+  - **Claude fallback:** Dispatched via Task tool with read-only instruction. Used when
+    Codex is unavailable.
+  - Cross-model review adds training distribution isolation on top of session isolation —
+    different models have different blind spots.
+- **`code-fixer`** — **Claude** subagent via Task tool. Has full write/edit/bash/MCP access.
+  Fixes issues and runs tests.
 
 ## Output Files
 
@@ -112,13 +120,19 @@ ROUND = 1
 MAX_ROUNDS = 5
 VERIFICATION_FAILURES = 0
 MAX_VERIFICATION_FAILURES = 2
+REVIEWER_PROVIDER = "codex" | "claude"
 ```
 
-1. **If `.artifacts/current/implementation.md` exists**, read it to extract:
+1. **Check Codex availability** — attempt to verify Codex is ready (e.g., check that the
+   `codex:rescue` skill is available and Codex CLI is installed). Set `REVIEWER_PROVIDER`:
+   - **Available** → `REVIEWER_PROVIDER = "codex"` (cross-model review)
+   - **Unavailable** → `REVIEWER_PROVIDER = "claude"` (same-model fallback).
+     Inform the user: "Codex 不可用，將使用 Claude 作為 reviewer（同 model review）。"
+2. **If `.artifacts/current/implementation.md` exists**, read it to extract:
    - List of changed files
    - Plan summary (task descriptions)
    - BDD scenarios and verification steps
-2. **If no implementation plan exists**, determine the review scope from git:
+3. **If no implementation plan exists**, determine the review scope from git:
    - Use `git diff` to identify changed files
    - If the scope is still unclear, ask the user to specify which commits or files to review
    - If the user cannot or will not clarify scope, **STOP**. Inform the user:
@@ -128,7 +142,7 @@ MAX_VERIFICATION_FAILURES = 2
      > 2. Specific commits or files to review
      > 3. A description of what this changeset does"
      >    Do not proceed to Step 1.
-3. Determine git SHAs:
+4. Determine git SHAs:
    - `BASE_SHA` = commit before implementation started (from plan or git log)
    - `HEAD_SHA` = current `git HEAD`
 
@@ -156,8 +170,21 @@ Fill in the template variables:
      were Fixed vs Not Fixed
   3. Constructing a status table with one row per issue (Fixed / Still Open / Partially
      Fixed), using the template from `resources/reviewer-prompt.md`
+- `{library_verification_instructions}` — filled based on `REVIEWER_PROVIDER`. See
+  "Library Verification Instructions Templates" in `resources/reviewer-prompt.md`.
+  - **Codex:** Orchestrator pre-fetches Context7 data before dispatch. Scan changed files
+    for external library imports, query Context7 for each (≤500 tokens per library, scoped
+    to APIs actually used), and inject the results. Round 2+: only re-query libraries
+    whose usage was modified by the fixer.
+  - **Claude:** Insert direct Context7 query instructions (the reviewer queries Context7
+    itself during review).
 
-Delegate to the **`code-reviewer`** subagent with the filled template as its prompt.
+**Dispatch based on `REVIEWER_PROVIDER`:**
+
+- **Codex** → invoke `codex:rescue` with the filled prompt. Do NOT pass `--write` (default
+  read-only sandbox). The orchestrator captures Codex's output.
+- **Claude** → dispatch via Task tool as a read-only subagent (same as fixer dispatch but
+  without write/edit permissions).
 
 Write the reviewer's output to `.artifacts/current/code-review-round-{ROUND}.md`.
 
@@ -296,17 +323,19 @@ Wait for the user to ask questions and confirm. After confirmation, create a PR 
    Ask the user whether this is a fresh session. If not, suggest opening a new one but
    continue if they choose to proceed — the human makes the final call.
 
-2. **Separate subagents** — Reviewer and fixer are dispatched via Task tool as independent
-   sessions. They never share context. Each dispatch is a clean slate.
+2. **Cross-model isolation (preferred)** — Reviewer (Codex) and fixer (Claude) use different
+   model providers. They never share context. When Codex is unavailable, both fall back to
+   Claude subagents via Task tool — session isolation is still enforced.
 
-3. **Reviewer is read-only** — The reviewer can read files and run queries (bash, MCP) but
-   cannot write or edit. This is enforced by tool configuration. If read-only isn't
-   enforceable, instruct the reviewer explicitly: "You are read-only. Do not modify files."
+3. **Reviewer is read-only** — Enforced at two levels:
+   - **Codex mode:** `codex:rescue` default sandbox is `read-only` (system-enforced).
+   - **Claude mode:** Task tool dispatch with explicit read-only instruction in the prompt.
 
-4. **Context7 verification** — Round 1: the reviewer queries Context7 for every external
-   library used in the changes. Subsequent rounds: only re-query libraries whose usage
-   was changed or newly introduced by the fixer. This catches deprecated APIs, reinvented
-   wheels, and non-idiomatic usage without wasting queries on unchanged code.
+4. **Context7 verification** — Library verification always uses Context7 data. The delivery
+   method depends on `REVIEWER_PROVIDER`:
+   - **Codex:** Orchestrator pre-fetches Context7 data and injects it into the reviewer prompt.
+   - **Claude:** Reviewer queries Context7 directly during review.
+   Round 1: all external libraries. Subsequent rounds: only libraries with changed usage.
 
 5. **Review Standards** — The reviewer enforces pragmatic code standards embedded in
    `resources/reviewer-prompt.md`: YAGNI, readability, comments, documentation, zero

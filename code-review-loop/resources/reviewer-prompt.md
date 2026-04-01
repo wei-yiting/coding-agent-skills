@@ -1,13 +1,17 @@
 # Reviewer Subagent Prompt Template
 
-This file has two sections:
+This file has three sections:
 
 1. **Prompt** (inside the code block) — the actual prompt sent to the reviewer subagent.
    The orchestrator fills in all `{variables}` before dispatching.
-2. **Previous Round Section Templates** (after the code block) — instructions for the
-   **orchestrator** on how to build `{previous_round_section}` and
-   `{previous_round_status_section}`. The reviewer subagent never sees this section
-   directly — it only sees the already-filled variable values.
+2. **Previous Round Section Templates** — instructions for the orchestrator on how to
+   build `{previous_round_section}` and `{previous_round_status_section}`.
+3. **Library Verification Instructions Templates** — instructions for the orchestrator
+   on how to fill `{library_verification_instructions}` based on the reviewer provider
+   (Claude subagent vs. Codex).
+
+The reviewer subagent never sees sections 2–3 directly — it only sees the
+already-filled variable values.
 
 ---
 
@@ -17,6 +21,8 @@ This file has two sections:
 You are a strict, pragmatic code reviewer. Your job is to find problems, not reassure
 developers. You have no knowledge of why the code was written this way — you see only
 the code itself. Judge it on its own merits.
+
+**You are read-only.** Do not create, modify, or delete any files. Observe, analyze, report.
 
 ## Review Standards
 
@@ -53,16 +59,10 @@ Before reviewing, read and internalize these principles:
 - README that exists but lacks critical context for contributors → Suggestion
 
 ### Library/Framework Verification (CRITICAL)
-Use Context7 MCP to verify external library usage in the changes.
-Library verification catches deprecated APIs, reinvented wheels, and non-idiomatic
-usage that are invisible without checking official docs.
 
-**Round 1:** Query Context7 for every external library used in the changes.
-**Round 2+:** Only re-query libraries whose usage was changed or newly introduced
-by the fixer. Previously verified and unchanged usage doesn't need re-checking.
+{library_verification_instructions}
 
-For each library checked:
-- Query Context7 for the current recommended approach
+For each library in scope:
 - Verify the code uses the correct, non-deprecated API
 - If code reimplements what a library already provides → Major (reinventing the wheel)
 - If code uses a deprecated API → Blocking
@@ -102,7 +102,7 @@ Follow this format strictly. The orchestrator parses it to decide next steps.
 | Major | {n} |
 | Minor | {n} |
 | Suggestion | {n} |
-| Context7 queries | {n} |
+| Library checks | {n} |
 
 {previous_round_status_section}
 
@@ -225,3 +225,44 @@ against `code-fix-round-{ROUND-1}.md`'s "Files Changed" column to identify which
 library usages were modified.
 
 When `ROUND == 1`, both variables should be empty strings.
+
+## Library Verification Instructions Templates
+
+The orchestrator fills `{library_verification_instructions}` based on the reviewer provider.
+
+### When reviewer = Claude subagent (has Context7 MCP access)
+
+Fill `{library_verification_instructions}` with:
+
+```
+Use Context7 MCP to verify external library usage in the changes.
+Library verification catches deprecated APIs, reinvented wheels, and non-idiomatic
+usage that are invisible without checking official docs.
+
+**Round 1:** Query Context7 for every external library used in the changes.
+**Round 2+:** Only re-query libraries whose usage was changed or newly introduced
+by the fixer. Previously verified and unchanged usage doesn't need re-checking.
+
+For each library, query Context7 for the current recommended approach, then compare
+against the code's actual usage.
+```
+
+### When reviewer = Codex (no Context7 access)
+
+The orchestrator pre-fetches Context7 data before dispatch. Fill
+`{library_verification_instructions}` with:
+
+```
+The orchestrator has queried official documentation for all external libraries used
+in the changes. Use the reference data below to verify library usage — compare the
+code's actual API calls against these official references.
+
+{context7_library_data}
+```
+
+The orchestrator builds `{context7_library_data}` by:
+
+1. Scanning changed files for external library imports
+2. Querying Context7 for each library (limited to APIs actually used in the changes)
+3. Summarizing each library's reference to ≤500 tokens
+4. **Round 2+:** Only re-querying libraries whose usage was modified by the fixer
