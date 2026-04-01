@@ -106,7 +106,7 @@ init_project_context() {
     fi
 
     PROJECT_NAME="$(basename "$PROJECT_ROOT")"
-    WORKTREE_PREFIX="${PROJECT_NAME}-wt"
+    WORKTREE_PREFIX="${PROJECT_NAME}"
 }
 
 sanitize_branch_name() {
@@ -119,10 +119,17 @@ sanitize_branch_name() {
     echo "$sanitized"
 }
 
+strip_branch_type_prefix() {
+    local branch_name="$1"
+    echo "$branch_name" | sed -E 's|^(feat|feature|fix|bugfix|hotfix|refactor|docs|experiment|chore)/||'
+}
+
 get_worktree_path() {
     local branch_name="$1"
+    local stripped
+    stripped="$(strip_branch_type_prefix "$branch_name")"
     local sanitized
-    sanitized="$(sanitize_branch_name "$branch_name")"
+    sanitized="$(sanitize_branch_name "$stripped")"
     echo "$(dirname "$PROJECT_ROOT")/${WORKTREE_PREFIX}-${sanitized}"
 }
 
@@ -276,8 +283,13 @@ detect_dir_package_manager() {
         return
     fi
 
-    if [ -f "$dir/package-lock.json" ] || [ -f "$dir/package.json" ]; then
+    if [ -f "$dir/package-lock.json" ]; then
         echo "npm"
+        return
+    fi
+
+    if [ -f "$dir/package.json" ]; then
+        echo "pnpm"
         return
     fi
 
