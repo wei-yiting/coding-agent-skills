@@ -39,7 +39,7 @@ Three phases regardless of mode:
 - `.artifacts/current/bdd-scenarios.md` exists (from behavior-validation-plan)
 - `.artifacts/current/verification-plan.md` exists (from behavior-validation-plan)
 - Implementation is complete (from subagent-driven-development or after code-review-loop)
-- **Docker Sandbox Mode only**: Docker installed and running, `~/.claude/.credentials.json` exists (see script output for macOS Keychain export instructions), `~/.claude.json` exists. The container lifecycle (runtime detection, Dockerfile generation, credential copy, stream monitoring, cleanup) is provided by the `autonomous-claude-sandbox` skill — `bdd-sandbox.sh` is a thin BDD-specific wrapper around its `run-sandbox.sh` launcher.
+- **Docker Sandbox Mode only**: Docker installed and running, `~/.claude/.credentials.json` exists (macOS: export from Keychain with `security find-generic-password -s "Claude Code-credentials" -w > ~/.claude/.credentials.json && chmod 600 ~/.claude/.credentials.json`), `~/.claude.json` exists. The container lifecycle (runtime detection, Dockerfile generation, credential copy, stream monitoring, cleanup) is provided by the `autonomous-claude-sandbox` skill — `bdd-sandbox.sh` is a thin BDD-specific wrapper around its `run-sandbox.sh` launcher.
 
 If either BDD file is missing, tell the user and suggest running behavior-validation-plan first. Do not attempt to derive scenarios on the fly — baseless scenarios give false confidence.
 
@@ -192,7 +192,12 @@ If any scenarios were classified as Level 3 design issues:
 ### Prerequisites (Docker-specific)
 
 - Docker installed and running
-- `~/.claude/.credentials.json` exists (macOS users: OAuth tokens are stored in Keychain and must be exported — the script checks this and provides instructions if missing)
+- `~/.claude/.credentials.json` exists. On macOS, OAuth tokens are stored in Keychain and must be exported to a file for Docker access:
+  ```bash
+  security find-generic-password -s "Claude Code-credentials" -w > ~/.claude/.credentials.json
+  chmod 600 ~/.claude/.credentials.json
+  ```
+  The Keychain service name is `"Claude Code-credentials"` (capital C, space, hyphen). If the token rotates (e.g., after re-auth), re-run this export.
 - `~/.claude.json` exists (Claude Code state file — created automatically by any Claude Code session)
 
 ### Stage 1: Run Automated Loop in Docker

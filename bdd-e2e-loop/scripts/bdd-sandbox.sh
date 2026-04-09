@@ -117,9 +117,9 @@ if [[ -n "${NODE_PKG_MGR:-}" ]]; then
     cd_prefix="cd /workspace/$NODE_SUBDIR && "
   fi
   case "$NODE_PKG_MGR" in
-    pnpm) node_install="${cd_prefix}pnpm install" ;;
-    yarn) node_install="${cd_prefix}yarn install" ;;
-    npm)  node_install="${cd_prefix}npm install" ;;
+    pnpm) node_install="${cd_prefix}pnpm install --frozen-lockfile" ;;
+    yarn) node_install="${cd_prefix}yarn install --frozen-lockfile" ;;
+    npm)  node_install="${cd_prefix}npm ci" ;;
   esac
   if [[ -n "$node_install" ]]; then
     if [[ "$install_cmd" == "echo"* ]]; then

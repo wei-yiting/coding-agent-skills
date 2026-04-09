@@ -260,14 +260,29 @@ echo ""
 
 PROMPT_TEXT=$(<"$PROMPT_FILE")
 
+# Shadow host node_modules with anonymous volumes so native binaries (macOS)
+# don't conflict with the Linux container. pnpm install --frozen-lockfile will
+# populate a clean node_modules inside the container.
+NODE_MODULES_VOLUMES=()
+if [[ "${HAS_NODE:-false}" == "true" ]]; then
+  if [[ -n "${NODE_SUBDIR:-}" ]]; then
+    NODE_MODULES_VOLUMES+=(-v "/workspace/$NODE_SUBDIR/node_modules")
+  else
+    NODE_MODULES_VOLUMES+=(-v "/workspace/node_modules")
+  fi
+fi
+
 # Docker run in background so the host can monitor progress via stream log.
 # Note: we mount the per-run claude home copy (not $HOME/.claude), so the
 # container can never mutate host state.
 docker run --rm \
   --cidfile "$CIDFILE" \
   -v "$PROJECT_DIR":/workspace \
+  "${NODE_MODULES_VOLUMES[@]}" \
   -v "$CLAUDE_HOME_COPY/.claude":"$CONTAINER_HOME/.claude" \
   -v "$CLAUDE_HOME_COPY/.claude.json":"$CONTAINER_HOME/.claude.json" \
+  -e CI=true \
+  -e VITE_API_TARGET=http://host.docker.internal:8000 \
   --add-host=host.docker.internal:host-gateway \
   "$IMAGE_NAME" \
   --dangerously-skip-permissions \

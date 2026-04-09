@@ -49,6 +49,40 @@ When connecting to an already-running Chromium via CDP, use the **HTTP** endpoin
 browser-use --cdp-url http://localhost:9222 open <url>
 ```
 
+## Docker Environment Best Practices
+
+This container is resource-constrained compared to the host. Follow these rules to avoid wasting rounds on environment issues:
+
+1. **Do NOT pipe long-running test commands through `tail` / `head` / `grep`.** Test suites run 2–5× slower in Docker than on the host. Piped commands may be auto-backgrounded before output flushes, producing empty results. Run the full command and let it complete:
+   ```bash
+   # BAD — may produce empty output
+   npx vitest run 2>&1 | tail -80
+   # GOOD
+   npx vitest run 2>&1
+   ```
+
+2. **Run Playwright E2E tests with `--workers=1`.** Multiple headless Chromium instances competing for limited Docker CPU/memory cause timeouts. Single worker is both more reliable and faster in this environment:
+   ```bash
+   npx playwright test --workers=1
+   ```
+   If `playwright.config.ts` does not already set `workers` for CI, add it:
+   ```ts
+   workers: process.env.CI ? 1 : undefined,
+   ```
+
+3. **Do NOT manually start the dev server for Playwright E2E tests.** Playwright's `webServer` config in `playwright.config.ts` automatically starts the dev server and waits until it's ready. Just run `npx playwright test` — Playwright handles server lifecycle.
+
+4. **Vite proxy target for host backend.** The `VITE_API_TARGET` environment variable is pre-set to `http://host.docker.internal:8000`. If the project's `vite.config.ts` hardcodes `localhost` as the API proxy target, update it to:
+   ```ts
+   proxy: {
+     '/api': {
+       target: process.env.VITE_API_TARGET || 'http://localhost:8000',
+       changeOrigin: true,
+     }
+   }
+   ```
+   This ensures the dev server can reach the host backend. For Deterministic scenarios using MSW, the proxy target is irrelevant — MSW intercepts requests before they reach the proxy.
+
 ## Step 0: Preparation
 
 1. Install project dependencies: `{install_cmd}`
