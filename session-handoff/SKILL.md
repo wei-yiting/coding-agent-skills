@@ -206,6 +206,8 @@ Handle the response:
 
 If all open records are stale, skip the "要接手哪一個？" question — focus on resolving the stale records first.
 
+After processing all stale resolutions and any close/status-update requests from the user in the same message, re-read `handoff.json` before proceeding to Step 3. The overview must reflect the post-action state — the user should never see a stale or closed record reappear in the overview they just cleaned up.
+
 ### Step 3: Present Overview (Stage 1)
 
 Read `resources/template-overview.md` as the formatting source of truth.
@@ -258,6 +260,7 @@ Each next step should include enough context so the user can jump right in witho
    python3 <skill-base-dir>/scripts/close.py --id <handoff-id>
    ```
 3. Confirm: "已關閉 handoff [id]"
+4. Re-read `handoff.json` and present a refreshed Overview of remaining open sessions (same format as Report Step 3). The user just changed the landscape — show them what's left so they can decide what to do next without having to ask again. If no open sessions remain, say "目前沒有其他進行中的 session。" If processing multiple actions in the same message (e.g., close one + update another), present only one refreshed overview after all actions complete.
 
 ---
 
@@ -271,6 +274,7 @@ Valid status values: `open`, `pending`, `abandoned`.
    python3 <skill-base-dir>/scripts/status_update.py --id <handoff-id> --status <new-status>
    ```
 3. Confirm the change.
+4. Re-read `handoff.json` and present a refreshed Overview of remaining open sessions (same format as Report Step 3). Changing a record's status reshapes what the user sees as "active work" — refresh the view so they stay oriented. If no open sessions remain, say "目前沒有其他進行中的 session。" If processing multiple actions in the same message, present only one refreshed overview after all actions complete.
 
 ---
 

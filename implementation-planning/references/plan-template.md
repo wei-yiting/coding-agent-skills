@@ -1,6 +1,6 @@
 # Plan Template Reference
 
-Use this exact template when writing `.artifacts/current/implementation.md`.
+Use this exact template when writing `artifacts/current/implementation.md`.
 Adapt section details to the specific task, but preserve the structure.
 
 ---
@@ -87,11 +87,13 @@ path/
 | Targeted | `{repo-specific command}` | `{specific pass / output / state change}` | {what it proves} |
 | Broader affected checks (if needed) | `{repo-specific command}` | `{specific pass / output / state change}` | {why it matters} |
 
-**Execution Checklist** (keep only the items that materially help the implementer):
+**Execution Checklist** (tasks with testable code must follow the 🔴🟢🔵 Red-Green-Refactor cycle; infrastructure-only tasks use build/type-check verification instead):
 
-- [ ] Add or update the smallest failing test or repro that proves this checkpoint
-- [ ] Implement the production change in the scoped files
-- [ ] Run the targeted verification for this checkpoint
+- [ ] 🔴 Write test cases for this checkpoint
+- [ ] 🔴 Run tests and confirm they **fail** (RED)
+- [ ] 🟢 Implement the minimal production change that makes tests pass (GREEN)
+- [ ] 🔵 Review implementation, refactor if needed
+- [ ] 🔵 Run tests again and confirm they **still pass** after refactor
 - [ ] Run broader affected checks if shared surfaces changed
 - [ ] Commit the checkpoint when it is stable: `git commit -m "{type}({scope}): {description}"`
 
@@ -164,6 +166,7 @@ path/
 - **Design Reference**: If there is no `design.md`, summarize the approved user prompt or discussion in `Planning Context` so the executor and reviewer can see the planning source.
 - **Dependencies Verification**: Include only external dependencies that materially affect API usage, configuration, runtime behavior, or integration choices for this plan. If none apply, either omit the section when allowed by your workflow or state that no external verification was required.
 - **File plan**: Use exact file paths and operation types, but do not invent speculative line-number ranges in a planning document.
+- **File naming**: File names must be self-descriptive without relying on the parent package for context. A developer seeing the name in an IDE tab, search result, or git diff should immediately know what domain/function the file covers. Bad: `models.py`, `store.py`, `converter.py`, `downloader.py`. Good: `filing_models.py`, `filing_store.py`, `html_to_md_converter.py`, `sec_downloader.py`.
 - **Critical snippets**: Include code only where a contract or architecture decision must be explicit. Do not pad the plan with filler examples.
 - **Verification**: Every verification entry must include both the command and the expected result, not just what the command is intended to prove.
 - **Commit messages**: Follow conventional commits format. Prefer one stable checkpoint per commit when practical, but do not force artificial commit boundaries.

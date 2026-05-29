@@ -68,10 +68,10 @@ Commands:
       Show this help message.
 
 Examples:
-  manage_worktree.sh create feature/add-login
-  manage_worktree.sh create feature/add-login --base main --install-deps --start-docker
-  manage_worktree.sh finish feature/add-login --switch
-  manage_worktree.sh sync-env feature/add-login
+  manage_worktree.sh create feat/add-login
+  manage_worktree.sh create feat/add-login --base main --install-deps --start-docker
+  manage_worktree.sh finish feat/add-login --switch
+  manage_worktree.sh sync-env feat/add-login
 EOF
 }
 
@@ -121,7 +121,7 @@ sanitize_branch_name() {
 
 strip_branch_type_prefix() {
     local branch_name="$1"
-    echo "$branch_name" | sed -E 's|^(feat|feature|fix|bugfix|hotfix|refactor|docs|experiment|chore)/||'
+    echo "$branch_name" | sed -E 's/^(feat|feature|fix|bugfix|hotfix|refactor|docs|experiment|chore)\///'
 }
 
 get_worktree_path() {
@@ -130,7 +130,7 @@ get_worktree_path() {
     stripped="$(strip_branch_type_prefix "$branch_name")"
     local sanitized
     sanitized="$(sanitize_branch_name "$stripped")"
-    echo "$(dirname "$PROJECT_ROOT")/${WORKTREE_PREFIX}-${sanitized}"
+    echo "$(dirname "$PROJECT_ROOT")/${WORKTREE_PREFIX}-wt/${sanitized}"
 }
 
 has_uncommitted_changes() {
@@ -516,6 +516,7 @@ cmd_create() {
         return 1
     fi
 
+    mkdir -p "$(dirname "$worktree_path")"
     log_info "Creating worktree at: $worktree_path"
 
     if git -C "$PROJECT_ROOT" show-ref --verify --quiet "refs/heads/$branch_name"; then

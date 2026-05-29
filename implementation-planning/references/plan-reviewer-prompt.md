@@ -26,19 +26,15 @@ Task tool (general-purpose):
     | Reference Alignment | Plan covers the approved design reference or clarified user prompt, with no major scope creep |
     | Task Decomposition | Tasks have clear boundaries, are actionable, and are not over-fragmented micro-steps |
     | Buildability | Could a junior engineer follow this plan without getting stuck? |
-    | File Paths | All paths are exact at file level, with no "somewhere in src/" or speculative line-number ranges |
-    | Code Specificity | Critical snippets and contracts are concrete where needed, but the plan is not padded with filler code or vague placeholders like "add validation" |
-    | Code Design Quality | Proposed code shape follows repo patterns, keeps responsibilities coherent, avoids needless duplication, and does not bake in obvious hacks that should have been refactored away |
-    | Commands | Exact commands with expected results, not "run the tests" |
+    | Specificity | All file paths are exact (no "somewhere in src/"), all commands have expected results (no "run the tests"), no speculative line-number ranges |
+    | Naming Descriptiveness | File names are self-descriptive without relying on parent directory context. No bare generic names (`models.py`, `utils.py`, `helpers.py`, `store.py`) — names should include domain context (e.g., `filing_models.py`, `sec_downloader.py`) |
+    | Code Quality | Critical snippets and contracts are concrete where needed, not padded with filler. Proposed code shape follows repo patterns, keeps responsibilities coherent, avoids needless duplication |
     | Dependencies | All material external dependencies are listed in Dependencies Verification table with a trusted source |
     | Approach Resolution | When multiple implementation approaches existed, the approved choice is recorded and unresolved architectural decisions are not pushed to the executor |
-    | Test Strategy Fit | The planned test level matches the risk: unit for pure logic, integration when persistence, framework wiring, multi-component collaboration, or real contracts matter |
-    | TDD Quality | Tests don't mock away critical dependencies (DB, external APIs) when integration matters. Tests assert on meaningful outcomes, not trivial things like "function was called". A mocked-out test that always passes regardless of real behavior is a red flag. |
-    | Refactor Safety | When the minimal implementation would leave obvious duplication or brittle design behind, the plan includes an explicit refactor + re-test step |
+    | Test Quality | Planned test level matches the risk (unit for pure logic, integration when persistence/wiring/contracts matter). Tests assert on meaningful outcomes, not mock call counts. Tests don't mock away the behavior that carries the real risk |
+    | TDD Completeness | Every testable task has 🔴🟢🔵 Red-Green-Refactor cycle in its execution checklist. Refactor step includes re-test. Infrastructure-only tasks use build/type-check instead |
     | Build Verification | If the repo has a real build or bundle step, the plan includes it in pre-delivery verification |
-    | Flow Verification Quality | Verification steps are concrete and executable. "Check it works" is not acceptable. Each step has a specific method, command, and expected result. |
-    | Flow Verification Coverage | Every major user-facing or business-critical flow has at least one verification point. No flow spans more than 3-4 tasks without a verification checkpoint. |
-    | Verification Method Fit | The chosen verification method matches the flow type (e.g., curl for API, browser for UI, trace inspection for LLM chains, DB query for state changes) |
+    | Flow Verification | Every major flow has at least one verification checkpoint (no flow spans more than 3-4 tasks without one). Each step has a specific method, command, and expected result — not "check it works". Method matches flow type (curl for API, browser for UI, trace inspection for LLM chains) |
 
     ## Calibration
 

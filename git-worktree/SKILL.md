@@ -53,20 +53,38 @@ Reason: setup, dependency install, and environment duplication cost time. Reserv
 
 ## Worktree naming convention
 
+### Directory structure
+
+All worktrees live under a single sibling directory named `{project-name}-wt/`:
+
+```
+dev-projects/
+├── my-project/              ← main worktree (PROJECT_ROOT)
+└── my-project-wt/           ← worktree container
+    ├── add-auth-api/        ← feat/add-auth-api
+    ├── fix-rag-timeout/     ← bugfix/fix-rag-timeout
+    └── new-embedding-model/ ← experiment/new-embedding-model
+```
+
+The script automatically strips the branch type prefix (`feat/`, `bugfix/`, etc.) to derive the directory name.
+
+### Branch naming
+
 Always propose names following this pattern:
 
-| Task Type | Branch Name Pattern | Example |
-|-----------|-------------------|---------|
-| New feature | `feature/<short-description>` | `feature/add-auth-api` |
-| Bug fix | `bugfix/<issue-or-description>` | `bugfix/fix-rag-timeout` |
-| Refactoring | `refactor/<scope>` | `refactor/retriever-strategy` |
-| Documentation | `docs/<scope>` | `docs/api-reference` |
-| Experiment | `experiment/<description>` | `experiment/new-embedding-model` |
+| Task Type | Branch Name Pattern | Example | Directory |
+|-----------|-------------------|---------|-----------|
+| New feature | `feat/<short-description>` | `feat/add-auth-api` | `add-auth-api/` |
+| Bug fix | `bugfix/<issue-or-description>` | `bugfix/fix-rag-timeout` | `fix-rag-timeout/` |
+| Refactoring | `refactor/<scope>` | `refactor/retriever-strategy` | `retriever-strategy/` |
+| Documentation | `docs/<scope>` | `docs/api-reference` | `api-reference/` |
+| Experiment | `experiment/<description>` | `experiment/new-embedding-model` | `new-embedding-model/` |
 
 Naming rules:
 - Use lowercase with hyphens
 - Keep suffix concise (usually 2-4 words)
 - Derive from task intent, not internal ticket noise
+- Use `feat/` (not `feature/`) for new features
 
 ## Lifecycle workflow (Propose → Confirm → Create → Work → Finish)
 
@@ -285,6 +303,7 @@ Script behavior worth remembering:
 **Assistant**:
 ```text
 Good call. Suggest branch `bugfix/auth-callback` from `main`.
+Directory: {project}-wt/auth-callback/
 I’ll run:
 <skill-base-dir>/scripts/manage_worktree.sh create bugfix/auth-callback --base main
 
@@ -297,6 +316,7 @@ Include `--install-deps` or keep setup minimal?
 ```text
 This refactor touches 8 files across parser/retriever/eval. Isolation will reduce rollback risk.
 Proposed branch: `refactor/retriever-eval-split`
+Directory: {project}-wt/retriever-eval-split/
 Base: `dev`
 Planned command:
 <skill-base-dir>/scripts/manage_worktree.sh create refactor/retriever-eval-split --base dev --install-deps

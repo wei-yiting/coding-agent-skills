@@ -32,6 +32,17 @@ The base branch is usually `main` — confirm by checking the repo convention.
 
 **Why read ALL commits?** A PR represents all work since the branch diverged, not just the latest commit. A branch might have 5 commits: initial implementation, bug fix, code review response, test additions, lint fix. The PR description synthesizes all of these into a coherent story — it doesn't enumerate commits.
 
+### Gathering Validation Artifacts
+
+If `artifacts/current/` exists, read the following files to inform the Validation and User Acceptance Test sections:
+
+- `bdd-scenarios.md` — feature and journey scenario titles
+- `verification-plan.md` — automated/manual verification methods and UAT steps
+- `bdd-verification-report.md` — actual verification results
+- `code-review-improvement-report.md` — code review summary
+
+**Important:** `artifacts/` is git-ignored and will not be included in the PR. Do NOT reference artifact file paths in the PR description — instead, extract the relevant information and inline it directly.
+
 ## PR Title
 
 Conventional commit style. Imperative mood.
@@ -55,9 +66,44 @@ Conventional commit style. Imperative mood.
 
 ## PR Description Structure
 
-Four sections: **Purpose**, **Solution**, **Key Changes**, **Validation**.
+Core sections: **Purpose**, **Solution**, **Key Changes**, **Validation**, **User Acceptance Test**.
 
-Scale the depth to the PR's complexity — a one-file config fix doesn't need the same treatment as a multi-module architecture change. But the four sections always apply, even if some are one-liners.
+Scale the depth to the PR's complexity — a one-file config fix doesn't need the same treatment as a multi-module architecture change. But the first four sections always apply, even if some are one-liners. User Acceptance Test is included when manual verification steps exist for the reviewer.
+
+### Two global rules that apply to every section
+
+**Rule 1: Be concise. The reviewer should skim the whole description in under a minute.**
+
+This is the single most common failure mode — PR descriptions balloon into multi-paragraph essays that bury the signal. Before submitting, re-read the draft as a reviewer:
+
+- **Purpose**: 2–3 sentences. Not 5 paragraphs.
+- **Solution**: One short paragraph + a bullet list of key decisions (each bullet = one sentence + a brief why-clause). Not a section-by-section essay covering every architectural choice.
+- **Key Changes**: 1–2 bullets per area. Not a function-by-function changelog.
+- **Known Limitations / Open Issues**: Optional. Omit the section entirely if the only "limitation" is a tradeoff already implied by the design. Do not invent caveats to fill the section.
+
+If a paragraph could be one sentence, cut it. If a sentence could be three words, cut it. Length is not a proxy for quality — it inversely correlates with reviewer engagement.
+
+**Rule 2: Never reference internal artifact IDs.**
+
+`artifacts/` is git-ignored and never appears in the PR. IDs like `DD-06`, `S-stream-01`, `J-stream-01`, `C08`, `M-1.3`, `m-1.1` are dangling references for any reviewer who only sees the PR. They are also a sign that the PR description is leaking implementation-process detail that does not belong in a reviewer-facing artifact.
+
+This rule applies to **every** section, not just Validation:
+- ❌ "Single-worker deployment assumption (DD-06)"
+- ✅ "Single-worker deployment is assumed; the in-memory session lock would not extend to multi-worker."
+- ❌ "Verified by S-tool-03 and J-stream-01"
+- ✅ "Verified by tool error sanitization scenarios and a complete financial-analysis journey"
+
+Before running `gh pr create`, search the draft for `DD-`, `S-`, `J-`, `C0`, `M-`, or any other artifact ID pattern. Replace with prose or delete.
+
+Optional trailing section (at most one, always last): **Known Limitations**, **Open Issues**, or **Future Improvements**. Use when the PR has noteworthy caveats, unresolved items, or planned follow-ups that the reviewer should be aware of. Pick the name that best fits the content:
+
+| Section | When to use |
+|---------|-------------|
+| Known Limitations | Acknowledged design tradeoffs or constraints that are intentionally accepted in this PR |
+| Open Issues | Items discovered during implementation that need resolution but are not blockers for merge |
+| Future Improvements | Planned enhancements that are out of scope for this PR but worth documenting for follow-up |
+
+If there is nothing noteworthy, omit the section entirely — do not add an empty one.
 
 ### Purpose — Why does this PR exist?
 
@@ -93,38 +139,136 @@ For simple PRs (typo fix, dependency bump), a single sentence suffices — don't
 
 Group by **module/area**, not by commit. Reviewers navigate by file path, not by git history.
 
-Use module path in subheaders so reviewers can jump to the relevant directory.
+**Formatting:** Use a clean subheader for the module/area name. List the relevant file paths as a blockquote (`>`) on the first line under the subheader, then bullet points for the changes. Keep file paths out of the subheader itself — subheaders should be human-readable area names.
 
-**Example:**
+**Granularity guideline:** Each module gets 1–2 bullet points summarizing _what_ it does and _why_ it exists, not an exhaustive list of every function or method added. The reviewer can see the full details in the diff — the Key Changes section tells them where to look and what to expect, not everything that happened.
 
+**Good format:**
 ```markdown
-### Orchestrator (`backend/agent_engine/agents/base.py`)
-- Added _build_langfuse_config() for per-request CallbackHandler construction
-- run() and arun() now wrap invoke with propagate_attributes() context manager
+### Eval Runner
 
-### Tools (`backend/agent_engine/tools/`)
-- Replaced @trace_step() with @observe() on all 4 tool functions
+> `backend/evals/eval_runner.py`
+
+- Convention-based scenario discovery with directory name validation
+- Dual path: `_run_local_eval()` (no Braintrust import) and Braintrust `Eval()` path
+- Task/scorer wrappers for error isolation, result CSV with original column preservation
 ```
 
-Include **Deleted**, **New Files**, and **Dependencies** subsections when applicable — these are easy to miss in a diff but critical for reviewers to notice.
+**Bad format — file paths in subheader:**
+```markdown
+### Eval Runner (`backend/evals/eval_runner.py`)
+- Convention-based scenario discovery with directory name validation
+...
+```
 
-Include a **Tests** subsection describing what test coverage changed. This section should almost always exist unless the PR is a trivial one-liner. Describe in prose:
-- What the new test cases verify
-- What existing test cases were modified, and why
-- What test cases were removed, and why (e.g., the code they tested was deleted)
+**Too detailed:**
+```markdown
+### Eval Runner
+
+> `backend/evals/eval_runner.py`
+
+- Added `discover_scenarios()` that scans `scenarios/` for subdirectories containing `dataset.csv` + `eval_spec.yaml`
+- Added `_validate_directory_name()` using regex `^[a-zA-Z0-9_-]+$` to reject spaces
+- Added `_check_duplicate_config_names()` to detect `--all` mode duplicate experiment names
+- Added `_run_local_eval()` function that executes task and scorers without importing braintrust
+- Added `_wrap_task()` that detects None returns and catches exceptions with ERROR markers
+- Added `_wrap_scorer()` that isolates failures, filters Braintrust-injected kwargs, aligns Score.name
+- ...
+```
+
+Include **Dependencies** subsection when packages are added or removed — these are easy to miss in a diff but critical for reviewers to notice.
+
+Include a **Tests** subsection summarizing test coverage scope (module count, test count) and what the tests verify at a high level. One or two lines is sufficient.
 
 ### Validation — What evidence supports this PR?
 
-List every verification actually performed. Include the specific commands and their outcomes. Honesty matters — don't list "Tests: all passed" if you didn't run them.
+Present validation results as a **table** for quick scanning. The table should cover all verification methods actually performed.
+
+**Standard columns:** Category, Scope, Result.
+
+**Standard categories** (include all that apply):
+
+| Category | What goes in Scope |
+|----------|--------------------|
+| Linter | Command run (e.g., `ruff check backend/`) |
+| Unit Tests | Test count and module coverage summary |
+| Automated Behavior Verification | **Features** and **Journeys** as separate HTML bullet lists (`<ul><li>`) with scenario counts |
+| Manual Behavior Test | Describe what was verified (not scenario IDs) |
+| Code Review | Number of rounds and issues found/fixed |
 
 **Example:**
 
 ```markdown
 ## Validation
-- **Linter**: `ruff check backend/` — all checks passed
-- **Type checker**: `pyright backend/` — 0 errors
-- **Tests**: `pytest backend/tests/` — 51 passed
+
+| Category | Scope | Result |
+|----------|-------|--------|
+| Linter | `ruff check backend/` | Passed |
+| Unit Tests | 99 tests across 5 modules (dataset loader, scenario config, scorer registry, eval runner, eval tasks) | All passed |
+| Automated Behavior Verification | **Features:**<ul><li>Scenario Discovery (8 scenarios)</li><li>CSV Dataset & Column Mapping (10 scenarios)</li><li>Scorer System (9 scenarios)</li><li>Eval Runner CLI (7 scenarios)</li><li>Result CSV Output (5 scenarios)</li><li>Braintrust Integration (4 scenarios)</li></ul>**Journeys:**<ul><li>New user setup error recovery</li><li>CSV-to-eval full pipeline</li><li>Mixed scorer flow</li><li>Single scenario end-to-end</li></ul> | All passed |
+| Manual Behavior Test | Default mode dual output (local CSV + Braintrust experiment); LLM-judge LLM calls isolated from task trace | All passed |
+| Code Review | 6 rounds of automated review, 14 issues found and fixed | All resolved |
 ```
+
+**Key rules:**
+- Use descriptive content, not IDs or codes (write "LLM-judge trace isolation", not "S-bt-07") — see Rule 2 above
+- For Automated Behavior Verification, list **feature titles** and **journey titles** — these tell the reviewer what behaviors were verified
+- Never reference `artifacts/` paths — the artifacts are git-ignored and won't be in the PR
+
+### User Acceptance Test — What should the reviewer manually verify?
+
+Include this section when there are manual verification steps the reviewer should perform during review. This is the reviewer's hands-on checklist.
+
+Structure:
+1. **Acceptance question** — what is being validated (framed as a question)
+2. **Steps** — concrete, copy-pasteable commands and actions
+3. **Checklist** — specific items to verify (use `- [ ]` checkboxes)
+4. **Expected result** — what success looks like
+
+**Example:**
+
+```markdown
+## User Acceptance Test
+
+> **Prompt iteration workflow with mixed programmatic + LLM-judge scores**
+>
+> Acceptance question: Can Braintrust's experiment diff effectively support prompt iteration decisions?
+
+**Steps:**
+1. Run eval with current prompt:
+   ```bash
+   uv run python -m backend.evals.eval_runner language_policy
+   ```
+2. Modify the agent's system prompt
+3. Run eval again:
+   ```bash
+   uv run python -m backend.evals.eval_runner language_policy
+   ```
+4. Open Braintrust UI → Compare the two experiments
+
+5. Verify:
+   - [ ] Each test case shows 3 scorer scores
+   - [ ] Per-case regression/improvement is visible in the diff view
+   - [ ] Drill-down shows full trace (input → tool calls → output)
+   - [ ] The diff information is sufficient to decide whether the prompt change is good or bad
+
+**Expected result:** Clear per-case regression/improvement, trace drill-down provides sufficient debugging context.
+```
+
+Source the UAT content from `verification-plan.md` (Manual Verification → User Acceptance Test section) if it exists. Include all UAT scenarios defined there.
+
+## Pre-push Validation (hard gate)
+
+Mandatory before every push that includes a code change, for both new PRs and updates. Do not skip a step because "the default command doesn't include it" or "CI will catch it."
+
+- [ ] Linter
+- [ ] Unit tests
+- [ ] Integration tests (including any suites deselected by default — e.g. `pytest -m integration`)
+- [ ] Any other project suites (type check, build, frontend lint/test, etc.)
+
+Only push after every box is checked. A red linter or failing test is never a valid "pre-existing" excuse — fix the root cause first.
+
+Body-only or comment-only updates (no code change) do not require rerunning this checklist.
 
 ## Creating the PR
 
@@ -147,6 +291,12 @@ gh pr create --base main --head <branch-name> \
 
 ## Validation
 ...
+
+## User Acceptance Test
+...
+
+## Known Limitations / Open Issues / Future Improvements (optional — pick one if needed)
+...
 EOF
 )"
 ```
@@ -158,13 +308,15 @@ After creation, report the PR URL to the user.
 Do not use `gh pr edit --body` or `--body-file` — they are unreliable due to a GraphQL deprecation issue and can silently fail. Use the GitHub REST API instead:
 
 ```bash
-# 1. Write the new description to /tmp/pr-body.md (use Write tool)
+# 1. Write the new description to a topic-specific tmp file (use Write tool).
+#    Do NOT use a generic name like /tmp/pr-body.md — multiple concurrent PR
+#    workflows may collide. Use /tmp/pr-body-<branch-or-topic>.md instead.
 
 # 2. Convert to JSON and update via REST API
-jq -n --rawfile body /tmp/pr-body.md '{"body": $body}' > /tmp/pr-body.json
+jq -n --rawfile body /tmp/pr-body-<topic>.md '{"body": $body}' > /tmp/pr-body-<topic>.json
 gh api repos/<owner>/<repo>/pulls/<number> \
   --method PATCH \
-  --input /tmp/pr-body.json \
+  --input /tmp/pr-body-<topic>.json \
   --jq '.body' | head -3
 
 # 3. Verify the update took effect

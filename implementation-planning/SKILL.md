@@ -1,19 +1,19 @@
 ---
 name: implementation-planning
 description: >-
-  Use this skill to turn an already-decided feature, task, or design into a
-  step-by-step implementation plan saved to
-  `.artifacts/current/implementation.md`. The plan is detailed enough for a
-  junior engineer with zero codebase context — every file path, command, test
-  case, and commit checkpoint is explicit. Trigger whenever the user wants to
-  plan implementation work where the scope is already clear: "write plan", "plan
-  this", "break this into tasks", "task breakdown", "execution checklist",
-  "implementation plan", "規劃實作", "寫計畫", "任務拆解", "拆成 tasks", or "轉成
-  implementation tasks". Also trigger when `.artifacts/current/design.md` exists
-  and the user wants to move from design to execution, or when the user provides
-  a concrete feature spec and asks for a structured plan. Do NOT use when the
-  user is still exploring what to build, comparing approaches, or the scope
-  spans multiple independent subsystems — use `brainstorming` instead.
+  Use this skill when design decisions are finalized and the next step is
+  converting them into an execution plan. Primary triggers: (1) user references
+  or asks to read an existing `design.md` and wants implementation steps from
+  it; (2) a brainstorming or design phase just concluded and the user wants to
+  move to building; (3) a concrete feature spec needs to be broken into
+  structured tasks a junior engineer can follow directly. Also trigger on
+  phrases like "plan this", "break into tasks", "task breakdown", "write plan",
+  "execution checklist", "implementation plan", "規劃實作", "拆成 tasks",
+  "任務拆解", "拆成 implementation plan". Output is saved to
+  `artifacts/current/implementation.md` with explicit file paths, commands,
+  tests, and commit checkpoints. Do NOT trigger when the user is still exploring
+  what to build, comparing approaches, or the scope spans multiple unrelated
+  subsystems — use `brainstorming` instead.
 ---
 
 # Implementation Planning
@@ -29,27 +29,19 @@ Frequent commits.
 Assume they are a skilled developer, but know almost nothing about our toolset
 or problem domain. Assume they don't know good test design very well.
 
-This skill extends Superpowers' `writing-plans` with:
-
-1. **Context7 verification** — Every material external dependency or API integration that affects implementation decisions is verified against official docs via Context7 MCP before being used in the plan.
-2. **Implementation approach options** — When multiple reasonable approaches exist, surface the options and trade-offs to the user before the plan commits to one path, then record the approved decision in the plan.
-3. **Flow Verification** — When a group of tasks completes a testable flow, include concrete behavioral verification steps (curl, browser, script, trace inspection, etc.) that must pass before proceeding.
-4. **Dependencies Verification table** — An audit trail recording which material dependencies were researched, what was confirmed, and which source was trusted.
-5. **Triggers create-briefing** — Automatically generates the companion briefing document after plan review passes.
-
 **Announce at start:** "I'm using the implementation-planning skill to create the implementation plan."
 
 ## Prerequisites
 
-- **Preferred**: `.artifacts/current/design.md` exists (output from brainstorming session). It should normally describe one sub-project or one coherent deliverable, not an entire multi-subsystem roadmap.
+- **Preferred**: `artifacts/current/design.md` exists (output from brainstorming session). It should normally describe one sub-project or one coherent deliverable, not an entire multi-subsystem roadmap.
 - **Also accepted**: User provides a task description or prompt directly — a formal design doc is not required. Treat the user's description as the design input and clarify ambiguities during the planning process.
 - **If neither exists**: Ask the user for the task's purpose and requirements before proceeding. Continue to clarify the design throughout the planning process as needed.
 
 ## Output
 
-- `.artifacts/current/implementation.md`
+- `artifacts/current/implementation.md`
 - Archive old outputs before overwrite:
-  - `.artifacts/current/implementation.md` → `.artifacts/archive/{YYYY-MM-DD-HH-MM}-{task-name}/implementation.md`
+  - `artifacts/current/implementation.md` → `artifacts/archive/{YYYY-MM-DD-HH-MM}-{task-name}/implementation.md`
 
 ---
 
@@ -57,7 +49,7 @@ This skill extends Superpowers' `writing-plans` with:
 
 ### Step 1: Establish Planning Input
 
-1. If `.artifacts/current/design.md` exists, read it first and extract the task's purpose, scope, design decisions, and constraints.
+1. If `artifacts/current/design.md` exists, read it first and extract the task's purpose, scope, design decisions, and constraints.
 2. Otherwise treat the user's prompt as the design input.
 3. If the task purpose or desired outcome is still unclear, ask the user before proceeding.
 4. Do not move into scope planning until the plan can state what "done" means.
@@ -74,11 +66,11 @@ This skill extends Superpowers' `writing-plans` with:
 This step decides whether planning can continue or must stop because the input
 scope is not ready for implementation planning.
 
-- If `.artifacts/current/design.md` exists, it should normally already describe one coherent deliverable that can be planned directly.
+- If `artifacts/current/design.md` exists, it should normally already describe one coherent deliverable that can be planned directly.
 - Use this step to catch direct prompts or oversized designs that still span multiple independent subsystems.
-- If there is no `design.md` and the prompt is too large, stop planning immediately. Reply to the user: `評估後認為 scope 太大，建議用 brainstorming 先 decompose 以後，再重新做 planning。` Do not write `.artifacts/current/implementation.md` for that request, and do not create any decomposition artifact inside `implementation-planning`.
+- If there is no `design.md` and the prompt is too large, stop planning immediately. Reply to the user: `評估後認為 scope 太大，建議用 brainstorming 先 decompose 以後，再重新做 planning。` Do not write `artifacts/current/implementation.md` for that request, and do not create any decomposition artifact inside `implementation-planning`.
 - If a `design.md` exists but still covers multiple independent subsystems, stop and ask the user whether to return to `brainstorming` to split the design properly, or explicitly choose the first sub-project to plan now.
-- One `.artifacts/current/implementation.md` should cover one coherent, independently testable deliverable.
+- One `artifacts/current/implementation.md` should cover one coherent, independently testable deliverable.
 - Only keep multiple phases in one plan when they are tightly coupled parts of the same deliverable and can be verified incrementally.
 
 ### Step 4: Clarify Requirements
@@ -104,6 +96,7 @@ each one is responsible for. This is where decomposition decisions get locked in
 
 - Design units with clear boundaries and well-defined interfaces. Each file should have one clear responsibility.
 - Prefer smaller, focused files over large ones that do too much.
+- File names must be self-descriptive without relying on the parent package for context. A developer seeing the name in an IDE tab, search result, or git diff should know what domain and function the file covers. Bare generic names like `models.py`, `store.py`, `utils.py` are not acceptable — use `filing_models.py`, `filing_store.py`, etc.
 - Files that change together should live together. Split by responsibility, not by technical layer.
 - In existing codebases, follow established patterns.
 - Record create / update / delete operations explicitly.
@@ -114,8 +107,8 @@ self-contained changes that make sense independently.
 
 ### Step 7: Write Implementation Plan
 
-Save to `.artifacts/current/implementation.md`. If an old file exists, archive it
-first to `.artifacts/archive/{YYYY-MM-DD-HH-MM}-{task-name}/implementation.md`.
+Save to `artifacts/current/implementation.md`. If an old file exists, archive it
+first to `artifacts/archive/{YYYY-MM-DD-HH-MM}-{task-name}/implementation.md`.
 
 **Read `references/plan-template.md` for the full plan template and follow it exactly.**
 
@@ -132,8 +125,30 @@ micro-step.
 
 - Group together the smallest coherent change that a junior engineer can execute without losing the thread.
 - Use substeps only when they reduce ambiguity, protect a risky boundary, or make verification clearer.
-- Keep the TDD intent visible, but do not force every task into the same seven-step ritual if that makes the plan noisier instead of clearer.
 - Commit at stable checkpoints rather than treating `Commit` as a mandatory standalone micro-step for every tiny action.
+
+#### TDD Red-Green-Refactor Cycle
+
+Every task that produces testable code **must** follow the Red-Green-Refactor cycle in its execution checklist. This is non-negotiable — it ensures tests drive the design, not the other way around.
+
+The cycle:
+
+1. 🔴 **RED** — Write test cases first. Run them and confirm they **fail**. If they pass before implementation, the tests are not testing anything new.
+2. 🟢 **GREEN** — Write the minimal correct implementation that makes the failing tests pass. Nothing more.
+3. 🔵 **REFACTOR** — Review the implementation for clarity, duplication, or design improvements. Apply refactoring. Run tests again and confirm they **still pass**.
+
+Execution checklists must use the 🔴🟢🔵 markers to make the cycle visually obvious. A task with tests that skips the RED confirmation step or omits the REFACTOR re-test step is incomplete.
+
+Tasks that are purely infrastructure (dependency install, config changes, no testable logic) may omit the cycle — use build/type-check verification instead.
+
+The execution agent follows the `test-driven-development` skill for the full TDD methodology including the Iron Law, verification gates, and anti-patterns. The plan's 🔴🟢🔵 checklist provides the task-specific structure; the TDD skill provides the discipline.
+
+When a task involves frontend tests — React Testing Library, Vitest, Playwright E2E, MSW handlers, or custom React hooks — plan the test shape using the `frontend-test-writing` skill and embed concrete guidance in the task notes so the executor doesn't have to infer shape from first principles. Specifically:
+
+- **RED step notes** should name the decomposition approach (e.g., "one test per `ToolCard` visual state", "one test per disabled boundary") and the query to prefer (`getByRole('button', { name: /submit/i })` rather than `getByTestId('submit-btn')`).
+- **Layer decision** should be explicit in the task description — is this an RTL unit, an RTL integration via MSW, or a Playwright E2E? Justify why E2E is needed if you chose it (browser-only behavior: real scroll / reload / streaming / cross-tab).
+- **Call out known anti-patterns to avoid** when the task is in risky territory: no `waitForTimeout`, no `isVisible()+expect(bool)`, no `if (count > 0) expect(...)`, no `toHaveAttribute` with regex in jest-dom, no whole-component snapshots.
+- **Reference `frontend-test-writing` by name** in the task's TDD checklist so the executor loads the skill. The skill's references (`rtl.md`, `vitest.md`, `playwright.md`, `msw.md`, `hooks-testing.md`, `state-based-testing.md`, `layer-policy.md`, `anti-patterns.md`) cover the deep-dive patterns.
 
 #### Code and Test Quality Standards
 
@@ -141,7 +156,7 @@ micro-step.
 - Prefer the smallest test scope that proves the requirement. Use unit tests for pure logic; use integration tests when the risk lives in framework wiring, database persistence, migrations, queues, external API contracts, or multi-component collaboration.
 - Do not mock away the behavior that carries the real risk. Prefer assertions on outputs, persisted state, emitted events, or user-visible behavior over internal call counts unless the interaction itself is the contract.
 - Each task should state what each new test proves: happy path, important edge case, and failure or regression path when that coverage is needed.
-- "Minimal implementation" means the smallest correct production-ready change that makes the failing test pass. If cleanup is needed to remove duplication or improve design, add an explicit refactor step and rerun the relevant tests afterward.
+- "Minimal implementation" means the smallest correct production-ready change that makes the failing tests pass. If cleanup is needed to remove duplication or improve design, add an explicit refactor step and rerun the relevant tests afterward.
 - Include build or bundle verification whenever the repo has a real build step that can fail independently of tests.
 
 #### Approach Decision Handling
@@ -158,8 +173,8 @@ must pass before proceeding to the next group of tasks.
 
 #### Flow Verification Method Selection
 
-Keep method naming aligned with the observable verification style used by the
-`create-briefing` skill so the plan and briefing stay in sync.
+Keep method naming consistent across plan and briefing documents to maintain
+traceability.
 
 | Method                        | When to Use                                          | Example                                                  |
 | ----------------------------- | ---------------------------------------------------- | -------------------------------------------------------- |
@@ -182,7 +197,7 @@ After writing the complete plan:
    with precisely crafted review context — never your session history.
    - Provide: path to the plan document, plus the design reference used for planning. If there is no `design.md`, provide a concise summary of the approved user prompt / discussion that served as the design input
 2. If Issues Found: fix the issues, re-dispatch reviewer for the whole plan
-3. If Approved: proceed to create-briefing
+3. If Approved: proceed to approval gate
 
 **Review loop guidance:**
 
@@ -190,21 +205,18 @@ After writing the complete plan:
 - If loop exceeds 3 iterations, surface to human for guidance
 - Reviewers are advisory — explain disagreements if you believe feedback is incorrect
 
-### Step 9: Trigger Create Briefing
+### Step 9: Completion
 
-After plan review passes, **immediately trigger the `create-briefing` skill**.
-Do not ask the user whether to create the briefing. Just do it.
+After plan review passes, announce that `artifacts/current/implementation.md` is ready. Prompt the user:
 
-### Step 10: Approval Gate and Execution Handoff
+```
+Implementation plan 已完成：artifacts/current/implementation.md
 
-After `create-briefing` completes:
+如果 behavior-validation-plan 也完成了，可以在新的 session 執行 generate-briefing，
+透過 review briefing 來確認 plan。
+```
 
-1. Treat `create-briefing` as the owner of the initial user-facing review message
-2. Do not immediately emit a second, conflicting handoff message after the briefing is shown
-3. Before suggesting any execution workflow, make sure the user has approved both `.artifacts/current/implementation.md` and `.artifacts/current/briefing.md`
-4. If feedback changes either document, use `sync-briefing-plan` before discussing execution
-5. Once both documents are approved and the user asks for next steps, recommend opening a separate session with `superpowers:executing-plans`
-6. Do not propose a same-session execution path from this skill
+Do not trigger any downstream skills. Do not propose same-session execution.
 
 ---
 
@@ -215,7 +227,7 @@ After `create-briefing` completes:
 3. One plan file should map to one coherent, independently testable deliverable
 4. Use Scope Check to decide whether planning can proceed directly or must redirect the user to `brainstorming`
 5. When there is no `design.md` and the prompt is oversized, stop planning and redirect the user to `brainstorming` for decomposition first
-6. Plan completion triggers plan review, then create-briefing — mandatory
+6. Plan completion triggers plan review — mandatory
 7. The plan must be detailed enough for a junior engineer with no project context to follow
 8. Exact file paths always — never "somewhere in src/" or speculative line-number ranges in the planning output
 9. Include code snippets or pseudo-diffs only where a contract, interface, or architecture-defining change needs to be explicit — never vague instructions like "add validation", but do not pad the plan with filler code

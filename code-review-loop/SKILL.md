@@ -18,7 +18,7 @@ session context, preventing the bias that occurs when the same agent reviews its
 
 ## Output Language Convention
 
-- **Reviewer and fixer subagents** produce output in English. Their round files (`code-review-round-*.md`, `code-fix-round-*.md`) are intermediate artifacts consumed by the orchestrator — no translation needed.
+- **Reviewer and fixer subagents** produce output in English. Their round files (`review-round-*.md`, `fix-round-*.md`) are intermediate artifacts consumed by the orchestrator — no translation needed.
 - **Final report** (`code-review-improvement-report.md`) and **user-facing chat notifications** (Step 6) use Traditional Chinese (zh-TW) with English technical terms (file paths, function names, CLI commands, code snippets, issue IDs, severity labels).
 
 ## Why Epistemic Isolation Matters
@@ -54,7 +54,7 @@ full changeset.
 
 Before triggering this skill, confirm:
 
-1. **Check for implementation plan** — look for `.artifacts/current/implementation.md`.
+1. **Check for implementation plan** — look for `artifacts/current/implementation.md`.
    - **If it exists**: confirm all task checkboxes are checked before proceeding.
    - **If it doesn't exist**: warn the user that no implementation plan was found. This is
      acceptable — the skill can also be used for reviewing external PRs, code from other
@@ -72,7 +72,7 @@ Before triggering this skill, confirm:
    > the loop should run in a fresh session."
 
    If the user confirms this is the coding session, suggest they open a new session with:
-   `Read .artifacts/current/implementation.md and start code-review-loop`
+   `Read artifacts/current/implementation.md and start code-review-loop`
 
    If the user chooses to proceed anyway, continue — the human makes the final call.
 
@@ -92,17 +92,18 @@ This skill uses two subagents with different providers for **cross-model isolati
 
 ## Output Files
 
-If `.artifacts/current/` already contains review or fix files (`code-review-round-*.md`, `code-fix-round-*.md`, `code-review-improvement-report.md`) from a previous run, archive them first to `.artifacts/archive/{YYYY-MM-DD-HH-MM}-{task-name}/` before starting the new loop.
+If `artifacts/current/` already contains review loop artifacts (`code-review-loop/` directory, `code-review-improvement-report.md`) from a previous run, archive them first to `artifacts/archive/{YYYY-MM-DD-HH-MM}-{task-name}/` before starting the new loop.
 
-All artifacts go under `.artifacts/current/`:
+All artifacts go under `artifacts/current/`:
 
 ```
-.artifacts/current/
-├── code-review-round-1.md
-├── code-fix-round-1.md
-├── code-review-round-2.md
-├── code-fix-round-2.md
-├── ...
+artifacts/current/
+├── code-review-loop/
+│   ├── review-round-1.md
+│   ├── fix-round-1.md
+│   ├── review-round-2.md
+│   ├── fix-round-2.md
+│   └── ...
 └── code-review-improvement-report.md
 ```
 
@@ -128,7 +129,7 @@ REVIEWER_PROVIDER = "codex" | "claude"
    - **Available** → `REVIEWER_PROVIDER = "codex"` (cross-model review)
    - **Unavailable** → `REVIEWER_PROVIDER = "claude"` (same-model fallback).
      Inform the user: "Codex 不可用，將使用 Claude 作為 reviewer（同 model review）。"
-2. **If `.artifacts/current/implementation.md` exists**, read it to extract:
+2. **If `artifacts/current/implementation.md` exists**, read it to extract:
    - List of changed files
    - Plan summary (task descriptions)
    - BDD scenarios and verification steps
@@ -138,7 +139,7 @@ REVIEWER_PROVIDER = "codex" | "claude"
    - If the user cannot or will not clarify scope, **STOP**. Inform the user:
      > "Cannot proceed without review scope. Please provide one of:
      >
-     > 1. `.artifacts/current/implementation.md`
+     > 1. `artifacts/current/implementation.md`
      > 2. Specific commits or files to review
      > 3. A description of what this changeset does"
      >    Do not proceed to Step 1.
@@ -155,18 +156,30 @@ Fill in the template variables:
 - `{ROUND}` — current round number
 - `{changed_files}` — list of files from Step 0 (from implementation plan or git diff)
 - `{BASE_SHA}`, `{HEAD_SHA}` — git SHAs
+- `{model}` — the actual model that will run the review. The reviewer must not
+  self-identify; the orchestrator resolves this value and substitutes it so the
+  output accurately reflects what was used.
+  - **Codex:** Read `~/.codex/config.toml` and grep `^model\s*=\s*"..."`. If the
+    working directory has a trusted `.codex/config.toml` with a `model` override,
+    prefer that. If the orchestrator explicitly dispatches with `--model <name>`
+    (or `--model spark`, which maps to `gpt-5.3-codex-spark`), use that override
+    instead. If nothing is resolvable, use `"codex (model unknown)"`.
+  - **Claude:** Use the Claude model identifier of the subagent that will run
+    the review (e.g., `claude-opus-4-7`, `claude-sonnet-4-6`). Fall back to
+    `"claude (model unknown)"` only if the identifier is genuinely unavailable.
+- `{date}` — today's date in ISO format (`YYYY-MM-DD`).
 - `{plan_summary}` — from implementation.md if available. If no implementation plan
   exists and the user hasn't explained the purpose of this code change, **ask the user**
   what this changeset is about before proceeding. The reviewer needs context to give
   meaningful feedback.
 - `{previous_round_section}` — empty string if ROUND == 1. If ROUND > 1, the orchestrator
-  builds this by reading `code-review-round-{ROUND-1}.md` and `code-fix-round-{ROUND-1}.md`,
+  builds this by reading `code-review-loop/review-round-{ROUND-1}.md` and `code-review-loop/fix-round-{ROUND-1}.md`,
   then filling in the template from the "Previous Round Section Templates" section of
   `resources/reviewer-prompt.md`.
 - `{previous_round_status_section}` — empty string if ROUND == 1. If ROUND > 1, the
   orchestrator builds this table by:
-  1. Reading all issue IDs from `code-review-round-{ROUND-1}.md`
-  2. Reading the fixer's report from `code-fix-round-{ROUND-1}.md` to see which issues
+  1. Reading all issue IDs from `code-review-loop/review-round-{ROUND-1}.md`
+  2. Reading the fixer's report from `code-review-loop/fix-round-{ROUND-1}.md` to see which issues
      were Fixed vs Not Fixed
   3. Constructing a status table with one row per issue (Fixed / Still Open / Partially
      Fixed), using the template from `resources/reviewer-prompt.md`
@@ -186,7 +199,7 @@ Fill in the template variables:
 - **Claude** → dispatch via Task tool as a read-only subagent (same as fixer dispatch but
   without write/edit permissions).
 
-Write the reviewer's output to `.artifacts/current/code-review-round-{ROUND}.md`.
+Write the reviewer's output to `artifacts/current/code-review-loop/review-round-{ROUND}.md`.
 
 ### Step 2: Evaluate Results
 
@@ -227,14 +240,14 @@ Read the full prompt template from `resources/fixer-prompt.md`.
 
 Fill in template variables:
 
-- `{issues_content}` — the Issues section from `code-review-round-{ROUND}.md`
+- `{issues_content}` — the Issues section from `code-review-loop/review-round-{ROUND}.md`
 - `{round}` — current round number
 
 Delegate to the **`code-fixer`** subagent with the filled template as its prompt.
 
 After fixer completes:
 
-- Write the fixer's output to `.artifacts/current/code-fix-round-{ROUND}.md`
+- Write the fixer's output to `artifacts/current/code-review-loop/fix-round-{ROUND}.md`
 - Increment `ROUND += 1`
 - Return to **Step 1** (reviewer confirms fixes and does fresh review)
 
@@ -244,7 +257,7 @@ Run the verification levels yourself (the orchestrator). Read `resources/verific
 for the full checklist structure.
 
 **BDD and E2E verification source** (priority order):
-1. `.artifacts/current/bdd-validation.md` — authoritative if it exists.
+1. `artifacts/current/bdd-validation.md` — authoritative if it exists.
 2. BDD/E2E steps in `implementation.md` — fallback.
 3. **Self-derived** — if neither exists, warn the user, derive behavioral validations from the codebase, propose them, proceed after confirmation. Record all proposed and executed validations in the report's "Behavioral Validation" section.
 
@@ -276,11 +289,11 @@ Fill in all sections with data collected across rounds:
 - Final verification results
 - Complete changed files manifest
 
-Write to `.artifacts/current/code-review-improvement-report.md`.
+Write to `artifacts/current/code-review-improvement-report.md`.
 
 ### Step 5.5: BDD Behavioral Verification
 
-If `.artifacts/current/bdd-scenarios.md` and `.artifacts/current/verification-plan.md` both exist, invoke the `bdd-e2e-loop` skill to run full BDD verification against the reviewed code. Review fixes can introduce behavioral regressions — this step catches them before the user sees the final result.
+If `artifacts/current/bdd-scenarios.md` and `artifacts/current/verification-plan.md` both exist, invoke the `bdd-e2e-loop` skill to run full BDD verification against the reviewed code. Review fixes can introduce behavioral regressions — this step catches them before the user sees the final result.
 
 If BDD verification finds failures, they are handled within the BDD E2E Loop's own fix cycle (separate from this skill's review rounds). Once BDD verification completes (pass or stop), proceed to Step 6.
 
@@ -302,7 +315,7 @@ Code Review Loop 完成。
 
 {architecture_impact_summary — 架構影響摘要的內容}
 
-完整 report：.artifacts/current/code-review-improvement-report.md
+完整 report：artifacts/current/code-review-improvement-report.md
 
 有任何不清楚的地方請隨時問我。
 確認 OK 後說「發 PR」，我會建立 PR 並附上 report 摘要和 Manual Validation checklist。
@@ -311,7 +324,7 @@ Code Review Loop 完成。
 Wait for the user to ask questions and confirm. After confirmation, create a PR with:
 
 - Report 摘要 in PR description
-- Manual Validation checklist (from `.artifacts/current/bdd-validation.md` if available)
+- Manual Validation checklist (from `artifacts/current/bdd-validation.md` if available)
 - Link to full report file
 
 ---

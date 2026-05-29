@@ -76,6 +76,24 @@ word_counts = defaultdict(int)
 2. Process all `@qst` directives first — answer every question in the chat before making any code changes. This way the user sees all answers upfront.
 3. Then process all `@cmt` directives — implement each code change and remove the directive.
 
+## Cross-reference ripple check
+
+After processing all directives in a file, scan the entire file for stale references to anything that was changed. If a directive renamed, restructured, or removed something, other parts of the same file — and potentially other dependent files — may reference the old version. Update all stale references in the same pass.
+
+**Discovery resolution cascade:** When a directive resolves a pending item (e.g., a「需確認」item in a briefing's discovery section), the resolution can change scope, architecture, or constraints. After resolving, explicitly check each other section of the document for consistency with the resolution — the impact is not limited to find-and-replace of identifiers, but may require content-level adjustments to downstream sections.
+
+---
+
+## Artifact sync
+
+The briefing (`artifacts/current/briefing.md`) is the human review surface for the entire development plan. When directives modify the briefing, changes must propagate back to the source artifacts so the coding agent executes the updated intent.
+
+After all directives are processed, if `artifacts/current/briefing.md` was among the processed files **and its content was actually modified** (by any directive type — `@cmt` or `@qst`), invoke `apply-briefing-update` via the Skill tool.
+
+Skip sync silently when:
+- No processed file is the briefing artifact
+- The briefing file was not actually modified (e.g., only `@qst` tags were removed but no content changed)
+
 ## Edge cases
 
 - If a `@cmt` instruction is ambiguous, use the surrounding code structure, naming conventions, and project patterns to infer the most reasonable interpretation.

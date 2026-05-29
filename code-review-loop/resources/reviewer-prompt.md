@@ -92,6 +92,10 @@ Follow this format strictly. The orchestrator parses it to decide next steps.
 # Code Review Round {ROUND}
 
 > Reviewer: {model} | Date: {date}
+>
+> (`{model}` and `{date}` are already substituted by the orchestrator with the
+> actual model slug and date. Copy them into your output verbatim — do not
+> replace them with your own self-identification such as "GPT-5" or "Claude".)
 
 ## Summary
 
@@ -157,8 +161,8 @@ Results of Context7 verification for each library used in the changes:
 
 **IMPORTANT (ROUND > 1):** Before starting a new review, you MUST:
 
-1. Read the previous round's code review (`code-review-round-{ROUND-1}.md`)
-2. Read the fixer's report (`code-fix-round-{ROUND-1}.md`) — pay attention to
+1. Read the previous round's code review (`code-review-loop/review-round-{ROUND-1}.md`)
+2. Read the fixer's report (`code-review-loop/fix-round-{ROUND-1}.md`) — pay attention to
    "Not Fixed" items and their reasons. Evaluate whether each "Won't Fix" justification
    is acceptable. If not, re-raise the issue in this round.
 3. Examine the current code to verify which issues are actually resolved
@@ -189,11 +193,11 @@ When re-raising, keep the original severity. Add note: "Re-raised: fixer justifi
 
 Then do a complete fresh review of all changed files.
 
-{content of code-review-round-{ROUND-1}.md}
+{content of code-review-loop/review-round-{ROUND-1}.md}
 
 ## Fixer's Report
 
-{content of code-fix-round-{ROUND-1}.md}
+{content of code-review-loop/fix-round-{ROUND-1}.md}
 ```
 
 When `ROUND > 1`, insert this into the `{previous_round_status_section}` variable:
@@ -220,8 +224,8 @@ Libraries with changed usage this round (must re-verify):
 ```
 
 The orchestrator builds this by extracting the library list from
-`code-review-round-{ROUND-1}.md`'s "Official Standards Check" table, then comparing
-against `code-fix-round-{ROUND-1}.md`'s "Files Changed" column to identify which
+`code-review-loop/review-round-{ROUND-1}.md`'s "Official Standards Check" table, then comparing
+against `code-review-loop/fix-round-{ROUND-1}.md`'s "Files Changed" column to identify which
 library usages were modified.
 
 When `ROUND == 1`, both variables should be empty strings.
