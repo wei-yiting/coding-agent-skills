@@ -74,8 +74,8 @@ Report each scenario in this exact format:
 Round {N-1} verification found these failures:
 {list of failed scenarios with actual results}
 
-The Fixer addressed these in commit `{hash}`:
-{summary of what was fixed}
+The Fixer addressed these with the following changes:
+{summary of what was fixed, from fix-history.json}
 
 Pay special attention to previously-failed scenarios to see if fixes resolved them,
 and also watch for regressions in previously-passing scenarios.

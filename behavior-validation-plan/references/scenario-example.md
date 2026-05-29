@@ -67,6 +67,54 @@ The chat interface renders agent responses in real-time. Tool usage is shown inl
 
 ---
 
+## Step 1.5: Discovery Conversation (Three Amigos Challenge Rounds)
+
+This section shows how challenge rounds produce scenarios that no single perspective would discover alone. Below is a condensed example for one Rule.
+
+### Rule: Conversation persists within session
+
+**PO's Example Seeds:**
+
+| Situation | Expected Outcome |
+| Alice sends "My name is Alice" then "What's my name?" in session abc-123 | Response references "Alice" |
+| Bob sends "My name is Bob" in sess-111, then "What's my name?" in sess-222 | Response does NOT reference "Bob" |
+
+**Dev challenge (Persistence Assumption):**
+
+> PO's examples assume the session survives between requests. But the design says "LangGraph checkpointer with thread_id = session_id" without specifying persistence. If I build this with the default in-memory checkpointer, a server restart between Alice's two requests loses the session silently — no error, just a response that ignores her name.
+
+Counter-example: Alice sends message → server restarts → Alice sends follow-up → response doesn't reference earlier context.
+
+→ PO judgment: **Needs user input** — design is silent on persistence strategy. Must ask user.
+
+**QA challenge (Boundary Value):**
+
+> PO tests 2-turn conversations. Dev tests restart. Neither tests the boundary of conversation length. The LLM has a context window — the checkpointer stores all turns, but the LLM only sees the last N tokens. What happens when a user references turn 1 from turn 50?
+
+Counter-example: Alice has 50 turns in session abc-123 → asks "What did I say first?" → response can't reference turn 1 (context window dropped it).
+
+→ PO judgment: **Include** — power users in long research sessions will hit this. Silent failure, high frustration.
+
+**Dev cross-talk response to QA:**
+
+> QA's 50-turn scenario reveals something more specific: the checkpointer and the LLM's effective context diverge. The checkpointer has turn 1, but the LLM doesn't see it. The user has no way to know which turns the LLM can still "see." This is the real gap — not just "too many turns" but "context window divergence with no user feedback."
+
+→ This cross-talk sharpened the scenario from "long conversation fails" to a precise behavior gap.
+
+**PO contest of Dev's judgment:**
+
+> Dev originally framed "server restart" as a technical infrastructure concern. But QA's mobile-user argument in cross-talk changed the picture — users on mobile switch apps constantly, and returning to find their conversation lost IS a user experience issue, not just a deployment concern.
+
+→ PO reconsidered: upgraded from "Needs user input" to "Include" after QA's evidence.
+
+**What this discovery produced that parallel independent lists would NOT have:**
+
+- The **context window divergence** insight came from Dev building on QA's boundary challenge — neither would have found it alone
+- The **server restart as user-visible** framing came from QA contesting PO's initial judgment with a concrete mobile-user scenario
+- PO's initial examples covered the basic happy/unhappy paths; the challenges found 3 additional scenarios from technical and boundary perspectives
+
+---
+
 ## Step 2: Write Scenarios
 
 ### Feature: Streaming Chat Pipeline
@@ -77,27 +125,21 @@ Backend streams AI agent responses via SSE. Conversations persist within session
 
 #### Rule: Conversation persists within session
 
-##### S-chat-01: Second message in same session references first conversation
+##### S-chat-01: Session context determines conversation continuity
 
-> Verifies that the agent receives conversation history from the checkpointer
+> Verifies that session state is preserved within a session and isolated across sessions
 
-- **Given** Alice sent "My name is Alice" in session abc-123 and received a response
-- **When** she sends "What's my name?" in the same session
-- **Then** the response references "Alice" — proving conversation state was preserved
+- **Given** `<user>` sent "My name is `<name>`" in session `<session_a>` and received a response
+- **When** they send "What's my name?" in session `<session_b>`
+- **Then** the response `<expectation>` "`<name>`"
 
-Category: Illustrative
-Origin: Dev
+| user  | name  | session_a | session_b | expectation        | notes              |
+|-------|-------|-----------|-----------|--------------------|--------------------|
+| Alice | Alice | sess-111  | sess-111  | references         | same session       |
+| Bob   | Bob   | sess-111  | sess-222  | does not reference | different sessions |
 
-##### S-chat-02: Different session IDs produce independent conversations
-
-> Verifies session isolation — no state leaks between sessions
-
-- **Given** Bob sent "My name is Bob" in session sess-111
-- **When** he sends "What's my name?" in a different session sess-222
-- **Then** the response does not reference "Bob" — proving sessions are isolated
-
-Category: Illustrative
-Origin: QA
+Category: Illustrative (table-driven)
+Origin: Multiple (PO seeded, QA challenged with isolation case)
 
 #### Rule: Regenerate replaces last response
 
@@ -257,11 +299,15 @@ Origin: Multiple
 
 **BRIEF check on S-chat-01:**
 
-- **B**usiness language: "sent", "received a response", "references Alice" — not "POST returns 200" or "checkpointer stores messages"
-- **R**eal data: "My name is Alice", session "abc-123" — concrete values, not "some message"
-- **I**ntention revealing: title says "Second message in same session references first conversation" — immediately clear what's tested
+- **B**usiness language: "sent", "received a response", "references" / "does not reference" — not "POST returns 200" or "checkpointer stores messages"
+- **R**eal data: "My name is Alice", session "sess-111" — concrete values, not "some message"
+- **I**ntention revealing: title says "Session context determines conversation continuity" — immediately clear what's tested
 - **E**ssential: no mention of SSE protocol, LangGraph, checkpointer implementation — irrelevant to this Rule
-- **F**ocused: tests only session persistence, nothing else
+- **F**ocused: tests only session persistence and isolation, nothing else
+
+**Table-driven scenarios reduce duplication.** S-chat-01 uses a table to test both same-session persistence and cross-session isolation in one scenario. Use table-driven format when multiple examples test the same Rule with different input variations (like the Frequent Flyer points example in BDD in Action Chapter 5). Use separate scenarios when the Rules themselves are different — S-chat-03 (Regenerate) and S-chat-04 (Server stops on disconnect) test different Rules, so they stay as independent scenarios.
+
+**Discovery narrative shows how scenarios emerge.** Step 1.5 demonstrates that the most valuable scenarios (context window divergence, server restart as user-visible) came from cross-perspective challenges, not from any single agent working alone. The challenge format — concrete counter-examples, not abstract concerns — is what forces genuine dialectic.
 
 **Backend vs frontend Rules determine verification method.** S-chat-01 (conversation persistence) is a backend behavior — verified via API calls. S-chat-05 (streaming text renders incrementally) is a frontend behavior — verified via Browser-Use CLI. The scenario text doesn't dictate the verification method; the layer where the Rule operates does.
 

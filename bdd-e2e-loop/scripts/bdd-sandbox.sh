@@ -45,7 +45,7 @@ done
 
 # ─── Paths ───────────────────────────────────────────────────────────────────
 
-ARTIFACTS_DIR="$PROJECT_DIR/.artifacts/current"
+ARTIFACTS_DIR="$PROJECT_DIR/artifacts/current"
 TEMP_DIR="$ARTIFACTS_DIR/temp"
 mkdir -p "$TEMP_DIR"
 
@@ -204,7 +204,7 @@ echo ""
 LAUNCHER_ARGS=(
   --project-dir "$PROJECT_DIR"
   --prompt-file "$RENDERED_PROMPT"
-  --expect-output ".artifacts/current/temp/auto-stage-report.json"
+  --expect-output "artifacts/current/temp/auto-stage-report.json"
   --progress-pattern '# [SJ]-[^\\]*'
   --image-prefix "bdd-sandbox"
 )

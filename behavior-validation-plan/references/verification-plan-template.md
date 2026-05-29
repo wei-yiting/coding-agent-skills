@@ -1,6 +1,6 @@
 # Verification Plan Template
 
-Follow this template exactly when writing `.artifacts/current/verification-plan.md`.
+Follow this template exactly when writing `artifacts/current/verification-plan.md`.
 
 ---
 
@@ -9,7 +9,7 @@ Follow this template exactly when writing `.artifacts/current/verification-plan.
 
 ## Meta
 
-- Scenarios Reference: `.artifacts/current/bdd-scenarios.md`
+- Scenarios Reference: `artifacts/current/bdd-scenarios.md`
 - Generated: {YYYY-MM-DD}
 
 ---

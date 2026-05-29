@@ -21,32 +21,52 @@ You are running inside a Docker sandbox to execute BDD automated verification. Y
 
 ## Browser-Use CLI Reference
 
-For Browser Automation scenarios, use the `browser-use` CLI (NOT Playwright test files). Run `browser-use --help` or `browser-use <command> --help` to discover usage. Key commands:
+For Browser Automation scenarios, use the `browser-use` CLI (NOT Playwright test files). Key commands:
 
 ```
-browser-use open <url>              # Navigate to URL
+browser-use open <url>              # Navigate to URL (also navigates within existing session)
 browser-use state                   # Get page state (URL, title, visible elements)
 browser-use screenshot [path]       # Screenshot (base64 if no path)
-browser-use eval "<js>"             # Execute JavaScript (e.g. getComputedStyle)
-browser-use get title               # Get page title
+browser-use eval "<js>"             # Execute JavaScript
 browser-use get text <index>        # Get element text by index from state
 browser-use wait text "<text>"      # Wait for text to appear
 browser-use wait selector "<sel>"   # Wait for CSS selector
 browser-use click <index|x y>      # Click element by index or coordinates
-browser-use close                   # Close browser session
+browser-use input <index> "<text>"  # Type text into an input element
+browser-use python --file <path>    # Run Python script within the browser session
+browser-use close                   # Close browser session (call ONCE at end)
 ```
 
-Typical flow: start dev server in background → `browser-use open` → `browser-use eval` for computed styles → `browser-use screenshot` → `browser-use close`.
+### CRITICAL: Single-Session Strategy
 
-**Docker session management:** browser-use uses a daemon architecture. If `open` times out or fails, clean up stale sessions before retrying:
-```bash
-browser-use close 2>/dev/null || true
-rm -rf "${BROWSER_USE_HOME:-$HOME/.browser-use}/sessions/" 2>/dev/null || true
-rm -rf /tmp/browser-use-* 2>/dev/null || true
+browser-use uses a daemon architecture that **cannot reliably restart** in Docker. Once a session is closed, opening a new one often hangs due to stale daemon state files.
+
+**Rule: Open the browser ONCE and keep the session alive for ALL Browser Automation scenarios.** Navigate between scenarios with `browser-use open <new-url>` (this navigates the existing tab, it does NOT require closing). Only call `browser-use close` once at the very end.
+
+For complex multi-step scenarios, use `browser-use python --file`:
+
+```python
+# /tmp/verify_v2_01.py — runs inside the existing browser session
+import time
+browser.goto("http://localhost:5173/chat")
+browser.wait_for_selector("[data-testid='empty-state']")
+browser.screenshot("/tmp/v2-01-empty.png")
+browser.fill("[data-testid='composer-textarea']", "Briefly explain NVIDIA Blackwell architecture")
+browser.click("[data-testid='composer-send-btn']")
+browser.wait_for_selector("[data-testid='message-list'][data-status='ready']", timeout=60000)
+browser.screenshot("/tmp/v2-01-complete.png")
+print("PASS: V2-01 completed")
 ```
-When connecting to an already-running Chromium via CDP, use the **HTTP** endpoint (not WebSocket):
+
+Execute: `browser-use python --file /tmp/verify_v2_01.py`
+
+If browser-use fails on first open, do a nuclear cleanup (must remove `state.json`):
 ```bash
-browser-use --cdp-url http://localhost:9222 open <url>
+pkill -9 -f chromium 2>/dev/null; pkill -9 -f "browser_use" 2>/dev/null
+rm -rf ~/.browser-use/            # entire dir, not just sessions/
+rm -rf /tmp/browser-use-* /tmp/.org.chromium.*
+sleep 2
+browser-use open <url>
 ```
 
 ## Docker Environment Best Practices
@@ -61,18 +81,29 @@ This container is resource-constrained compared to the host. Follow these rules 
    npx vitest run 2>&1
    ```
 
-2. **Run Playwright E2E tests with `--workers=1`.** Multiple headless Chromium instances competing for limited Docker CPU/memory cause timeouts. Single worker is both more reliable and faster in this environment:
+2. **Vitest test timeout.** Default 5000ms is too short in Docker. Always use extended timeout:
+   ```bash
+   npx vitest run --test-timeout=30000
+   ```
+
+3. **Run Playwright E2E tests with `--workers=1`.** Multiple headless Chromium instances competing for limited Docker CPU/memory cause timeouts:
    ```bash
    npx playwright test --workers=1
    ```
-   If `playwright.config.ts` does not already set `workers` for CI, add it:
-   ```ts
-   workers: process.env.CI ? 1 : undefined,
+
+4. **Do NOT manually start the dev server for Playwright E2E tests.** Playwright's `webServer` config in `playwright.config.ts` automatically starts the dev server. Just run `npx playwright test`.
+
+5. **Execution order: Deterministic FIRST, then Browser Automation.** Playwright and browser-use share Chromium. browser-use's daemon can leave zombie chrome processes that break Playwright. Always run in this order:
+   1. Vitest (unit/component/hook/integration)
+   2. Playwright E2E (e2e-tier0)
+   3. Browser Automation (browser-use) — LAST
+   
+   After browser-use finishes, do NOT re-run Playwright unless you first kill all chrome processes:
+   ```bash
+   pkill -9 -f chromium 2>/dev/null; sleep 2
    ```
 
-3. **Do NOT manually start the dev server for Playwright E2E tests.** Playwright's `webServer` config in `playwright.config.ts` automatically starts the dev server and waits until it's ready. Just run `npx playwright test` — Playwright handles server lifecycle.
-
-4. **Vite proxy target for host backend.** The `VITE_API_TARGET` environment variable is pre-set to `http://host.docker.internal:8000`. If the project's `vite.config.ts` hardcodes `localhost` as the API proxy target, update it to:
+6. **Vite proxy target for host backend.** The `VITE_API_TARGET` environment variable is pre-set to `http://host.docker.internal:8000`. If the project's `vite.config.ts` hardcodes `localhost` as the API proxy target, update it to:
    ```ts
    proxy: {
      '/api': {
@@ -81,17 +112,19 @@ This container is resource-constrained compared to the host. Follow these rules 
      }
    }
    ```
-   This ensures the dev server can reach the host backend. For Deterministic scenarios using MSW, the proxy target is irrelevant — MSW intercepts requests before they reach the proxy.
+   For Deterministic scenarios using MSW, the proxy target is irrelevant — MSW intercepts requests before they reach the proxy.
+
+7. **Do NOT waste tool calls exploring the project.** Skip `Agent` subagents for codebase exploration. Read the verification plan and BDD scenarios directly, then run tests. The project structure is already described in those artifacts.
 
 ## Step 0: Preparation
 
 1. Install project dependencies: `{install_cmd}`
-2. Check if `.artifacts/current/executable-verification.md` already exists:
+2. Check if `artifacts/current/executable-verification.md` already exists:
    - **If it exists**: Read it and use it directly as the verification plan. Skip placeholder resolution — the host session already resolved all `[POST-CODING: ...]` placeholders.
-   - **If it does NOT exist**: Read `.artifacts/current/{verification_plan_file}` and `.artifacts/current/{bdd_scenarios_file}`, resolve all `[POST-CODING: ...]` placeholders by inspecting the codebase, and write the result to `.artifacts/current/executable-verification.md`.
+   - **If it does NOT exist**: Read `artifacts/current/{verification_plan_file}` and `artifacts/current/{bdd_scenarios_file}`, resolve all `[POST-CODING: ...]` placeholders by inspecting the codebase, and write the result to `artifacts/current/executable-verification.md`.
 3. If a placeholder cannot be resolved (expected code structure doesn't exist), mark that scenario as ERROR in the report
 4. Separate automated scenarios (Deterministic + Browser Automation) from manual scenarios (Manual Behavior Test + User Acceptance Test)
-5. Create `.artifacts/current/temp/` directory if it doesn't exist
+5. Create `artifacts/current/temp/` directory if it doesn't exist
 
 ## Automated Verification Loop
 
@@ -102,7 +135,7 @@ FIX_HISTORY = []
 TARGETED_SCENARIOS = []   # empty = run all (Round 1)
 ```
 
-**CRITICAL: No git operations.** NEVER run `git init`, `git add`, `git commit`, `git status`, or any git command. The /workspace directory may be a git worktree with a .git pointer to a host path that does not exist inside this container. Any git operation risks destroying the host's git history. All fix tracking is file-based via `.artifacts/current/temp/fix-history.json`.
+**CRITICAL: No git operations.** NEVER run `git init`, `git add`, `git commit`, `git status`, or any git command. The /workspace directory may be a git worktree with a .git pointer to a host path that does not exist inside this container. Any git operation risks destroying the host's git history. All fix tracking is file-based via `artifacts/current/temp/fix-history.json`.
 
 ### Round 1: Full Suite
 
@@ -112,7 +145,7 @@ Run ALL automated scenarios. For each scenario:
 3. Compare with expected result
 4. Mark as PASS, FAIL, or ERROR
 
-Save results to `.artifacts/current/temp/bdd-verification-round-1.md`.
+Save results to `artifacts/current/temp/bdd-verification-round-1.md`.
 
 If all pass → exit with `ALL_AUTO_PASS`.
 
@@ -124,7 +157,7 @@ If failures exist → classify, fix (see Fix and Classify sections below), set `
 
 Run **only `TARGETED_SCENARIOS`** — the scenarios that failed last round and were supposedly fixed.
 
-Save results to `.artifacts/current/temp/bdd-verification-round-{ROUND}.md`.
+Save results to `artifacts/current/temp/bdd-verification-round-{ROUND}.md`.
 
 **If any targeted scenario still fails:**
 1. Classify using the escalation ladder below
@@ -169,7 +202,7 @@ For all scenarios classified as Level 1-2:
 2. Run the project's unit tests — all tests must pass before the fix is accepted
 3. Record: what was fixed (root cause + fix description), files changed
 4. If you believe a scenario's expectation is wrong, record it as "Not Fixed" with reason
-5. Append fix details to `.artifacts/current/temp/fix-history.json` (create if doesn't exist, append to the array)
+5. Append fix details to `artifacts/current/temp/fix-history.json` (create if doesn't exist, append to the array)
 
 **Do NOT run any git commands.** Fix tracking is entirely file-based.
 
@@ -197,7 +230,7 @@ Do NOT skip cleanup even if you are about to exit due to MAX_ROUNDS_HIT or error
 
 ## Output
 
-When the loop completes (and after cleanup), write `.artifacts/current/temp/auto-stage-report.json` following this exact structure:
+When the loop completes (and after cleanup), write `artifacts/current/temp/auto-stage-report.json` following this exact structure:
 
 ```json
 {
@@ -285,7 +318,7 @@ Passed: <N> / <total automated>
 Failed: <N>
 Design Issues: <N>
 Regressions: <N>
-Report: .artifacts/current/temp/auto-stage-report.json
+Report: artifacts/current/temp/auto-stage-report.json
 ```
 ````
 

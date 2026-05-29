@@ -1,6 +1,6 @@
 # BDD Scenarios Template
 
-Follow this template exactly when writing `.artifacts/current/bdd-scenarios.md`.
+Follow this template exactly when writing `artifacts/current/bdd-scenarios.md`.
 
 ---
 
@@ -8,7 +8,7 @@ Follow this template exactly when writing `.artifacts/current/bdd-scenarios.md`.
 # BDD Scenarios
 
 ## Meta
-- Design Reference: `.artifacts/current/design.md`
+- Design Reference: `artifacts/current/design.md`
 - Generated: {YYYY-MM-DD}
 - Discovery Method: Three Amigos ({Agent Teams | Subagent Fallback})
 

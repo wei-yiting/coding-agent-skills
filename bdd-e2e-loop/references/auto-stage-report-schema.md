@@ -1,6 +1,6 @@
 # Auto Stage Report Schema
 
-The JSON file at `.artifacts/current/temp/auto-stage-report.json` is the contract between Stage 1 (Docker automated verification) and Stage 2 (host interactive session). Stage 1 writes it; Stage 2 reads it.
+The JSON file at `artifacts/current/temp/auto-stage-report.json` is the contract between Stage 1 (Docker automated verification) and Stage 2 (host interactive session). Stage 1 writes it; Stage 2 reads it.
 
 ## Schema
 
