@@ -1,0 +1,42 @@
+{
+  "skill_name": "frontend-test-writing",
+  "notes": "Realistic test prompts a frontend engineer would actually type, covering the main scenarios the skill is meant to help with. Run via skill-creator's eval loop when you want quantitative validation.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "audit-existing-e2e-for-antipatterns",
+      "prompt": "Review my Playwright E2E specs under tests/e2e/ for anti-patterns. Here's one of them: ```ts\ntest('J-err-01 @critical: error recovery works', async ({ page }) => {\n  await page.goto('/?msw_fixture=500');\n  await page.getByTestId('composer-textarea').fill('test');\n  await page.getByTestId('composer-send-btn').click();\n  await page.waitForTimeout(2000);\n  const errVisible = await page.getByTestId('error-block').isVisible();\n  expect(errVisible).toBe(true);\n  await page.getByTestId('error-retry-btn').click();\n  await page.waitForLoadState('networkidle');\n  const count = await page.locator('[data-testid=\"user-bubble\"]').count();\n  if (count > 0) expect(count).toBe(1);\n});\n``` What's wrong here?",
+      "expected_output": "Identifies: (1) hard waitForTimeout anti-pattern, (2) non-web-first isVisible/expect pattern, (3) networkidle deprecated-ish, (4) conditional assertion, (5) tag embedded in title instead of { tag: [...] }, (6) BDD ID in title. Suggests web-first replacements and fixture extraction."
+    },
+    {
+      "id": 2,
+      "name": "design-state-based-suite-for-new-component",
+      "prompt": "I'm writing tests for a new <Pagination currentPage totalPages onChange isLoading /> component. It shows prev/next buttons (disabled at page 1 and last page respectively), page number buttons, and a loading skeleton when isLoading=true. Help me structure the test suite.",
+      "expected_output": "Proposes one test per meaningful state: (loading), (page 1 — prev disabled), (last page — next disabled), (middle page — both enabled), (click prev/next invokes onChange). Uses getByRole('button', { name: /previous/i }), not getByTestId. Doesn't suggest snapshots. May propose data-* attributes for test contracts if needed."
+    },
+    {
+      "id": 3,
+      "name": "playwright-flaky-test-diagnosis",
+      "prompt": "My Playwright test is flaky on CI but passes locally. The assertion is:\n```ts\nconst text = await page.getByTestId('result').textContent();\nexpect(text).toContain('Success');\n```\nIt passes ~80% of runs. What's the fix?",
+      "expected_output": "Identifies that textContent+expect is a snapshot, not web-first. Suggests `await expect(page.getByTestId('result')).toContainText('Success')` for auto-retry. Optionally mentions trace/video for deeper debugging."
+    },
+    {
+      "id": 4,
+      "name": "layer-policy-decision",
+      "prompt": "Should I write a Playwright E2E test for a new <Dropdown> component I'm building? It opens/closes on click, supports arrow-key navigation, and fires onChange with the selected value.",
+      "expected_output": "Applies layer policy: most of this is RTL's job (component render + state + keyboard interaction). E2E only if the dropdown interacts with real browser behavior like iframe, portal positioning with real layout, or real scroll-lock. Suggests RTL unit tests for state transitions + keyboard handling, covered by userEvent.keyboard."
+    },
+    {
+      "id": 5,
+      "name": "jest-dom-tohaveattribute-regex-trap",
+      "prompt": "In my vitest + RTL test I'm asserting `expect(link).toHaveAttribute('rel', /noopener/)` but it keeps failing even though I can see rel=\"noopener noreferrer\" in the rendered DOM. What's going on?",
+      "expected_output": "Identifies that jest-dom's toHaveAttribute takes a string for exact match, NOT a regex (unlike Playwright's version). Suggests either `toHaveAttribute('rel', 'noopener noreferrer')` for exact match or `expect(link.getAttribute('rel')).toMatch(/noopener/)` for regex."
+    },
+    {
+      "id": 6,
+      "name": "should-use-getbytestid-or-getbyrole",
+      "prompt": "I've been using `screen.getByTestId('submit-btn')` everywhere in my RTL tests. My teammate says I should use getByRole instead. Is that right?",
+      "expected_output": "Confirms teammate is right. Explains query priority: getByRole with name option is preferred because it tests what all users (including assistive tech) experience. getByTestId is last resort. Shows before/after example. Notes Playwright is slightly more tolerant of getByTestId but same priority applies."
+    }
+  ]
+}

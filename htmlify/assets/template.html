@@ -1,0 +1,2071 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>{{DOC_TITLE}}</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.10.0/styles/github.min.css">
+<style>
+:root {
+  --bg: #f8fafc;
+  --card-bg: #ffffff;
+  --text: #0f172a;
+  --text-muted: #475569;
+  --text-subtle: #64748b;
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --code-bg: #f1f5f9;
+  --primary: #2563eb;
+  --primary-light: #dbeafe;
+  --architecture: #2563eb;
+  --architecture-bg: #eff6ff;
+  --sunset: #f97316;
+  --sunset-bg: #fff7ed;
+  --inspect: #10b981;
+  --inspect-bg: #ecfdf5;
+  --decision: #8b5cf6;
+  --decision-bg: #f5f3ff;
+  --ab: #ef4444;
+  --ab-bg: #fef2f2;
+  --api: #14b8a6;
+  --api-bg: #f0fdfa;
+  --open: #eab308;
+  --open-bg: #fefce8;
+  --comment-w: 320px;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 24px; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Noto Sans TC", sans-serif;
+  line-height: 1.7;
+  font-size: 15px;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--comment-w);
+  max-width: 1740px;
+  margin: 0 auto;
+  transition: padding-left 0.22s ease;
+}
+body.sidebar-pinned .layout {
+  padding-left: 260px;
+}
+body.comment-resizing {
+  cursor: ew-resize;
+  user-select: none;
+}
+
+/* annotations-off mode: hide comment UI, single-column layout */
+body.annotations-off .layout { grid-template-columns: minmax(0, 1fr); max-width: 1100px; }
+body.annotations-off .comment-panel,
+body.annotations-off .comment-fab,
+body.annotations-off .selection-toolbar,
+body.annotations-off #comment-dialog-backdrop { display: none !important; }
+
+/* SIDEBAR TOGGLE BUTTON (floating) */
+.sidebar-toggle {
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 75;
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  font-size: 17px;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  user-select: none;
+  font-family: inherit;
+  line-height: 1;
+}
+.sidebar-toggle:hover {
+  background: var(--primary-light);
+  color: var(--primary);
+  border-color: var(--primary);
+}
+body.sidebar-pinned .sidebar-toggle {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+/* SIDEBAR (fixed off-screen, slides in on hover/pin) */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 260px;
+  height: 100vh;
+  background: var(--card-bg);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 62px 18px 22px;
+  z-index: 60;
+  transform: translateX(-100%);
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+  font-size: 13.5px;
+}
+.sidebar.show { transform: translateX(0); }
+.sidebar.hover-mode { box-shadow: 6px 0 24px rgba(0, 0, 0, 0.12); }
+.sidebar.pinned-mode { box-shadow: none; }
+.sidebar-brand {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--text);
+  margin-bottom: 4px;
+  letter-spacing: -0.01em;
+}
+.sidebar-sub {
+  color: var(--text-subtle);
+  font-size: 12px;
+  margin-bottom: 20px;
+}
+.toc {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.toc li { margin: 2px 0; }
+.toc a {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: background 0.1s, color 0.1s;
+}
+.toc a:hover { background: var(--code-bg); color: var(--text); }
+.toc-num {
+  display: inline-block;
+  width: 22px;
+  font-weight: 600;
+  color: var(--text-subtle);
+  font-feature-settings: "tnum";
+  flex-shrink: 0;
+}
+.toc-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* MAIN */
+main {
+  padding: 32px 56px 80px;
+  max-width: 1100px;
+}
+
+/* HERO */
+.hero {
+  margin-bottom: 56px;
+  padding-bottom: 32px;
+  border-bottom: 1px solid var(--border);
+}
+.status-badge {
+  display: inline-block;
+  background: var(--open-bg);
+  color: #854d0e;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 12px;
+}
+.hero h1 {
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 4px 0 8px;
+  line-height: 1.2;
+}
+.hero .subtitle {
+  font-size: 17px;
+  color: var(--text-muted);
+  margin: 0 0 24px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.stat {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 18px;
+}
+.stat-num {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--primary);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-feature-settings: "tnum";
+}
+.stat-label {
+  font-size: 12px;
+  color: var(--text-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 6px;
+}
+
+.prereq {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--primary);
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 13.5px;
+  color: var(--text-muted);
+  margin-bottom: 18px;
+}
+.research-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.research-chip {
+  display: inline-flex;
+  align-items: center;
+  background: var(--code-bg);
+  color: var(--text-muted);
+  font-family: "SF Mono", Menlo, monospace;
+  font-size: 11.5px;
+  padding: 4px 9px;
+  border-radius: 6px;
+}
+
+/* SECTIONS */
+section.doc-section { margin-bottom: 56px; scroll-margin-top: 24px; }
+.section-head {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 2px solid var(--border);
+}
+.section-num {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-subtle);
+  font-feature-settings: "tnum";
+  min-width: 28px;
+}
+.section-head h2 {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  margin: 0;
+  flex: 1;
+}
+.section-tag {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.tag-architecture { background: var(--architecture-bg); color: var(--architecture); }
+.tag-sunset { background: var(--sunset-bg); color: var(--sunset); }
+.tag-inspect { background: var(--inspect-bg); color: var(--inspect); }
+.tag-decision { background: var(--decision-bg); color: var(--decision); }
+.tag-ab { background: var(--ab-bg); color: var(--ab); }
+.tag-api { background: var(--api-bg); color: var(--api); }
+.tag-open { background: var(--open-bg); color: #854d0e; }
+
+h3 {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 32px 0 14px;
+  color: var(--text);
+}
+h4 {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 22px 0 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+p { margin: 0 0 14px; }
+
+/* INLINE */
+code {
+  background: var(--code-bg);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.88em;
+  color: #be185d;
+}
+strong { color: var(--text); font-weight: 600; }
+em { font-style: italic; color: var(--text-muted); }
+
+/* CODE BLOCK */
+pre {
+  background: var(--code-bg);
+  border-radius: 8px;
+  padding: 16px 18px;
+  overflow-x: auto;
+  font-size: 13px;
+  line-height: 1.55;
+  margin: 14px 0 20px;
+  border: 1px solid var(--border);
+}
+pre code {
+  background: transparent;
+  padding: 0;
+  color: var(--text);
+  font-size: inherit;
+}
+
+/* TABLES */
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+thead {
+  background: var(--code-bg);
+}
+th {
+  text-align: left;
+  padding: 10px 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-size: 12.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-bottom: 1px solid var(--border);
+}
+td {
+  padding: 10px 14px;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+  line-height: 1.6;
+}
+tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: #fcfcfd; }
+
+/* DECISION TABLE — colored num + larger row gap */
+.decisions-table td:first-child {
+  font-weight: 700;
+  text-align: center;
+  color: white;
+  width: 44px;
+  font-feature-settings: "tnum";
+  font-size: 13px;
+}
+.decisions-table.cat-pipeline td:first-child { background: var(--architecture); }
+.decisions-table.cat-coexist td:first-child { background: var(--sunset); }
+.decisions-table.cat-ab td:first-child { background: var(--ab); }
+.decisions-table.cat-api td:first-child { background: var(--api); }
+.decisions-table td:nth-child(2) {
+  font-weight: 600;
+  width: 28%;
+}
+.decisions-table td:nth-child(3) {
+  width: 38%;
+}
+.decisions-table td:nth-child(4) {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* MERMAID */
+.mermaid {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 22px;
+  margin: 18px 0 24px;
+  overflow-x: auto;
+  text-align: center;
+}
+
+/* CALLOUT */
+.callout {
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin: 14px 0 20px;
+  border-left: 4px solid;
+  font-size: 14px;
+}
+.callout-info { background: var(--architecture-bg); border-color: var(--architecture); color: #1e3a8a; }
+.callout-warn { background: var(--sunset-bg); border-color: var(--sunset); color: #9a3412; }
+.callout-key { background: var(--decision-bg); border-color: var(--decision); color: #5b21b6; }
+.callout-success { background: var(--inspect-bg); border-color: var(--inspect); color: #064e3b; }
+.callout strong { color: inherit; }
+
+/* LISTS */
+ul, ol { margin: 0 0 16px; padding-left: 22px; }
+ul li, ol li { margin-bottom: 6px; }
+
+/* SUMMARY/DETAILS */
+details {
+  margin: 14px 0;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 16px;
+}
+summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: 6px 0;
+}
+details[open] summary { margin-bottom: 8px; }
+
+/* FOOTER */
+footer {
+  margin-top: 80px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+  color: var(--text-subtle);
+  font-size: 13px;
+  text-align: center;
+}
+
+/* === ANNOTATION SYSTEM === */
+
+.comment-panel {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  padding: 22px 16px;
+  border-left: 1px solid var(--border);
+  background: var(--card-bg);
+  font-size: 13px;
+}
+/* Drag handle on the panel's left edge — drag left to widen (panel grows leftward) */
+.comment-resize-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 8px;
+  cursor: ew-resize;
+  z-index: 40;
+  touch-action: none;
+}
+.comment-resize-handle::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: transparent;
+  transition: background 0.15s ease;
+}
+.comment-resize-handle:hover::after,
+body.comment-resizing .comment-resize-handle::after {
+  background: var(--primary);
+}
+.comment-panel-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px; padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.comment-panel-title {
+  font-weight: 700; font-size: 14px;
+}
+/* unified badge sizing — all three same height/padding/font */
+.comment-count-badge,
+.resolved-count-badge,
+.outdated-count-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+  font-feature-settings: "tnum";
+}
+.comment-count-badge::before,
+.outdated-count-badge::before {
+  content: '';
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center;
+}
+.comment-count-badge { background: #fef08a; color: #854d0e; padding-left: 6px; }
+.comment-count-badge::before {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='%23854d0e' d='M4 3C2.9 3 2 3.9 2 5v10c0 1.1.9 2 2 2h4v4l5-4h7c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2H4z'/></svg>");
+}
+.comment-help {
+  font-size: 11.5px; color: var(--text-subtle);
+  line-height: 1.5; margin-bottom: 14px;
+  padding: 8px 10px; background: var(--code-bg); border-radius: 6px;
+}
+.comment-actions {
+  display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap;
+}
+.btn-action {
+  padding: 6px 10px;
+  background: var(--code-bg);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 11.5px;
+  cursor: pointer;
+  font-weight: 500;
+  font-family: inherit;
+  transition: background 0.1s, color 0.1s, border-color 0.1s;
+}
+.btn-action:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+.btn-action.btn-danger:hover { background: var(--ab-bg); color: var(--ab); border-color: var(--ab); }
+.btn-action.btn-primary-action {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+.btn-action.btn-primary-action:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  color: white;
+}
+.btn-icon {
+  display: inline-block;
+  font-weight: 700;
+  margin-right: 1px;
+}
+.caret { font-size: 9px; opacity: 0.7; margin-left: 1px; }
+
+/* Export dropdown */
+.export-menu-wrap { position: relative; display: inline-block; }
+.export-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+  z-index: 200;
+  display: none;
+  min-width: 180px;
+  padding: 4px;
+}
+.export-dropdown.show { display: block; }
+.export-option {
+  display: block;
+  width: 100%;
+  background: transparent;
+  border: none;
+  text-align: left;
+  padding: 7px 10px;
+  cursor: pointer;
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--text);
+  border-radius: 4px;
+}
+.export-option:hover { background: var(--primary-light); color: var(--primary); }
+
+.comment-list { display: flex; flex-direction: column; gap: 8px; }
+.comment-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: border-color 0.12s, transform 0.12s, box-shadow 0.12s;
+}
+.comment-card:hover {
+  border-color: var(--primary);
+  transform: translateX(-2px);
+  box-shadow: -2px 2px 8px rgba(37, 99, 235, 0.08);
+}
+.comment-section {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-subtle);
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.comment-quote {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  background: var(--code-bg);
+  border-left: 2px solid #facc15;
+  padding: 5px 8px;
+  border-radius: 0 4px 4px 0;
+  margin-bottom: 6px;
+  line-height: 1.45;
+  font-style: italic;
+  max-height: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.comment-body {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.5;
+  margin-bottom: 6px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+.comment-meta {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 10.5px; color: var(--text-subtle);
+}
+.btn-delete {
+  background: transparent; border: none;
+  color: var(--text-subtle);
+  cursor: pointer; font-size: 13px;
+  padding: 2px 5px; border-radius: 4px;
+  font-family: inherit;
+  line-height: 1;
+  opacity: 0.55;
+  transition: opacity 0.12s, background 0.12s, color 0.12s;
+}
+.btn-delete:hover {
+  background: var(--ab-bg);
+  color: var(--ab);
+  opacity: 1;
+}
+.empty-state {
+  color: var(--text-subtle); font-size: 12.5px;
+  text-align: center; padding: 32px 12px; line-height: 1.7;
+}
+
+/* annotation marks */
+mark.annot {
+  background: #fef08a;
+  color: inherit;
+  padding: 1px 2px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s;
+  border-bottom: 1px dashed #ca8a04;
+}
+mark.annot:hover { background: #fde047; }
+mark.annot.pulse {
+  animation: pulse-mark 1.6s ease-in-out;
+}
+@keyframes pulse-mark {
+  0%, 100% { background: #fef08a; }
+  50% { background: #facc15; box-shadow: 0 0 0 6px rgba(250, 204, 21, 0.35); }
+}
+
+/* selection toolbar */
+.selection-toolbar {
+  position: absolute;
+  display: none;
+  background: var(--text);
+  color: white;
+  border-radius: 8px;
+  padding: 4px;
+  z-index: 1000;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+  white-space: nowrap;
+}
+.selection-toolbar button {
+  background: transparent; color: white; border: none;
+  padding: 6px 12px;
+  font-size: 12.5px; cursor: pointer; border-radius: 5px;
+  font-family: inherit;
+}
+.selection-toolbar button:hover { background: rgba(255,255,255,0.18); }
+
+/* comment dialog */
+.dialog-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  display: none; align-items: center; justify-content: center;
+  z-index: 2000;
+}
+.dialog-backdrop.show { display: flex; }
+.comment-dialog {
+  background: white;
+  border-radius: 12px;
+  padding: 22px;
+  width: 480px; max-width: 90vw;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+}
+.comment-dialog h3 { margin: 0 0 8px; font-size: 16px; font-weight: 700; }
+.comment-dialog .selection-preview {
+  background: var(--code-bg);
+  border-left: 3px solid #facc15;
+  padding: 8px 12px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  border-radius: 4px;
+  margin-bottom: 14px;
+  max-height: 100px; overflow-y: auto;
+  font-style: italic;
+  line-height: 1.5;
+}
+.comment-dialog textarea {
+  width: 100%; min-height: 100px;
+  border: 1px solid var(--border); border-radius: 6px;
+  padding: 10px 12px;
+  font-family: inherit; font-size: 14px;
+  line-height: 1.5; resize: vertical;
+  box-sizing: border-box;
+}
+.comment-dialog textarea:focus {
+  outline: none; border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+.dialog-actions {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 14px;
+}
+.dialog-hint { font-size: 11.5px; color: var(--text-subtle); }
+.dialog-buttons { display: flex; gap: 6px; }
+.btn-primary {
+  background: var(--primary); color: white; border: none;
+  padding: 8px 18px; border-radius: 6px;
+  font-size: 13px; font-weight: 600;
+  cursor: pointer; font-family: inherit;
+}
+.btn-primary:hover { background: #1d4ed8; }
+.btn-secondary {
+  background: var(--code-bg); color: var(--text-muted);
+  border: 1px solid var(--border);
+  padding: 8px 16px; border-radius: 6px;
+  font-size: 13px; font-weight: 500;
+  cursor: pointer; font-family: inherit;
+}
+.btn-secondary:hover { background: var(--border); }
+
+/* toast */
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: var(--text); color: white;
+  padding: 12px 18px;
+  border-radius: 8px; font-size: 13px;
+  opacity: 0; transform: translateY(20px);
+  transition: opacity 0.2s, transform 0.2s;
+  pointer-events: none; z-index: 3000;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+  max-width: 400px;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+
+/* floating fab for mobile */
+.comment-fab {
+  position: fixed; bottom: 20px; right: 20px;
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  background: var(--primary); color: white; border: none;
+  font-size: 22px; cursor: pointer;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+  display: none;
+  align-items: center; justify-content: center;
+  z-index: 40;
+}
+.comment-fab-badge {
+  position: absolute; top: -2px; right: -2px;
+  background: var(--ab); color: white;
+  border-radius: 999px;
+  font-size: 10px; font-weight: 700;
+  padding: 2px 6px; min-width: 18px;
+  text-align: center;
+}
+
+/* === MERMAID LIGHTBOX === */
+.mermaid {
+  cursor: zoom-in;
+  position: relative;
+  transition: box-shadow 0.15s, border-color 0.15s;
+}
+.mermaid:hover {
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.12);
+  border-color: var(--primary);
+}
+.mermaid::after {
+  content: '🔍 click to zoom';
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.55);
+  color: white;
+  font-size: 10.5px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+  pointer-events: none;
+}
+.mermaid:hover::after { opacity: 1; }
+
+.mm-modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(15, 23, 42, 0.88);
+  display: none;
+  align-items: center; justify-content: center;
+  z-index: 5000;
+}
+.mm-modal-backdrop.show { display: flex; }
+.mm-modal-frame {
+  width: 95vw; height: 92vh;
+  background: white;
+  border-radius: 12px;
+  position: relative;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+}
+.mm-modal-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--code-bg);
+}
+.mm-modal-title { font-size: 13px; font-weight: 600; color: var(--text); }
+.mm-modal-actions { display: flex; gap: 6px; }
+.mm-modal-actions button {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.mm-modal-actions button:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+.mm-modal-svg-wrap {
+  flex: 1;
+  overflow: hidden;
+  background: white;
+}
+.mm-modal-svg-wrap svg {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none;
+  max-height: none;
+}
+
+/* === RESOLVED STATE (dimmed + muted gray-green) === */
+mark.annot.resolved {
+  background: #e6ede9 !important;
+  color: var(--text-muted) !important;
+  border-bottom-color: #c0ccc4 !important;
+  opacity: 1 !important;
+}
+mark.annot.resolved:hover {
+  background: #d4ddd7 !important;
+  color: var(--text) !important;
+}
+
+.comment-card.resolved {
+  background: #f3f6f4;
+  border-color: #e0e8e3;
+  opacity: 0.5;
+  transition: opacity 0.15s, border-color 0.12s, background 0.12s, transform 0.12s, box-shadow 0.12s;
+}
+.comment-card.resolved:hover {
+  opacity: 0.95;
+  border-color: #c8d3cc;
+  box-shadow: -2px 2px 8px rgba(120, 130, 125, 0.08);
+}
+.comment-card.resolved .comment-quote {
+  border-left-color: transparent;
+  background: #eef2f0;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.status-pill.resolved {
+  background: #e6ede9;
+  color: #6b7975;
+}
+.status-pill.outdated {
+  background: #dbe6f3;
+  color: #3d5b7e;
+}
+
+/* outdated state — same dim as resolved but with subtle blue tint */
+.comment-card.outdated {
+  background: #f4f8fc;
+  border-color: #dbe4ee;
+  opacity: 0.5;
+  transition: opacity 0.15s, border-color 0.12s, background 0.12s, transform 0.12s, box-shadow 0.12s;
+}
+.comment-card.outdated:hover {
+  opacity: 0.95;
+  border-color: #bccbdc;
+  box-shadow: -2px 2px 8px rgba(80, 110, 150, 0.1);
+}
+.comment-card.outdated .comment-quote {
+  border-left-color: transparent;
+  background: #e8eff7;
+}
+
+.comment-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.btn-toggle {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-subtle);
+  cursor: pointer;
+  font-size: 10.5px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-family: inherit;
+  font-weight: 600;
+  transition: background 0.1s, color 0.1s, border-color 0.1s;
+}
+.btn-toggle:hover {
+  background: #bbf7d0;
+  color: #047857;
+  border-color: #86efac;
+}
+.comment-card.resolved .btn-toggle:hover {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #fde68a;
+}
+
+.comment-counts {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.resolved-count-badge { background: #e6ede9; color: #6b7975; }
+.outdated-count-badge { background: #dbe6f3; color: #3d5b7e; padding-left: 6px; }
+.outdated-count-badge::before {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='%233d5b7e' d='M5 2h14v2l-5 8 5 8v2H5v-2l5-8-5-8V2z'/></svg>");
+}
+.status-pill.outdated::before {
+  content: '';
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  flex-shrink: 0;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='%233d5b7e' d='M5 2h14v2l-5 8 5 8v2H5v-2l5-8-5-8V2z'/></svg>");
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
+/* MOBILE */
+@media (max-width: 1100px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  body.sidebar-pinned .layout { padding-left: 260px; }
+  .comment-panel {
+    position: fixed; top: 0; right: 0;
+    width: 320px;
+    z-index: 50;
+    transform: translateX(100%);
+    transition: transform 0.2s;
+    box-shadow: -8px 0 24px rgba(0,0,0,0.12);
+  }
+  .comment-panel.open { transform: translateX(0); }
+  .comment-fab { display: flex; }
+  .comment-resize-handle { display: none; }
+}
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  body.sidebar-pinned .layout { padding-left: 0; }
+  main { padding: 24px 20px 64px; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .hero h1 { font-size: 26px; }
+}
+</style>
+</head>
+<body>
+
+<!-- FLOATING SIDEBAR TOGGLE -->
+<button class="sidebar-toggle" id="sidebar-toggle" title="Table of contents (hover preview · click to pin)">≡</button>
+
+<!-- SIDEBAR (fixed positioned, hidden by default, hover or click toggle button to show) -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">{{SIDEBAR_BRAND}}</div>
+  <div class="sidebar-sub">{{SIDEBAR_SUB}}</div>
+  <nav>
+    <ul class="toc">
+      <!--{{SIDEBAR_TOC}}-->
+      <!-- one <li> per top-level section, e.g.:
+      <li><a href="#s1"><span class="toc-num">1.</span><span class="toc-label">背景與動機</span></a></li>
+      -->
+    </ul>
+  </nav>
+</aside>
+
+<div class="layout">
+
+<main>
+
+<!-- HERO — status-badge / stats-grid / prereq / research-links are all OPTIONAL.
+     Omit any block that the source doc doesn't justify (see references/styling-guide.md). -->
+<header class="hero">
+  <!--{{STATUS_BADGE}}-->        <!-- e.g. <span class="status-badge">draft</span> ; omit if none -->
+  <h1>{{DOC_TITLE}}</h1>
+  <p class="subtitle">{{DOC_SUBTITLE}}</p>
+
+  <!--{{HERO_STATS}}-->          <!-- the <div class="stats-grid">…</div>; omit entirely for simple docs -->
+
+  <!--{{HERO_META}}-->           <!-- optional .prereq callout + .research-links chips; omit if N/A -->
+</header>
+
+<!--{{MAIN_CONTENT}}-->
+<!-- Replace this marker with the rendered <section class="doc-section"> blocks,
+     one per top-level heading. See references/styling-guide.md for the exact
+     section / callout / table / mermaid / code patterns. -->
+
+<footer>
+  {{FOOTER_TEXT}}
+</footer>
+
+</main>
+
+<!-- COMMENT PANEL -->
+<aside class="comment-panel" id="comment-panel">
+  <div class="comment-resize-handle" id="comment-resize-handle" title="拖曳調整寬度"></div>
+  <div class="comment-panel-header">
+    <span class="comment-panel-title">Comments</span>
+    <span class="comment-counts">
+      <span class="comment-count-badge" id="comment-count" title="待處理 (active)">0</span>
+      <span class="resolved-count-badge" id="resolved-count" title="已 resolved" style="display:none">✓ 0</span>
+      <span class="outdated-count-badge" id="outdated-count" title="Outdated — doc 已修改，原文字找不到" style="display:none">0</span>
+    </span>
+  </div>
+
+  <div class="comment-help" id="comment-help">
+    選文字 → 「💬 新增 comment」→ 寫想法。<br>
+    Comment card 上 「Resolve」 切灰綠；Export 只匯出未 resolved。
+  </div>
+
+  <div class="comment-actions">
+    <button class="btn-action btn-primary-action" id="btn-copy-json" title="複製 active JSON 到剪貼簿">
+      <span class="btn-icon">⧉</span> Copy JSON
+    </button>
+    <div class="export-menu-wrap">
+      <button class="btn-action" id="btn-export-menu" title="下載檔案 (JSON / Prompt)">
+        <span class="btn-icon">↓</span> Export <span class="caret">▾</span>
+      </button>
+      <div class="export-dropdown" id="export-dropdown" role="menu">
+        <button class="export-option" data-format="json">JSON file (.json)</button>
+        <button class="export-option" data-format="prompt">Prompt markdown (.md)</button>
+      </div>
+    </div>
+    <button class="btn-action" id="btn-resolve-all" title="把所有 active comment 標為 resolved">
+      <span class="btn-icon">✓</span> Resolve all
+    </button>
+    <button class="btn-action btn-danger" id="btn-clear-all" title="刪除全部 comment">
+      <span class="btn-icon">×</span> Clear
+    </button>
+  </div>
+
+  <div class="comment-list" id="comment-list"></div>
+</aside>
+
+</div>
+
+<!-- FAB (mobile) -->
+<button class="comment-fab" id="comment-fab" aria-label="Toggle comments">💬<span class="comment-fab-badge" id="fab-badge" style="display:none">0</span></button>
+
+<!-- SELECTION TOOLBAR -->
+<div class="selection-toolbar" id="selection-toolbar">
+  <button id="btn-add-comment">💬 新增 comment</button>
+</div>
+
+<!-- COMMENT DIALOG -->
+<div class="dialog-backdrop" id="comment-dialog-backdrop">
+  <div class="comment-dialog">
+    <h3>新增 comment</h3>
+    <div class="selection-preview" id="dialog-selection-preview"></div>
+    <textarea id="comment-input" placeholder="寫下你對這段內容的想法、疑問、要 Claude 修改的方向…"></textarea>
+    <div class="dialog-actions">
+      <span class="dialog-hint">⌘+Enter 送出 · Esc 取消</span>
+      <div class="dialog-buttons">
+        <button class="btn-secondary" id="comment-cancel">取消</button>
+        <button class="btn-primary" id="comment-submit">儲存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MERMAID LIGHTBOX MODAL -->
+<div class="mm-modal-backdrop" id="mm-modal-backdrop">
+  <div class="mm-modal-frame">
+    <div class="mm-modal-toolbar">
+      <span class="mm-modal-title" id="mm-modal-title">Mermaid diagram</span>
+      <div class="mm-modal-actions">
+        <button id="mm-zoom-in" title="Zoom in">＋</button>
+        <button id="mm-zoom-out" title="Zoom out">－</button>
+        <button id="mm-reset" title="Reset">⤺ reset</button>
+        <button id="mm-close" title="Close (Esc)">✕ close</button>
+      </div>
+    </div>
+    <div class="mm-modal-svg-wrap" id="mm-modal-svg-wrap"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.10.0/lib/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.10.0/lib/languages/python.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'default',
+  themeVariables: {
+    primaryColor: '#eff6ff',
+    primaryTextColor: '#1f2937',
+    primaryBorderColor: '#2563eb',
+    lineColor: '#64748b',
+    secondaryColor: '#fef3c7',
+    tertiaryColor: '#f0fdf4',
+    fontSize: '14px'
+  },
+  flowchart: { curve: 'basis', htmlLabels: true }
+});
+hljs.highlightAll();
+</script>
+
+<script>
+// ============================================================
+// Annotation / Comment System
+// ============================================================
+
+const STORAGE_KEY = '{{STORAGE_KEY}}';
+const DOC_NAME = '{{DOC_NAME}}';
+let comments = [];
+
+function uid() {
+  return 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[<>&"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+function getContainingSection(node) {
+  while (node && node !== document.body) {
+    if (node.nodeType === 1 && node.tagName === 'SECTION' && node.id) return node;
+    node = node.parentNode;
+  }
+  return null;
+}
+
+// ============================================================
+// Mark wrapping
+// ============================================================
+
+function wrapRange(range, commentId) {
+  // Collect text nodes that intersect with range
+  const root = range.commonAncestorContainer.nodeType === 3
+    ? range.commonAncestorContainer.parentNode
+    : range.commonAncestorContainer;
+
+  const textNodes = [];
+  if (range.commonAncestorContainer.nodeType === 3) {
+    textNodes.push(range.commonAncestorContainer);
+  } else {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode(n) {
+        return range.intersectsNode(n) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+      }
+    });
+    let n;
+    while ((n = walker.nextNode())) textNodes.push(n);
+  }
+
+  for (const node of textNodes) {
+    // skip if already inside a mark or inside non-content area
+    if (node.parentNode.closest('mark.annot')) continue;
+    if (node.parentNode.closest('.comment-panel, .selection-toolbar, .dialog-backdrop, .toast, .sidebar')) continue;
+
+    const start = (node === range.startContainer) ? range.startOffset : 0;
+    const end = (node === range.endContainer) ? range.endOffset : node.textContent.length;
+    if (start >= end) continue;
+
+    const text = node.textContent;
+    const before = text.slice(0, start);
+    const wrapped = text.slice(start, end);
+    const after = text.slice(end);
+
+    if (!wrapped.trim()) continue;
+
+    const mark = document.createElement('mark');
+    mark.className = 'annot';
+    mark.dataset.commentId = commentId;
+    mark.textContent = wrapped;
+    mark.addEventListener('click', e => {
+      e.stopPropagation();
+      flashComment(commentId);
+      scrollToCommentCard(commentId);
+    });
+
+    const frag = document.createDocumentFragment();
+    if (before) frag.appendChild(document.createTextNode(before));
+    frag.appendChild(mark);
+    if (after) frag.appendChild(document.createTextNode(after));
+
+    node.parentNode.replaceChild(frag, node);
+  }
+}
+
+function unwrapMark(commentId) {
+  document.querySelectorAll(`mark.annot[data-comment-id="${commentId}"]`).forEach(m => {
+    const text = document.createTextNode(m.textContent);
+    m.parentNode.replaceChild(text, m);
+  });
+  // Normalize adjacent text nodes
+  document.querySelectorAll('main').forEach(n => n.normalize());
+}
+
+// Restore: find selected text in section, wrap it
+function restoreComment(c) {
+  const section = document.getElementById(c.sectionId);
+  if (!section) return false;
+
+  // Concatenate all text nodes, tracking node + offset
+  const walker = document.createTreeWalker(section, NodeFilter.SHOW_TEXT, {
+    acceptNode(n) {
+      if (n.parentNode.closest('.comment-panel, .selection-toolbar, .dialog-backdrop, .toast')) {
+        return NodeFilter.FILTER_REJECT;
+      }
+      return NodeFilter.FILTER_ACCEPT;
+    }
+  });
+  const map = [];
+  let combined = '';
+  let n;
+  while ((n = walker.nextNode())) {
+    map.push({ node: n, start: combined.length });
+    combined += n.textContent;
+  }
+
+  // Normalize whitespace for comparison (selected text may have whitespace differences)
+  const target = c.selectedText;
+  const idx = combined.indexOf(target);
+  if (idx < 0) return false;
+
+  const endIdx = idx + target.length;
+
+  let startNode, startOffset, endNode, endOffset;
+  for (const item of map) {
+    const nodeStart = item.start;
+    const nodeEnd = nodeStart + item.node.textContent.length;
+    if (startNode === undefined && idx >= nodeStart && idx < nodeEnd) {
+      startNode = item.node;
+      startOffset = idx - nodeStart;
+    }
+    if (endNode === undefined && endIdx > nodeStart && endIdx <= nodeEnd) {
+      endNode = item.node;
+      endOffset = endIdx - nodeStart;
+    }
+    if (startNode && endNode) break;
+  }
+
+  if (!startNode || !endNode) return false;
+
+  try {
+    const range = document.createRange();
+    range.setStart(startNode, startOffset);
+    range.setEnd(endNode, endOffset);
+    wrapRange(range, c.id);
+    return true;
+  } catch (e) {
+    console.warn('restore failed', c.id, e);
+    return false;
+  }
+}
+
+// ============================================================
+// Storage
+// ============================================================
+
+function loadComments() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (raw) {
+    try { comments = JSON.parse(raw); }
+    catch (e) { comments = []; }
+  }
+  // Migrate legacy `addressed` field → `resolved`
+  comments.forEach(c => {
+    if (c.addressed !== undefined && c.resolved === undefined) {
+      c.resolved = c.addressed;
+      if (c.addressedAt) c.resolvedAt = c.addressedAt;
+      delete c.addressed;
+      delete c.addressedAt;
+    }
+  });
+  saveComments();
+  // re-wrap marks + recompute outdated state (must wait for mermaid to settle so DOM is stable)
+  let outdated = 0;
+  comments.forEach(c => {
+    const ok = restoreComment(c);
+    if (ok) {
+      c.outdated = false;
+      if (c.resolved) updateMarkResolvedState(c.id, true);
+    } else {
+      // text not found → outdated (unless already resolved, then it stays resolved)
+      c.outdated = !c.resolved;
+      if (c.outdated) outdated++;
+    }
+  });
+  saveComments();
+  renderCommentList();
+  if (outdated > 0) showToast(`⧖ ${outdated} comment outdated — 原文字已不在 doc 中`);
+}
+
+function saveComments() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(comments));
+}
+
+// ============================================================
+// Selection toolbar
+// ============================================================
+
+const toolbar = document.getElementById('selection-toolbar');
+let pendingRange = null;
+let pendingText = null;
+let pendingSection = null;
+
+function handleSelection() {
+  setTimeout(() => {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) {
+      hideToolbar();
+      return;
+    }
+    const text = sel.toString().trim();
+    if (!text || text.length < 2) {
+      hideToolbar();
+      return;
+    }
+    const range = sel.getRangeAt(0);
+    const section = getContainingSection(range.commonAncestorContainer);
+    if (!section) {
+      hideToolbar();
+      return;
+    }
+    // Don't trigger inside comment panel/dialog
+    if (range.commonAncestorContainer.parentNode && range.commonAncestorContainer.parentNode.closest && range.commonAncestorContainer.parentNode.closest('.comment-panel, .dialog-backdrop')) {
+      hideToolbar();
+      return;
+    }
+
+    pendingRange = range.cloneRange();
+    pendingText = text;
+    pendingSection = section;
+    showToolbarAt(range);
+  }, 0);
+}
+
+function showToolbarAt(range) {
+  const rect = range.getBoundingClientRect();
+  toolbar.style.display = 'flex';
+  // Position above selection
+  const top = window.scrollY + rect.top - toolbar.offsetHeight - 10;
+  const left = window.scrollX + rect.left + rect.width / 2 - 75;
+  toolbar.style.top = `${Math.max(top, window.scrollY + 8)}px`;
+  toolbar.style.left = `${Math.max(left, 8)}px`;
+}
+
+function hideToolbar() {
+  toolbar.style.display = 'none';
+}
+
+document.addEventListener('mouseup', e => {
+  if (e.target.closest('.selection-toolbar, .comment-panel, .dialog-backdrop')) return;
+  handleSelection();
+});
+document.addEventListener('keyup', e => {
+  if (e.shiftKey) handleSelection();
+});
+document.addEventListener('mousedown', e => {
+  if (!e.target.closest('.selection-toolbar')) hideToolbar();
+});
+
+// ============================================================
+// Add comment flow
+// ============================================================
+
+document.getElementById('btn-add-comment').addEventListener('click', () => {
+  if (!pendingRange || !pendingText || !pendingSection) return;
+  showCommentDialog(pendingText, (commentText) => {
+    if (!commentText) return;
+
+    const sectionTitle = pendingSection.querySelector('h2')?.textContent.replace(/^§\d+\s*/, '').trim() || '';
+    const sectionNumMatch = pendingSection.id.match(/^s(\d+)$/);
+    const sectionLabel = sectionNumMatch ? `§${sectionNumMatch[1]} ${sectionTitle}` : sectionTitle;
+
+    const c = {
+      id: uid(),
+      sectionId: pendingSection.id,
+      sectionLabel,
+      selectedText: pendingText,
+      comment: commentText,
+      resolved: false,
+      createdAt: new Date().toISOString()
+    };
+
+    comments.push(c);
+    saveComments();
+
+    try {
+      wrapRange(pendingRange, c.id);
+    } catch (e) {
+      console.warn('wrap failed, attempting restore', e);
+      restoreComment(c);
+    }
+
+    window.getSelection().removeAllRanges();
+    hideToolbar();
+    pendingRange = null;
+    pendingText = null;
+    pendingSection = null;
+    renderCommentList();
+    showToast('Comment 已新增');
+  });
+});
+
+// ============================================================
+// Dialog
+// ============================================================
+
+const dialogBackdrop = document.getElementById('comment-dialog-backdrop');
+const dialogPreview = document.getElementById('dialog-selection-preview');
+const dialogInput = document.getElementById('comment-input');
+const dialogSubmit = document.getElementById('comment-submit');
+const dialogCancel = document.getElementById('comment-cancel');
+
+function showCommentDialog(selectedText, callback) {
+  dialogPreview.textContent = selectedText.slice(0, 500) + (selectedText.length > 500 ? '…' : '');
+  dialogInput.value = '';
+  dialogBackdrop.classList.add('show');
+  setTimeout(() => dialogInput.focus(), 50);
+
+  const cleanup = () => {
+    dialogBackdrop.classList.remove('show');
+    dialogSubmit.removeEventListener('click', onSubmit);
+    dialogCancel.removeEventListener('click', onCancel);
+    dialogBackdrop.removeEventListener('click', onBackdrop);
+    document.removeEventListener('keydown', onKey);
+  };
+  const onSubmit = () => { const v = dialogInput.value.trim(); cleanup(); callback(v); };
+  const onCancel = () => { cleanup(); callback(null); };
+  const onBackdrop = (e) => { if (e.target === dialogBackdrop) onCancel(); };
+  const onKey = (e) => {
+    if (e.key === 'Escape') { e.preventDefault(); onCancel(); }
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); onSubmit(); }
+  };
+  dialogSubmit.addEventListener('click', onSubmit);
+  dialogCancel.addEventListener('click', onCancel);
+  dialogBackdrop.addEventListener('click', onBackdrop);
+  document.addEventListener('keydown', onKey);
+}
+
+// ============================================================
+// Render comment list
+// ============================================================
+
+function renderCommentList() {
+  const list = document.getElementById('comment-list');
+  const count = document.getElementById('comment-count');
+  const resolvedCount = document.getElementById('resolved-count');
+  const outdatedCount = document.getElementById('outdated-count');
+  const fabBadge = document.getElementById('fab-badge');
+  const help = document.getElementById('comment-help');
+
+  const activeCount = comments.filter(c => !c.resolved && !c.outdated).length;
+  const resolvedNum = comments.filter(c => c.resolved).length;
+  const outdatedNum = comments.filter(c => c.outdated && !c.resolved).length;
+
+  if (help) help.style.display = comments.length === 0 ? 'block' : 'none';
+
+  count.textContent = activeCount;
+  if (resolvedNum > 0) {
+    resolvedCount.style.display = 'inline-block';
+    resolvedCount.textContent = `✓ ${resolvedNum}`;
+  } else {
+    resolvedCount.style.display = 'none';
+  }
+  if (outdatedNum > 0) {
+    outdatedCount.style.display = 'inline-block';
+    outdatedCount.textContent = outdatedNum;
+  } else {
+    outdatedCount.style.display = 'none';
+  }
+  if (activeCount > 0) {
+    fabBadge.textContent = activeCount;
+    fabBadge.style.display = 'block';
+  } else {
+    fabBadge.style.display = 'none';
+  }
+
+  if (comments.length === 0) {
+    list.innerHTML = '<div class="empty-state">尚無 comment<br><br>在本文選擇文字 →<br>點 toolbar 的「💬 新增 comment」</div>';
+    return;
+  }
+
+  list.innerHTML = '';
+  // Sort: active first, dim (resolved/outdated) last; within each group by section order
+  const sorted = [...comments].sort((a, b) => {
+    const aDim = !!(a.resolved || a.outdated);
+    const bDim = !!(b.resolved || b.outdated);
+    if (aDim !== bDim) return aDim ? 1 : -1;
+    const na = parseInt((a.sectionId || '').replace(/\D/g, '')) || 999;
+    const nb = parseInt((b.sectionId || '').replace(/\D/g, '')) || 999;
+    if (na !== nb) return na - nb;
+    return a.createdAt.localeCompare(b.createdAt);
+  });
+
+  sorted.forEach(c => {
+    const isResolved = c.resolved === true;
+    const isOutdated = c.outdated === true && !isResolved;
+    const card = document.createElement('div');
+    let cls = 'comment-card';
+    if (isResolved) cls += ' resolved';
+    if (isOutdated) cls += ' outdated';
+    card.className = cls;
+    card.dataset.commentId = c.id;
+
+    const toggleLabel = isResolved ? '↩ Undo' : '✓ Resolve';
+    let statusPill = '';
+    if (isResolved) statusPill = '<span class="status-pill resolved">✓ resolved</span>';
+    else if (isOutdated) statusPill = '<span class="status-pill outdated">outdated</span>';
+
+    card.innerHTML = `
+      <div class="comment-card-head">
+        <div class="comment-section">${escapeHtml(c.sectionLabel || c.sectionId)}</div>
+        ${statusPill}
+      </div>
+      <div class="comment-quote">${escapeHtml(c.selectedText.length > 140 ? c.selectedText.slice(0, 140) + '…' : c.selectedText)}</div>
+      <div class="comment-body">${escapeHtml(c.comment)}</div>
+      <div class="comment-meta">
+        <span>${new Date(c.createdAt).toLocaleString('zh-TW', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+        <span style="display:flex; gap:6px;">
+          <button class="btn-toggle" data-id="${c.id}">${toggleLabel}</button>
+          <button class="btn-delete" data-id="${c.id}" title="刪除 comment" aria-label="刪除">×</button>
+        </span>
+      </div>
+    `;
+    card.addEventListener('click', e => {
+      if (e.target.classList.contains('btn-delete')) return;
+      if (e.target.classList.contains('btn-toggle')) return;
+      if (isOutdated) {
+        showToast('⧖ 文字已不在 doc 中（doc 可能已修改）');
+        return;
+      }
+      scrollToMark(c.id);
+    });
+    card.querySelector('.btn-toggle').addEventListener('click', e => {
+      e.stopPropagation();
+      toggleResolved(c.id);
+    });
+    card.querySelector('.btn-delete').addEventListener('click', e => {
+      e.stopPropagation();
+      if (!confirm('刪除這個 comment？')) return;
+      deleteComment(c.id);
+    });
+    list.appendChild(card);
+  });
+}
+
+function toggleResolved(id) {
+  const c = comments.find(x => x.id === id);
+  if (!c) return;
+  c.resolved = !c.resolved;
+  if (c.resolved) {
+    c.resolvedAt = new Date().toISOString();
+    // Resolved overrides outdated (already "done"); outdated visual hidden by precedence
+  } else {
+    delete c.resolvedAt;
+    // Re-check outdated: if no mark exists in DOM, text is gone → outdated
+    const hasMark = !!document.querySelector(`mark.annot[data-comment-id="${c.id}"]`);
+    c.outdated = !hasMark;
+  }
+  saveComments();
+  updateMarkResolvedState(id, c.resolved);
+  renderCommentList();
+  const msg = c.resolved
+    ? '✓ 標為 resolved'
+    : (c.outdated ? '↩ 恢復為待處理（⧖ outdated）' : '↩ 恢復為待處理');
+  showToast(msg);
+}
+
+function updateMarkResolvedState(commentId, isResolved) {
+  document.querySelectorAll(`mark.annot[data-comment-id="${commentId}"]`).forEach(m => {
+    m.classList.toggle('resolved', isResolved);
+  });
+}
+
+function scrollToMark(commentId) {
+  const mark = document.querySelector(`mark.annot[data-comment-id="${commentId}"]`);
+  if (!mark) {
+    showToast('找不到對應的 highlight（可能 orphan）');
+    return;
+  }
+  mark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  flashMark(commentId);
+}
+
+function scrollToCommentCard(commentId) {
+  const card = document.querySelector(`.comment-card[data-comment-id="${commentId}"]`);
+  if (!card) return;
+  // Open mobile panel if needed
+  document.getElementById('comment-panel').classList.add('open');
+  card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  card.style.transition = 'background 0.3s';
+  card.style.background = 'var(--primary-light)';
+  setTimeout(() => { card.style.background = ''; }, 800);
+}
+
+function flashMark(commentId) {
+  document.querySelectorAll(`mark.annot[data-comment-id="${commentId}"]`).forEach(m => {
+    m.classList.remove('pulse');
+    // force reflow
+    void m.offsetWidth;
+    m.classList.add('pulse');
+    setTimeout(() => m.classList.remove('pulse'), 1700);
+  });
+}
+
+function flashComment(commentId) { flashMark(commentId); }
+
+function deleteComment(id) {
+  comments = comments.filter(c => c.id !== id);
+  saveComments();
+  unwrapMark(id);
+  renderCommentList();
+  showToast('已刪除');
+}
+
+// ============================================================
+// Export
+// ============================================================
+
+function getActiveSorted() {
+  return comments.filter(c => !c.resolved && !c.outdated).sort((a, b) => {
+    const na = parseInt((a.sectionId || '').replace(/\D/g, '')) || 999;
+    const nb = parseInt((b.sectionId || '').replace(/\D/g, '')) || 999;
+    if (na !== nb) return na - nb;
+    return a.createdAt.localeCompare(b.createdAt);
+  });
+}
+
+function buildJsonPayload(active) {
+  const resolvedNum = comments.filter(c => c.resolved).length;
+  const outdatedNum = comments.filter(c => c.outdated && !c.resolved).length;
+  return {
+    version: 1,
+    doc: DOC_NAME,
+    exported_at: new Date().toISOString(),
+    comment_count: active.length,
+    resolved_excluded: resolvedNum,
+    outdated_excluded: outdatedNum,
+    comments: active
+  };
+}
+
+function buildPromptMarkdown(active) {
+  const resolvedNum = comments.filter(c => c.resolved).length;
+  const outdatedNum = comments.filter(c => c.outdated && !c.resolved).length;
+  let md = `# Comments on ${DOC_NAME}\n\n`;
+  md += `Exported: ${new Date().toISOString()}\n`;
+  md += `Total: ${active.length} comment${active.length > 1 ? 's' : ''} (active only)\n`;
+  if (resolvedNum > 0) md += `Resolved (excluded): ${resolvedNum}\n`;
+  if (outdatedNum > 0) md += `Outdated / orphaned (excluded): ${outdatedNum}\n`;
+  md += `\n---\n\n`;
+  active.forEach((c, i) => {
+    md += `## ${i + 1}. ${c.sectionLabel || c.sectionId}\n\n`;
+    md += `**Selected text** (from ${c.sectionId}):\n\n> ${c.selectedText.split('\n').join('\n> ')}\n\n`;
+    md += `**My comment**:\n${c.comment}\n\n`;
+    md += `---\n\n`;
+  });
+  return md;
+}
+
+function downloadBlob(content, mime, filename) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+// Copy JSON to clipboard (primary daily action — no file download)
+document.getElementById('btn-copy-json').addEventListener('click', () => {
+  const active = getActiveSorted();
+  if (active.length === 0) {
+    showToast(comments.length > 0 ? '全部 resolved，沒有 active comment' : '沒有 comment');
+    return;
+  }
+  const json = JSON.stringify(buildJsonPayload(active), null, 2);
+  navigator.clipboard?.writeText(json).then(() => {
+    const note = comments.length - active.length > 0 ? `（排除 ${comments.length - active.length} 個 resolved）` : '';
+    showToast(`✓ Copied ${active.length} comment 到剪貼簿 ${note}`);
+  }).catch(() => showToast('複製失敗，瀏覽器拒絕剪貼簿存取'));
+});
+
+// Export dropdown menu
+const exportMenuBtn = document.getElementById('btn-export-menu');
+const exportDropdown = document.getElementById('export-dropdown');
+exportMenuBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  exportDropdown.classList.toggle('show');
+});
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.export-menu-wrap')) exportDropdown.classList.remove('show');
+});
+exportDropdown.querySelectorAll('.export-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    const fmt = opt.dataset.format;
+    exportDropdown.classList.remove('show');
+    const active = getActiveSorted();
+    if (active.length === 0) {
+      showToast(comments.length > 0 ? '全部 resolved，沒有 active comment' : '沒有 comment');
+      return;
+    }
+    const date = new Date().toISOString().slice(0, 10);
+    if (fmt === 'json') {
+      const json = JSON.stringify(buildJsonPayload(active), null, 2);
+      downloadBlob(json, 'application/json', `design-comments-${date}.json`);
+      showToast(`↓ Downloaded design-comments-${date}.json`);
+    } else if (fmt === 'prompt') {
+      const md = buildPromptMarkdown(active);
+      downloadBlob(md, 'text/markdown', `design-comments-prompt-${date}.md`);
+      showToast(`↓ Downloaded design-comments-prompt-${date}.md`);
+    }
+  });
+});
+
+document.getElementById('btn-clear-all').addEventListener('click', () => {
+  if (comments.length === 0) return;
+  if (!confirm(`刪除全部 ${comments.length} 個 comment？`)) return;
+  comments.forEach(c => unwrapMark(c.id));
+  comments = [];
+  saveComments();
+  renderCommentList();
+  showToast('已清空');
+});
+
+document.getElementById('btn-resolve-all').addEventListener('click', () => {
+  const active = comments.filter(c => !c.resolved && !c.outdated);
+  if (active.length === 0) {
+    showToast(comments.length > 0 ? '沒有 active comment（outdated 不算）' : '沒有 comment');
+    return;
+  }
+  if (!confirm(`把全部 ${active.length} 個 active comment 標為 resolved？（outdated 不會被標）`)) return;
+  const now = new Date().toISOString();
+  active.forEach(c => {
+    c.resolved = true;
+    c.resolvedAt = now;
+    updateMarkResolvedState(c.id, true);
+  });
+  saveComments();
+  renderCommentList();
+  showToast(`✓ 已標 ${active.length} 個 comment 為 resolved`);
+});
+
+// ============================================================
+// Mobile FAB
+// ============================================================
+
+document.getElementById('comment-fab').addEventListener('click', () => {
+  document.getElementById('comment-panel').classList.toggle('open');
+});
+
+// ============================================================
+// Mermaid lightbox (click to zoom + pan)
+// ============================================================
+
+let currentMmPanZoom = null;
+const mmBackdrop = document.getElementById('mm-modal-backdrop');
+const mmSvgWrap = document.getElementById('mm-modal-svg-wrap');
+const mmTitle = document.getElementById('mm-modal-title');
+
+function findDiagramLabel(mermaidEl) {
+  let n = mermaidEl.previousElementSibling;
+  while (n) {
+    if (n.tagName === 'H3' || n.tagName === 'H4' || n.tagName === 'H2') return n.textContent.trim();
+    n = n.previousElementSibling;
+  }
+  const sec = mermaidEl.closest('section');
+  if (sec) {
+    const h = sec.querySelector('h2');
+    if (h) return h.textContent.trim();
+  }
+  return 'Mermaid diagram';
+}
+
+function openMermaidLightbox(mermaidEl) {
+  const origSvg = mermaidEl.querySelector('svg');
+  if (!origSvg) return;
+  const cloned = origSvg.cloneNode(true);
+  cloned.removeAttribute('style');
+  cloned.removeAttribute('width');
+  cloned.removeAttribute('height');
+  cloned.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+  mmSvgWrap.innerHTML = '';
+  mmSvgWrap.appendChild(cloned);
+  mmTitle.textContent = findDiagramLabel(mermaidEl);
+  mmBackdrop.classList.add('show');
+
+  setTimeout(() => {
+    try {
+      currentMmPanZoom = svgPanZoom(cloned, {
+        zoomEnabled: true,
+        controlIconsEnabled: false,
+        fit: true,
+        center: true,
+        minZoom: 0.3,
+        maxZoom: 12,
+        zoomScaleSensitivity: 0.4,
+        dblClickZoomEnabled: true
+      });
+    } catch (e) {
+      console.warn('pan-zoom init failed', e);
+    }
+  }, 40);
+}
+
+function closeMermaidLightbox() {
+  mmBackdrop.classList.remove('show');
+  if (currentMmPanZoom) {
+    try { currentMmPanZoom.destroy(); } catch (e) {}
+    currentMmPanZoom = null;
+  }
+  mmSvgWrap.innerHTML = '';
+}
+
+function bindMermaidLightbox() {
+  document.querySelectorAll('.mermaid').forEach(el => {
+    if (el.dataset.lbBound) return;
+    el.dataset.lbBound = '1';
+    el.addEventListener('click', (e) => {
+      const sel = window.getSelection();
+      if (sel && sel.toString().trim().length > 0 && el.contains(sel.anchorNode)) return;
+      openMermaidLightbox(el);
+    });
+  });
+}
+
+document.getElementById('mm-close').addEventListener('click', closeMermaidLightbox);
+document.getElementById('mm-zoom-in').addEventListener('click', () => currentMmPanZoom?.zoomIn());
+document.getElementById('mm-zoom-out').addEventListener('click', () => currentMmPanZoom?.zoomOut());
+document.getElementById('mm-reset').addEventListener('click', () => {
+  if (!currentMmPanZoom) return;
+  currentMmPanZoom.resetZoom();
+  currentMmPanZoom.center();
+  currentMmPanZoom.fit();
+});
+mmBackdrop.addEventListener('click', (e) => { if (e.target === mmBackdrop) closeMermaidLightbox(); });
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && mmBackdrop.classList.contains('show')) closeMermaidLightbox();
+});
+
+// ============================================================
+// Sidebar toggle (floating menu button → hover overlay / click pin)
+// ============================================================
+
+const sidebarToggle = document.getElementById('sidebar-toggle');
+const sidebarEl = document.getElementById('sidebar');
+let sidebarPinned = false;
+let sidebarHoverTimer = null;
+
+function setSidebarPinned(pinned) {
+  sidebarPinned = pinned;
+  document.body.classList.toggle('sidebar-pinned', pinned);
+  if (pinned) {
+    sidebarEl.classList.add('show', 'pinned-mode');
+    sidebarEl.classList.remove('hover-mode');
+  } else {
+    sidebarEl.classList.remove('show', 'pinned-mode', 'hover-mode');
+  }
+}
+
+function showSidebarHover() {
+  if (sidebarPinned) return;
+  clearTimeout(sidebarHoverTimer);
+  sidebarEl.classList.add('show', 'hover-mode');
+}
+
+function hideSidebarHover() {
+  if (sidebarPinned) return;
+  clearTimeout(sidebarHoverTimer);
+  sidebarHoverTimer = setTimeout(() => {
+    if (!sidebarPinned) {
+      sidebarEl.classList.remove('show', 'hover-mode');
+    }
+  }, 180);
+}
+
+sidebarToggle.addEventListener('click', () => setSidebarPinned(!sidebarPinned));
+sidebarToggle.addEventListener('mouseenter', showSidebarHover);
+sidebarToggle.addEventListener('mouseleave', hideSidebarHover);
+sidebarEl.addEventListener('mouseenter', () => {
+  if (sidebarPinned) return;
+  clearTimeout(sidebarHoverTimer);
+});
+sidebarEl.addEventListener('mouseleave', hideSidebarHover);
+// Click on a TOC link while in hover mode → also close
+sidebarEl.querySelectorAll('.toc a').forEach(a => {
+  a.addEventListener('click', () => {
+    if (!sidebarPinned) {
+      sidebarEl.classList.remove('show', 'hover-mode');
+    }
+  });
+});
+
+// ============================================================
+// Comment panel resize (drag the left edge; width persists)
+// ============================================================
+const COMMENT_WIDTH_KEY = STORAGE_KEY + '-width';
+const COMMENT_W_MIN = 240;
+const COMMENT_W_MAX = 760;
+
+function applyCommentWidth(px) {
+  const w = Math.round(Math.min(COMMENT_W_MAX, Math.max(COMMENT_W_MIN, px)));
+  document.documentElement.style.setProperty('--comment-w', w + 'px');
+  return w;
+}
+
+function applyStoredCommentWidth() {
+  const raw = localStorage.getItem(COMMENT_WIDTH_KEY);
+  if (raw) {
+    const n = parseInt(raw, 10);
+    if (!isNaN(n)) applyCommentWidth(n);
+  }
+}
+
+function bindCommentResize() {
+  const handle = document.getElementById('comment-resize-handle');
+  if (!handle || handle.dataset.bound) return;
+  handle.dataset.bound = '1';
+
+  let startX = 0, startW = 0, dragging = false;
+
+  function currentWidth() {
+    const v = getComputedStyle(document.documentElement).getPropertyValue('--comment-w');
+    const n = parseInt(v, 10);
+    return isNaN(n) ? 320 : n;
+  }
+  function onMove(e) {
+    if (!dragging) return;
+    const x = e.touches ? e.touches[0].clientX : e.clientX;
+    applyCommentWidth(startW + (startX - x));  // drag left → panel grows (right-anchored)
+    e.preventDefault();
+  }
+  function onUp() {
+    if (!dragging) return;
+    dragging = false;
+    document.body.classList.remove('comment-resizing');
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+    document.removeEventListener('touchmove', onMove);
+    document.removeEventListener('touchend', onUp);
+    localStorage.setItem(COMMENT_WIDTH_KEY, String(currentWidth()));
+  }
+  function onDown(e) {
+    dragging = true;
+    startX = e.touches ? e.touches[0].clientX : e.clientX;
+    startW = currentWidth();
+    document.body.classList.add('comment-resizing');
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('touchend', onUp);
+    e.preventDefault();
+  }
+  handle.addEventListener('mousedown', onDown);
+  handle.addEventListener('touchstart', onDown, { passive: false });
+  handle.addEventListener('dblclick', () => {  // double-click resets to default
+    applyCommentWidth(320);
+    localStorage.setItem(COMMENT_WIDTH_KEY, '320');
+  });
+}
+
+// Apply persisted width + bind drag immediately (independent of comment loading)
+applyStoredCommentWidth();
+bindCommentResize();
+
+// ============================================================
+// Init (wait for mermaid + hljs to finish rendering)
+// ============================================================
+
+function init() {
+  bindMermaidLightbox();
+  // Annotation system is opt-out: skip wiring it up when body.annotations-off is set.
+  if (!document.body.classList.contains('annotations-off')) {
+    loadComments();
+  }
+}
+// Wait a bit for mermaid SVG rendering to settle
+setTimeout(init, 1800);
+</script>
+
+</body>
+</html>

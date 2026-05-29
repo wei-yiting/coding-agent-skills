@@ -1,0 +1,33 @@
+{
+  "skill_name": "interactive-slide-builder",
+  "evals": [
+    {
+      "id": 0,
+      "name": "negative-bulk-deck-no-careful-design",
+      "prompt": "我下週要 pitch 找錢,需要做一份 20 頁的 investor deck,內容大概是公司介紹、市場、產品、business model、團隊、財務、roadmap、ask。我已經把講稿寫好放在 /tmp/pitch-script.md 了,直接照講稿做出來就好,顏色不要太花、字體乾淨就好,週五前要交。",
+      "expected_output": "This is a NEGATIVE test case. The user wants a bulk deck (20 pages) under time pressure, with no diagrams, no animations, and explicitly says 'just make it from the script'. interactive-slide-builder should NOT trigger here — its per-slide planning loop would be the wrong tool. The generic `pptx` skill is the right fit. If interactive-slide-builder triggers, the description's 'Skip if...' disambiguation is failing.",
+      "files": []
+    },
+    {
+      "id": 1,
+      "name": "architecture-diagram-with-click-reveal",
+      "prompt": "幫我做一頁 PPT,要講解一個 API gateway 的流程:client 送 request 給 gateway,gateway 先去 cache 看,如果 cache miss 才打 backend service。我希望 client、gateway、cache、service 這四個方塊配上之間的箭頭,點一下出現一個東西,從左到右、由上而下慢慢揭露。投影片用 16:9。輸出檔放在 /tmp/api-gateway-slide/。",
+      "expected_output": "The assistant should drive the per-slide planning loop: ASCII sketch of layout, text + shape inventory tables with IDs, grouping plan (each tile = box + label), numbered animation order table, clarifying questions (colour palette, exact text, font, file naming), then wait for confirmation before building. Final output: deck.pptx with 4 tiles + 3 arrows, native shapes (no images), groups named G1..G4, speaker notes mirroring the animation order, and a slide-1-spec.md file.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "three-feature-comparison-grouping",
+      "prompt": "Make a slide comparing three approaches to caching: write-through, write-behind, and write-around. Each one needs an icon, a heading, and a 2-line description, all together in a column with a tinted background. The three columns should be visually grouped — when I edit one later I want to grab the whole column. No animation needed. Save it as comparison.pptx in the current directory.",
+      "expected_output": "The assistant runs the planning loop, recognises animations are not needed (asks first, then skips that table), produces an inventory with three column tiles, declares grouping (G1=column1, G2=column2, G3=column3, each containing background box + icon + heading + description text). Confirms no animation is intended. Builds with python-pptx, names groups properly, leaves spec file. The grouping should be implemented via add_group_shape so the user can grab each column as one unit in PowerPoint.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "pipeline-progressive-reveal",
+      "prompt": "做一個 5 步驟的 pipeline 投影片:Signup → Email verify → Profile setup → Tutorial → Done。每步是一個圓圈裡面寫編號,下面寫步驟名稱。每按一次滑鼠,下一個步驟跟它前面的箭頭一起出現,當前步驟用較深的顏色標出來。標題寫「Onboarding pipeline」。投影片配色想要簡潔現代,你提幾個選項給我選。",
+      "expected_output": "The assistant runs the planning loop, including asking the user to pick from suggested colour palettes (e.g. teal/charcoal/sage) before building. It produces: 5 step groups (each = circle + number text + step label), arrow elements between them, grouping plan, animation order that pairs each arrow with its following step using 'after previous'. Clarifies whether 'highlight current' means a colour-change emphasis or just initial-state difference. Builds via python-pptx, animation injection attempts XML for fade/wipe entrances, speaker notes mirror the full sequence.",
+      "files": []
+    }
+  ]
+}
