@@ -30,7 +30,7 @@ Task tool (general-purpose):
 
     Once you're clear on requirements:
     1. Implement exactly what the task specifies
-    2. Write tests (following TDD if task says to)
+    2. Write tests (following TDD if task says to). If the task produces frontend tests — React Testing Library, Vitest, Playwright E2E, MSW handlers, or custom hooks — load the `frontend-test-writing` skill **before** the TDD Red step and apply its query priority, state-based decomposition, layer policy, and anti-pattern guidance. Tests that ignore those patterns are rejected at review.
     3. Verify implementation works
     4. Commit your work
     5. Self-review (see below)

@@ -105,7 +105,7 @@ Use this skill (or call its launcher from another skill) when all of the followi
 **Optional flags:**
 
 - `--expect-output` — relative path (from `--project-dir`) where the launcher expects the prompt to have written a report. If the file is missing after the run, the launcher exits with code 2 even if Docker exited cleanly.
-- `--stream-log` — where to tee stream-json output (relative to `--project-dir`). Default: `.artifacts/current/temp/sandbox-stream.jsonl`. Preserved on exit for debugging.
+- `--stream-log` — where to tee stream-json output (relative to `--project-dir`). Default: `artifacts/current/temp/sandbox-stream.jsonl`. Preserved on exit for debugging.
 - `--progress-pattern` — regex to grep from `Bash` tool-use commands in the stream log. If set, only matching commands are printed. If empty (default), all tool-use names are printed as they happen.
 - `--browser-use` — install `browser-use` CLI + Chromium in the container. Forces Python >= 3.11.
 - `--playwright` — force-install Playwright system deps + Chromium binary. Auto-detected from `package.json` but can be forced.
@@ -138,7 +138,7 @@ Key guarantees:
 
 | Skill | How it uses this launcher |
 |---|---|
-| `bdd-e2e-loop` | `scripts/bdd-sandbox.sh` pre-renders the Stage 1 BDD prompt, then calls `run-sandbox.sh` with `--progress-pattern '# [SJ]-[^\\]*'` and `--expect-output .artifacts/current/temp/auto-stage-report.json`. Runs BDD verification scenarios in a loop. |
+| `bdd-e2e-loop` | `scripts/bdd-sandbox.sh` pre-renders the Stage 1 BDD prompt, then calls `run-sandbox.sh` with `--progress-pattern '# [SJ]-[^\\]*'` and `--expect-output artifacts/current/temp/auto-stage-report.json`. Runs BDD verification scenarios in a loop. |
 | `subagent-driven-development` | In Sandbox Mode, the skill pre-renders an orchestrator prompt that runs the full implementation loop (implementer → spec review → quality review → flow verification), calls `run-sandbox.sh`, and reads the completion report when the container exits. No commits happen inside the sandbox; the host makes one final commit after the container finishes. |
 
 ## Reference Files
@@ -161,7 +161,7 @@ Key guarantees:
 
 2. **Host state is untouchable.** The container mounts a **copy** of `~/.claude`, not the original. Nothing the container does can affect the host's Claude Code state.
 
-3. **Ephemeral everything.** Image, temp claude copy, Dockerfile, cidfile — all destroyed on exit. The only persistent artifact is the stream log, which lives in the caller's `.artifacts/current/temp/` for debugging.
+3. **Ephemeral everything.** Image, temp claude copy, Dockerfile, cidfile — all destroyed on exit. The only persistent artifact is the stream log, which lives in the caller's `artifacts/current/temp/` for debugging.
 
 4. **Unique image tags.** Concurrent runs (e.g., BDD sandbox + SDD sandbox in two worktrees) never collide because every run generates a PID-+-nanosecond-unique tag.
 

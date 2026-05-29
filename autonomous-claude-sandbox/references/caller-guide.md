@@ -6,7 +6,7 @@ This guide walks you through integrating `autonomous-claude-sandbox` into anothe
 
 ```
 Your skill controller (on host):
-  1. Prepare input artifacts in $PROJECT_DIR/.artifacts/current/
+  1. Prepare input artifacts in $PROJECT_DIR/artifacts/current/
   2. Pre-render your prompt file (substitute template variables)
   3. exec run-sandbox.sh with the right flags
   4. When run-sandbox.sh returns, read the report file
@@ -19,7 +19,7 @@ The key idea: your skill owns the **what** (the prompt, the expected output sche
 
 ### Step 1: Prepare input artifacts
 
-Before calling the launcher, put any files your prompt will read into `$PROJECT_DIR/.artifacts/current/`. The container mounts the project at `/workspace`, so these files will appear at `/workspace/.artifacts/current/`.
+Before calling the launcher, put any files your prompt will read into `$PROJECT_DIR/artifacts/current/`. The container mounts the project at `/workspace`, so these files will appear at `/workspace/artifacts/current/`.
 
 ### Step 2: Pre-render your prompt file
 
@@ -27,7 +27,7 @@ Before calling the launcher, put any files your prompt will read into `$PROJECT_
 
 ```bash
 # Inside your skill's script
-TEMP_DIR="$PROJECT_DIR/.artifacts/current/temp"
+TEMP_DIR="$PROJECT_DIR/artifacts/current/temp"
 mkdir -p "$TEMP_DIR"
 
 # Option A: sed (fine if values don't contain sed metacharacters)
@@ -58,7 +58,7 @@ Option B is preferred when values might contain `|`, `&`, newlines, or other sed
 bash ~/.claude/skills/autonomous-claude-sandbox/scripts/run-sandbox.sh \
   --project-dir "$PROJECT_DIR" \
   --prompt-file "$TEMP_DIR/my-prompt-resolved.md" \
-  --expect-output ".artifacts/current/temp/my-report.json" \
+  --expect-output "artifacts/current/temp/my-report.json" \
   --progress-pattern 'Task [0-9]+:|Error:' \
   --timeout 7200
 ```
@@ -72,7 +72,7 @@ The launcher runs in the foreground. It will print:
 ### Step 4: Read the report after the launcher exits
 
 ```bash
-REPORT="$PROJECT_DIR/.artifacts/current/temp/my-report.json"
+REPORT="$PROJECT_DIR/artifacts/current/temp/my-report.json"
 if [[ -f "$REPORT" ]]; then
   status=$(jq -r '.status' "$REPORT")
   case "$status" in
@@ -105,7 +105,7 @@ set -euo pipefail
 PROJECT_DIR="${1:?}"
 MAX_ROUNDS="${2:-5}"
 
-ARTIFACTS="$PROJECT_DIR/.artifacts/current"
+ARTIFACTS="$PROJECT_DIR/artifacts/current"
 TEMP_DIR="$ARTIFACTS/temp"
 mkdir -p "$TEMP_DIR"
 
@@ -152,7 +152,7 @@ PY
 bash ~/.claude/skills/autonomous-claude-sandbox/scripts/run-sandbox.sh \
   --project-dir "$PROJECT_DIR" \
   --prompt-file "$TEMP_DIR/stage1-prompt-resolved.md" \
-  --expect-output ".artifacts/current/temp/auto-stage-report.json" \
+  --expect-output "artifacts/current/temp/auto-stage-report.json" \
   --progress-pattern '# [SJ]-[^\\]*' \
   --image-prefix "bdd-sandbox" \
   $BROWSER_FLAG
@@ -179,7 +179,7 @@ set -euo pipefail
 PROJECT_DIR="${1:?}"
 TIMEOUT="${2:-7200}"   # 2 hours default
 
-ARTIFACTS="$PROJECT_DIR/.artifacts/current"
+ARTIFACTS="$PROJECT_DIR/artifacts/current"
 TEMP_DIR="$ARTIFACTS/temp"
 mkdir -p "$TEMP_DIR"
 
@@ -197,7 +197,7 @@ cp ~/.claude/skills/subagent-driven-development/references/sandbox-orchestrator-
 bash ~/.claude/skills/autonomous-claude-sandbox/scripts/run-sandbox.sh \
   --project-dir "$PROJECT_DIR" \
   --prompt-file "$TEMP_DIR/orchestrator-prompt.md" \
-  --expect-output ".artifacts/current/temp/sdd-sandbox-report.json" \
+  --expect-output "artifacts/current/temp/sdd-sandbox-report.json" \
   --progress-pattern 'Task [0-9]+:|Spec review|Quality review|Flow verification' \
   --image-prefix "sdd-sandbox" \
   --timeout "$TIMEOUT"

@@ -34,7 +34,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR=""
 PROMPT_FILE=""
 EXPECT_OUTPUT=""
-STREAM_LOG_REL=".artifacts/current/temp/sandbox-stream.jsonl"
+STREAM_LOG_REL="artifacts/current/temp/sandbox-stream.jsonl"
 PROGRESS_PATTERN=""
 NEED_BROWSER_USE=false
 FORCE_PLAYWRIGHT=false
@@ -86,7 +86,7 @@ PROMPT_FILE="$(cd "$(dirname "$PROMPT_FILE")" && pwd)/$(basename "$PROMPT_FILE")
 
 # ─── Paths ──────────────────────────────────────────────────────────────────
 
-ARTIFACTS_DIR="$PROJECT_DIR/.artifacts/current"
+ARTIFACTS_DIR="$PROJECT_DIR/artifacts/current"
 TEMP_DIR="$ARTIFACTS_DIR/temp"
 mkdir -p "$TEMP_DIR"
 

@@ -107,7 +107,7 @@ There's no way to rotate credentials inside a running sandbox — the container'
 
 - The per-run temp dir (`$HOST_TEMP`) contains a copy of your OAuth token. It lives under `$TMPDIR` (usually `/tmp/` or `/var/folders/...` on macOS) with `0700` permissions inherited from `mktemp`. The `cleanup` trap `rm -rf`'s it on exit (success, failure, or signal).
 
-- The stream log preserved at `$STREAM_LOG` may contain tool-use output that echoed credentials (unlikely but possible if the prompt explicitly asked Claude to print env vars). The `monitor-stream.sh` helper scrubs obvious patterns (`Bearer`, `token`, `sk-ant-*`) before display, but the raw stream log on disk is NOT scrubbed. Treat it as sensitive and gitignore your `.artifacts/current/temp/` directory.
+- The stream log preserved at `$STREAM_LOG` may contain tool-use output that echoed credentials (unlikely but possible if the prompt explicitly asked Claude to print env vars). The `monitor-stream.sh` helper scrubs obvious patterns (`Bearer`, `token`, `sk-ant-*`) before display, but the raw stream log on disk is NOT scrubbed. Treat it as sensitive and gitignore your `artifacts/current/temp/` directory.
 
 - If the launcher is killed hard (SIGKILL from the OS, not Ctrl+C), the cleanup trap does not fire and the temp dir stays on disk. Periodically check for leftover directories: `ls -la "${TMPDIR:-/tmp}"/claude-sandbox-* 2>/dev/null` and clean them manually if the launcher is not running.
 
