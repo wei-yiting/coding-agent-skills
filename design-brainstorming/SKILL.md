@@ -29,7 +29,7 @@ You MUST create a task for each of these items and complete them in order:
 6. **Write design doc** — save to `artifacts/current/design.md` (per Artifact Contract in CLAUDE.md)
 7. **Spec review loop** — dispatch spec-document-reviewer subagent with precisely crafted review context (never your session history); fix issues and re-dispatch until approved (max 3 iterations, then surface to human)
 8. **User reviews written spec** — ask user to review the spec file before proceeding
-9. **Transition to implementation** — invoke writing-plans skill to create implementation plan
+9. **Transition to implementation** — invoke implementation-planning skill to create implementation plan (per slice if a Slice Roadmap exists)
 
 ## Process Flow
 
@@ -46,7 +46,7 @@ digraph brainstorming {
     "Spec review loop" [shape=box];
     "Spec review passed?" [shape=diamond];
     "User reviews spec?" [shape=diamond];
-    "Invoke writing-plans skill" [shape=doublecircle];
+    "Invoke implementation-planning skill" [shape=doublecircle];
 
     "Explore project context" -> "Visual questions ahead?";
     "Visual questions ahead?" -> "Offer Visual Companion\n(own message, no other content)" [label="yes"];
@@ -62,22 +62,27 @@ digraph brainstorming {
     "Spec review passed?" -> "Spec review loop" [label="issues found,\nfix and re-dispatch"];
     "Spec review passed?" -> "User reviews spec?" [label="approved"];
     "User reviews spec?" -> "Write design doc" [label="changes requested"];
-    "User reviews spec?" -> "Invoke writing-plans skill" [label="approved"];
+    "User reviews spec?" -> "Invoke implementation-planning skill" [label="approved"];
 }
 ```
 
-**The terminal state is invoking writing-plans.** Do NOT invoke frontend-design, mcp-builder, or any other implementation skill. The ONLY skill you invoke after brainstorming is writing-plans.
+**The terminal state is invoking implementation-planning.** Do NOT invoke frontend-design, mcp-builder, or any other implementation skill. The ONLY skill you invoke after brainstorming is implementation-planning.
 
 ## The Process
 
 **Understanding the idea:**
 
 - Check out the current project state first (files, docs, recent commits)
-- Before asking detailed questions, assess scope: if the request describes multiple independent subsystems (e.g., "build a platform with chat, file storage, billing, and analytics"), flag this immediately. Don't spend questions refining details of a project that needs to be decomposed first.
-- If the project is too large for a single spec, help the user decompose into sub-projects: what are the independent pieces, how do they relate, what order should they be built? Then brainstorm the first sub-project through the normal design flow. Each sub-project gets its own spec → plan → implementation cycle.
+- Before asking detailed questions, assess scope on two axes:
+  - **Subsystem count:** if the request describes multiple independent subsystems (e.g., "build a platform with chat, file storage, billing, and analytics"), flag this immediately. Don't spend questions refining details of a project that needs to be decomposed first.
+  - **Size:** even a single coherent feature must be decomposed into slices when its estimated implementation diff exceeds ~1000 net lines. A feature that is conceptually one thing but ships as a 3000-line changeset is still too large to review as one batch — it needs a Slice Roadmap (see below).
+- A **slice** is a group of plan tasks that completes one independently verifiable, independently mergeable end-to-end flow (1 slice = 1 Flow Verification group = 1 PR). Target net diff 300–800 lines per slice. LOC estimates are rough forcing functions for decomposition, not precise predictions.
+- If the project is too large for a single spec (by subsystem count or size), help the user decompose: what are the independent pieces or slices, how do they relate, what order should they be built? Then brainstorm the first piece through the normal design flow. Each sub-project or slice gets its own spec → plan → briefing → implementation → PR cycle.
 - For appropriately-scoped projects, ask questions one at a time to refine the idea
 - Prefer multiple choice questions when possible, but open-ended is fine too
 - Only one question per message - if a topic needs more exploration, break it into multiple questions
+- For each question, provide your recommended answer and why — the recommendation reduces decision fatigue, and its trade-off reasoning is itself useful to the user
+- If a *fact* can be found by exploring the codebase, look it up rather than asking. The *decisions* are the user's — put each one to them and wait
 - Focus on understanding: purpose, constraints, success criteria
 
 **Exploring approaches:**
@@ -99,18 +104,24 @@ digraph brainstorming {
 The design doc answers "WHAT are we building and HOW do components interact."
 It does NOT answer "HOW is each component implemented internally."
 
+**Length guidance:** the design doc body should normally fit in ~150 lines
+excluding diagrams. Exceeding it is a signal that implementation detail has
+leaked in — treat it as a prompt to move content into the implementation plan,
+not as a hard cap to pad up to. (The optional Learning Notes section below is
+excluded from this budget.)
+
 Include in the design doc:
 - Component responsibilities and boundaries (what each piece does, not how)
-- Interfaces between components (input/output types, protocols, API shapes)
+- Interface signatures ONLY for contract-defining boundaries between components (the shapes consumers depend on) — not internal helper signatures
 - Data flow diagrams (which components talk to which, in what order)
-- Key design decisions with rationale (decision table: choice + why)
+- Key design decisions recorded as a **decision table** (choice / alternatives rejected / why) rather than long prose
 - Known constraints and trade-offs
 - What is explicitly out of scope
 
 Do NOT include in the design doc:
 - Internal implementation pseudocode or processing rules
 - Detailed error handling logic (just note "errors are handled gracefully")
-- Complete type/class definitions (interface signatures are enough)
+- Complete type/class definitions (contract-boundary interface signatures are enough)
 - File-by-file module structure (that belongs in the implementation plan)
 - Test case specifics (just note the testing strategy at a high level)
 - Step-by-step algorithms or state machine transitions
@@ -118,6 +129,29 @@ Do NOT include in the design doc:
 The test: if removing a section doesn't change the reader's ability to evaluate
 whether the architecture decisions are correct, that section belongs in the
 implementation plan, not the design doc.
+
+**Slice Roadmap (required when the design exceeds the size budget):**
+
+When the design's estimated implementation diff exceeds ~1000 net lines, the
+design doc MUST include a `## Slice Roadmap` section. It lists ordered slices
+S1..Sn, each with:
+- a one-sentence scope (the one end-to-end flow the slice delivers)
+- dependencies on prior slices
+- acceptance criteria (how you know the slice is done)
+- a rough size estimate (net lines)
+
+Each slice then goes through its own plan → briefing → implementation → PR
+cycle. A small design that fits in a single slice (≤ ~1000 lines) may omit the
+roadmap.
+
+**Learning Notes (optional):**
+
+The design doc MAY end with a `## Learning Notes` section — educational content
+for the user, who learns while building. It aggregates engineering strategies
+applied, trade-offs considered (what was chosen over what and why), and key
+generalizable takeaways. Write it in zh-TW prose with English technical terms.
+This section is explicitly excluded from the ~150-line length budget and from
+spec review scope.
 
 **Design for isolation and clarity:**
 
@@ -158,13 +192,15 @@ Wait for the user's response. If they request changes, make them and re-run the 
 
 **Implementation:**
 
-- Invoke the writing-plans skill to create a detailed implementation plan
-- Do NOT invoke any other skill. writing-plans is the next step.
+- Invoke the implementation-planning skill to create a detailed implementation plan
+- Do NOT invoke any other skill. implementation-planning is the next step.
 
 ## Key Principles
 
 - **One question at a time** - Don't overwhelm with multiple questions
 - **Multiple choice preferred** - Easier to answer than open-ended when possible
+- **Recommend on every question** - Each question carries your suggested answer and reasoning
+- **Look up facts, ask decisions** - Codebase-answerable facts are researched, never asked; decisions always go to the user
 - **YAGNI ruthlessly** - Remove unnecessary features from all designs
 - **Explore alternatives** - Always propose 2-3 approaches before settling
 - **Incremental validation** - Present design, get approval before moving on

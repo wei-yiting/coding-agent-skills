@@ -23,7 +23,11 @@ Task tool (general-purpose):
     | Clarity | Requirements ambiguous enough to cause someone to build the wrong thing |
     | Scope | Focused enough for a single plan — not covering multiple independent subsystems |
     | YAGNI | Unrequested features, over-engineering |
-    | Implementation leakage | Pseudocode, internal algorithms, file trees, detailed test cases, or step-by-step processing rules that belong in the implementation plan — not the design doc |
+    | Implementation leakage | Pseudocode, error-handling logic, full type/class definitions, file-by-file structure, step-by-step algorithms, or detailed test cases that belong in the implementation plan — not the design doc. Interface signatures are allowed ONLY for contract-defining boundaries between components. |
+    | Missing Slice Roadmap | The design clearly exceeds the ~1000-net-line size budget but has no `## Slice Roadmap` section decomposing it into ordered, independently mergeable slices |
+    | Litmus test | Any section where removing it would NOT change the reader's ability to evaluate whether the architecture decisions are correct — that section belongs in the implementation plan |
+
+    Note: a `## Learning Notes` section (if present) is educational content for the user and is OUT of review scope — do not flag it for leakage, length, or detail.
 
     ## Calibration
 
