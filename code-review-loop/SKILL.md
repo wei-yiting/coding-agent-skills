@@ -1,13 +1,12 @@
 ---
 name: code-review-loop
 description: >-
-  Run a comprehensive post-implementation review/fix loop for a completed
-  changeset or PR. Uses isolated reviewer and fixer subagents, checks pragmatism,
-  documentation gaps, and external library usage against official docs via
-  Context7, then runs final verification and writes a Code Review Improvement
-  Report. Use only when the user explicitly requests a broad review such as
-  "run code review loop", "review this PR", or "quality gate check". Do not
-  use for single-file, quick, or mid-implementation reviews.
+  Run a comprehensive post-implementation review/fix loop for a completed changeset or PR:
+  isolated reviewer and fixer subagents, two review axes (code quality/standards and spec
+  conformance against the implementation plan or issue), pragmatism and documentation-gap
+  checks, external library usage verified against official docs via Context7, final
+  verification, and a written Code Review Improvement Report. Use only when the user explicitly requests a broad review or
+  quality gate; not for single-file, quick, or mid-implementation reviews.
 ---
 
 # Code Review Loop
@@ -15,6 +14,18 @@ description: >-
 A multi-round orchestrated review-fix cycle that achieves zero-issue code quality through
 **epistemic isolation** — the reviewer and fixer are separate subagents that never share
 session context, preventing the bias that occurs when the same agent reviews its own work.
+
+The review runs along **two axes**, each owned by its own reviewer:
+
+- **Quality/Standards** — is the code well built? (pragmatism, readability, smell
+  baseline, documentation, library usage)
+- **Spec conformance** — is it the *right* code? (checked against the originating spec:
+  nothing missing, no scope creep, nothing misimplemented)
+
+A change can pass one axis and fail the other — code that follows every standard but
+implements the wrong thing, or code that does exactly what the issue asked while breaking
+conventions. The axes are reviewed and reported separately so a severe finding on one
+never masks or reranks the other.
 
 ## Output Language Convention
 
@@ -146,8 +157,12 @@ REVIEWER_PROVIDER = "codex" | "claude"
 4. Determine git SHAs:
    - `BASE_SHA` = commit before implementation started (from plan or git log)
    - `HEAD_SHA` = current `git HEAD`
+5. **Determine the spec source** for the Spec axis (priority order, per
+   `resources/spec-reviewer-prompt.md`): `implementation.md` (+ `bdd-scenarios.md` if
+   present) → Linear issue description → user-supplied spec/description. If none exists,
+   the Spec axis is skipped for the whole loop — note this in the final report.
 
-### Step 1: Dispatch Reviewer
+### Step 1: Dispatch Reviewers
 
 Read the full prompt template from `resources/reviewer-prompt.md`.
 
@@ -199,11 +214,23 @@ Fill in the template variables:
 - **Claude** → dispatch via Task tool as a read-only subagent (same as fixer dispatch but
   without write/edit permissions).
 
-Write the reviewer's output to `artifacts/current/code-review-loop/review-round-{ROUND}.md`.
+**Spec reviewer (second axis, in parallel):** if a spec source exists, also dispatch the
+Spec reviewer using `resources/spec-reviewer-prompt.md` — always a Claude read-only
+subagent via Task tool, independent of `REVIEWER_PROVIDER`. The two reviewers run in
+parallel and never see each other's output. Round 2+: dispatch only if the previous
+round has SP- findings to confirm or still open (dispatch criteria in the template).
+
+Write both outputs to `artifacts/current/code-review-loop/review-round-{ROUND}.md` —
+the quality review first, then the Spec reviewer's output appended under its own
+`# Spec Conformance Round {ROUND}` heading. Keep the sections verbatim; do not merge
+findings across axes.
 
 ### Step 2: Evaluate Results
 
-Parse the reviewer's output for issue counts by severity.
+Parse the round file for issue counts by severity, across both axes — SP- findings
+carry the same severity labels and enter the same buckets for loop-control purposes.
+Counting is not reranking: findings stay attributed to their axis and are never
+reordered against the other axis's.
 
 **Decision tree:**
 
@@ -240,7 +267,8 @@ Read the full prompt template from `resources/fixer-prompt.md`.
 
 Fill in template variables:
 
-- `{issues_content}` — the Issues section from `code-review-loop/review-round-{ROUND}.md`
+- `{issues_content}` — the Issues section from `code-review-loop/review-round-{ROUND}.md`,
+  plus the Spec Conformance Findings section (SP- items) if present
 - `{round}` — current round number
 
 Delegate to the **`code-fixer`** subagent with the filled template as its prompt.
@@ -282,12 +310,15 @@ Read the template from `resources/report-template.md`.
 Fill in all sections with data collected across rounds:
 
 - Round-by-round summary
+- Spec Conformance outcomes (SP- findings per type, or why the axis was skipped)
+- Reading Guide (suggested review order for the human: contracts/types → core logic → wiring → tests, with ⚠️ risk flags)
 - Critical fixes table
 - Library usage corrections (Context7)
 - Documentation improvements
 - Unaddressed suggestions
 - Final verification results
 - Complete changed files manifest
+- Learning Notes (engineering strategies applied, trade-offs accepted, key takeaways — distilled from what the rounds surfaced)
 
 Write to `artifacts/current/code-review-improvement-report.md`.
 
@@ -316,6 +347,7 @@ Code Review Loop 完成。
 {architecture_impact_summary — 架構影響摘要的內容}
 
 完整 report：artifacts/current/code-review-improvement-report.md
+（想邊讀邊註解的話，可用 `htmlify` 轉成 HTML——Learning Notes 會呈現為浮動側欄。）
 
 有任何不清楚的地方請隨時問我。
 確認 OK 後說「發 PR」，我會建立 PR 並附上 report 摘要和 Manual Validation checklist。
@@ -352,7 +384,8 @@ Wait for the user to ask questions and confirm. After confirmation, create a PR 
 
 5. **Review Standards** — The reviewer enforces pragmatic code standards embedded in
    `resources/reviewer-prompt.md`: YAGNI, readability, comments, documentation, zero
-   tolerance for code cruft, and Context7-verified library usage.
+   tolerance for code cruft, the Fowler smell baseline (repo-documented standards
+   override it; smells are always judgement calls), and Context7-verified library usage.
 
 6. **Max 5 rounds** — If issues persist after 5 rounds, stop and hand off to the user.
    Infinite loops waste time; the human needs to intervene.
@@ -368,11 +401,17 @@ Wait for the user to ask questions and confirm. After confirmation, create a PR 
    sufficient. Only include detailed sections (Library Corrections, Documentation
    Improvements, etc.) when there's actual content for them.
 
+10. **Two axes, never merged** — Quality/Standards and Spec conformance are reviewed by
+    separate subagents and reported side by side. Do not merge, rerank, or pick a single
+    "worst issue" across axes — one axis's severe findings would mask the other's, and
+    "well-built but wrong thing" is exactly the failure the Spec axis exists to catch.
+
 ## Resource Files Reference
 
 | File                                  | Purpose                           | When to Read        |
 | ------------------------------------- | --------------------------------- | ------------------- |
-| `resources/reviewer-prompt.md`        | Reviewer subagent prompt template | Step 1 (each round) |
+| `resources/reviewer-prompt.md`        | Quality reviewer prompt template  | Step 1 (each round) |
+| `resources/spec-reviewer-prompt.md`   | Spec reviewer prompt template     | Step 1 (per dispatch criteria) |
 | `resources/fixer-prompt.md`           | Fixer subagent prompt template    | Step 3 (each round) |
 | `resources/report-template.md`        | Improvement report structure      | Step 5              |
 | `resources/verification-checklist.md` | Final verification checklist      | Step 4              |
