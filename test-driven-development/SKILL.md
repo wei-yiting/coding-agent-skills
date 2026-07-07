@@ -281,6 +281,26 @@ it('calls db.query with ORDER BY created_at DESC', async () => {
 
 **The litmus test:** would this test survive an internal refactor that doesn't change behavior? If renaming a private function or reordering internal calls breaks it, it was testing implementation, not behavior — and it'll cost you every time you clean up the code.
 
+### Expected Values Come From an Independent Source
+
+A **tautological test** recomputes the expected value the same way the code under test does, so it passes by construction and can never disagree with the code. This is the natural failure mode when writing a test while looking at the implementation — which is exactly what an AI agent does when testing after the fact, and another reason the Iron Law says test-first.
+
+```typescript
+// Tautological: expected value recomputed the way the code computes it
+it('sums line item prices', () => {
+  const items = [{ price: 10 }, { price: 5 }];
+  const expected = items.reduce((sum, i) => sum + i.price, 0);
+  expect(calculateTotal(items)).toBe(expected);  // passes even if both are wrong
+});
+
+// Good: expected value is an independent, known-good literal
+it('sums line item prices', () => {
+  expect(calculateTotal([{ price: 10 }, { price: 5 }])).toBe(15);
+});
+```
+
+Expected values must come from an independent source of truth: a known-good literal, a worked example computed by hand, or the spec. `expect(add(a, b)).toBe(a + b)` verifies nothing; `expect(add(2, 3)).toBe(5)` does.
+
 Verify *through the public interface*, too — don't reach around it to check internal state:
 
 ```typescript
@@ -372,6 +392,7 @@ A name with "and" in it usually means the test does two things — split it.
 | Testing implementation details | Tests break on refactor even when behavior is unchanged | Test inputs and outputs, not internal structure |
 | Flaky tests (timing, order-dependent) | Erode trust in the whole suite | Deterministic assertions, isolate test state |
 | Testing framework code | Wastes effort on third-party behavior | Only test YOUR code |
+| Tautological tests | Expected value recomputed the code's way — passes by construction, can never catch a bug | Expected values from an independent source: known-good literal, worked example, spec |
 | Snapshot abuse | Huge snapshots nobody reviews, break on any change | Use sparingly, review every change |
 | No test isolation | Pass individually, fail together | Each test sets up and tears down its own state |
 | Mocking everything | Tests pass while production breaks | Real > fake > stub > mock; mock only at boundaries |
