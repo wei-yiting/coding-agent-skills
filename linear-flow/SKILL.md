@@ -48,6 +48,11 @@ issue's team key.
 Statuses mirror the dev pipeline. **Whenever the work enters a stage, immediately move the issue
 to that status** (`save_issue` with `state`) — do not batch status updates for later.
 
+**Moving any issue to a `completed` or `canceled` status — by ANY path — triggers the
+[Unblock sweep](#unblock-sweep--runs-on-every-completion) in the same turn.** This includes
+paths that never go through /issue-close: rescue/chore issues with no PR, direct status moves,
+cancellations, and merges you notice that GitHub automation already marked completed.
+
 | Status | Type | Stage meaning | Entered when… |
 |---|---|---|---|
 | `Noted` / `Soon (P1)` / `Later (P2)` | backlog | triage buckets | issue captured, not scheduled |
@@ -191,11 +196,37 @@ Only after the PR is actually merged (check with `gh pr view`):
    untracked valuables first — check `git status` and gitignored `artifacts/`, `results/` dirs).
 2. Move status to `Merge & Deployed`. Final comment: merge commit, what shipped, follow-up issues
    spawned (link them).
-3. **Unblock sweep**: fetch this issue's relations (`get_issue` with `includeRelations: true`).
-   For every issue this one was blocking and which now has no other open blockers, post a short
-   「🔓 已解鎖（blocker DONG-XX 完成）」comment there, and re-evaluate its status and
-   `🙋 human-action` label — an unblocked issue whose first pending item is human's gets the
-   label now, not at some future sync.
+3. Run the [Unblock sweep](#unblock-sweep--runs-on-every-completion) (it fires on the status
+   move in step 2; listed here so /issue-close is self-contained).
+
+## Unblock sweep — runs on EVERY completion
+
+**Trigger**: an issue reaches any `completed` or `canceled` status, no matter how — /issue-close,
+/issue-ship 後直接 merge、無 PR 的 rescue/chore 任務直接移 completed、user 手動移、或 GitHub
+automation 已標 completed 而你剛注意到。The sweep is part of the completion itself: 移動狀態的
+那個 turn 就要做完，不是留給未來 session。Applies to both profiles (dev and content).
+
+Steps — fetch the completed issue's relations (`get_issue` with `includeRelations: true`), then
+for **every issue in `blocks` that now has no other open blockers**:
+
+1. **🔓 comment**: 「🔓 已解鎖（blocker DONG-XX 完成）」+ 這次完成對它的具體意義（交付物在哪個
+   branch/SHA、哪個前置條件已滿足、下一步是誰的）.
+2. **Description de-stale**: search its description for blocked-claims about the completed
+   issue（「前置條件：…完成後才能動手」「先完成 DONG-XX」「⚠️ 尚未 commit」等 prose）and rewrite
+   them to reflect reality（已完成、交付物位置）. The board reads descriptions, not comment
+   threads — a swept issue whose description still says "blocked" is a failed sweep.
+3. **Checklist**: check off any of its `- [ ]` items this completion satisfied (e.g., 「等 X
+   救援」項).
+4. **Status**: re-evaluate — if it sat in a backlog/unstarted bucket *only because of* the
+   blocker, promote it (dev: → `Todo (P0)`; content: → `Queued`); if it parked in a stage
+   awaiting the blocker, confirm the stage still matches. When in doubt, leave status but say so
+   in the 🔓 comment.
+5. **`🙋 human-action` label**: an unblocked issue whose first pending item is human's gets the
+   label NOW, not at some future sync; conversely don't add it when the next actionable item is
+   agent work.
+
+Before ending the turn, verify: no issue formerly blocked by this one still *reads* blocked —
+relations cleared (Linear does this automatically), description prose updated, status truthful.
 
 ## General rules
 
@@ -212,8 +243,8 @@ Only after the PR is actually merged (check with `gh pr view`):
      (e.g., entering `Human Code Review` → add; human decision unblocks `Implementation` → remove).
   3. **Stage completion / agent work exhausted** — when the agent finishes everything it can do
      without the human, add the label as part of the same update.
-  4. **/issue-start, /issue-sync, /issue-ship, /issue-close** — each verb ends by checking the
-     label matches reality.
+  4. **/issue-start, /issue-sync, /issue-ship, /issue-close, and every Unblock sweep** — each
+     ends by checking the label matches reality.
   5. **Human action completed** — the moment the human's reply/review/answer is processed
      (e.g., addressing their comment, receiving their decision), remove the label in the same
      turn, and check their corresponding `## 🧑 Human todo` checkbox.
