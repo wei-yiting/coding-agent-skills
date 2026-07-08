@@ -138,7 +138,6 @@ address them by changing *code or the generated explanations*, then regenerate; 
 `assets/template.html` = the `htmlify` skill's template (visual shell, sidebar, hero,
 comment panel + sidecar sync, mermaid lightbox, theme system) as of 2026-07-07, plus
 PR-specific layers: diff renderer with unified/split toggle, risk map, review bubbles,
-walkthrough, takeaway panel (collapsible), comment-panel desktop collapse, and dialog IME
-guards that htmlify does not have yet (worth backporting). The two templates drift
-independently — when fixing a runtime bug in either skill, check whether the other needs the
-same patch.
+walkthrough, takeaway panel (collapsible), and comment-panel desktop collapse. The two
+templates drift independently — when fixing a runtime bug in either skill, check whether the
+other needs the same patch.

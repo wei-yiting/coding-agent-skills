@@ -78,8 +78,8 @@ These are automated checks. Run each command and record the result.
 
 BDD scenario source priority:
 
-1. `artifacts/current/bdd-validation.md` (produced by the `bdd-test-planning` skill) — authoritative, cross-validates with the implementation plan.
-2. BDD scenarios in `implementation.md` — fallback if `bdd-validation.md` does not exist.
+1. `artifacts/current/bdd-scenarios.md` + `artifacts/current/verification-plan.md` (produced by the `behavior-validation-plan` skill) — authoritative, cross-validates with the implementation plan.
+2. BDD scenarios in `implementation.md` — fallback if the BDD artifacts do not exist.
 3. **Self-derived** — if neither source exists, warn the user that no behavioral verification is available, then derive scenarios from the codebase yourself. Propose them to the user, proceed after confirmation, and record all proposed and executed scenarios in the report (see report template's "Behavioral Validation" section).
 
 For each scenario:
@@ -104,7 +104,7 @@ Scenario: {scenario_name}
 
 E2E verification step source priority:
 
-1. Observable Verification section of `artifacts/current/bdd-validation.md`.
+1. Browser Automation and Manual Verification sections of `artifacts/current/verification-plan.md`.
 2. E2E verification steps in `implementation.md`.
 3. **Self-derived** — if neither source exists, warn the user, derive verification steps from the codebase, propose them, and proceed after confirmation. Record in the report.
 

@@ -285,7 +285,7 @@ Run the verification levels yourself (the orchestrator). Read `resources/verific
 for the full checklist structure.
 
 **BDD and E2E verification source** (priority order):
-1. `artifacts/current/bdd-validation.md` — authoritative if it exists.
+1. `artifacts/current/bdd-scenarios.md` + `artifacts/current/verification-plan.md` (produced by `behavior-validation-plan`) — authoritative if they exist.
 2. BDD/E2E steps in `implementation.md` — fallback.
 3. **Self-derived** — if neither exists, warn the user, derive behavioral validations from the codebase, propose them, proceed after confirmation. Record all proposed and executed validations in the report's "Behavioral Validation" section.
 
@@ -356,7 +356,7 @@ Code Review Loop 完成。
 Wait for the user to ask questions and confirm. After confirmation, create a PR with:
 
 - Report 摘要 in PR description
-- Manual Validation checklist (from `artifacts/current/bdd-validation.md` if available)
+- Manual Validation checklist (from the Manual Verification section of `artifacts/current/verification-plan.md` if available)
 - Link to full report file
 
 ---
