@@ -6,6 +6,7 @@ class names below. Don't invent new CSS — reuse these classes so the doc stays
 coherent and the annotation system keeps working.
 
 ## Table of Contents
+- [Content width (reading column)](#content-width-reading-column)
 - [Section block](#section-block)
 - [Section tags (colors)](#section-tags-colors)
 - [Headings inside a section](#headings-inside-a-section)
@@ -20,6 +21,28 @@ coherent and the annotation system keeps working.
 - [Color palette reference](#color-palette-reference)
 
 ---
+
+## Content width (reading column)
+
+The template lays content out as a **centered reading column**, not a full-width
+slab. `main` is capped at `62rem` and centered; within it, flowing text — `p`,
+`ul`/`ol`, `h3`/`h4`, `.callout`, the `.section-head`, and the whole `.hero` — is
+further capped to a `46rem` measure and centered with `margin-inline: auto`.
+Tables (`.table-wrap`), Mermaid (`.mermaid`), and code (`<pre>`) are intentionally
+left **uncapped**, so they fill `main` and break out symmetrically past the text
+column on the **same center axis** — wider than the prose, but never lopsided.
+
+What this means when you emit content HTML:
+
+- **Don't add your own `max-width` / `width` / left-right margins** to content
+  elements. The reading measure and the breakout are already handled; a
+  hand-rolled width re-introduces the left-skewed look this layout exists to kill.
+- Wide tables / diagrams *should* be wider than the prose — that's the breakout,
+  and it stays centered. If a table is still too wide it scrolls inside
+  `.table-wrap`; that's expected, not something to "fix" with a width.
+- To change the measure for a whole doc, edit the two `max-width` values in the
+  template's `main` / reading-column rules — never per-element overrides inside
+  `{{MAIN_CONTENT}}`.
 
 ## Section block
 
@@ -142,10 +165,19 @@ HTML labels are enabled). Preserve any `classDef` / `class` styling from the sou
     return 42</code></pre>
 ```
 
-highlight.js auto-highlights. Use the right `language-*` class (`language-python`,
-`language-javascript`, `language-bash`, `language-markdown`, …). HTML-escape the code
-body: `<` → `&lt;`, `>` → `&gt;`, `&` → `&amp;`. For a pseudo-code / plain block, drop the
-`language-*` class.
+highlight.js auto-highlights. **Syntax highlighting is mandatory: every code block MUST
+carry a `language-*` class** — never ship a bare `<code>`, or the block renders flat and
+(worse) highlight.js may auto-detect the wrong language. Use the right token
+(`language-python`, `language-javascript`, `language-bash`, `language-json`, `language-html`,
+`language-css`, `language-markdown`, …); carry the language through from the source fence, and
+if the fence has none, infer it from the code. For genuine plaintext (ASCII art, signatures,
+console output with no real language) use `language-text` explicitly — not a missing class.
+HTML-escape the code body: `<` → `&lt;`, `>` → `&gt;`, `&` → `&amp;`.
+
+The highlight.js wiring lives in the template and is load-bearing: the browser bundle
+`@highlightjs/cdn-assets@<v>/highlight.min.js` (defines the `hljs` global + bundles common
+languages) plus a trailing `hljs.highlightAll()`. Don't repoint it at `npm/highlight.js/lib/…`
+— that's a CommonJS build that 404s as a `<script src>` and silently disables all highlighting.
 
 ## Collapsible details
 

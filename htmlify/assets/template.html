@@ -5,34 +5,104 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>{{DOC_TITLE}}</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.10.0/styles/github.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.10.0/styles/github.min.css">
 <style>
+/* ── Instrument-panel palette: cool ledger neutrals + teal accent + violet hub.
+   Light is the base; dark is redefined at token level below so every component
+   that styles through var() follows both themes. Reading-column widths are
+   intentionally left in the layout rules, not here. */
 :root {
-  --bg: #f8fafc;
+  --bg: #eceef1;
   --card-bg: #ffffff;
-  --text: #0f172a;
-  --text-muted: #475569;
-  --text-subtle: #64748b;
-  --border: #e2e8f0;
-  --border-strong: #cbd5e1;
-  --code-bg: #f1f5f9;
-  --primary: #2563eb;
-  --primary-light: #dbeafe;
+  --text: #14181f;
+  --text-muted: #3f4855;
+  --text-subtle: #6b7480;
+  --border: #dde1e7;
+  --border-strong: #c6ccd4;
+  --code-bg: #f0f2f5;
+  --code-ink: #2b3542;
+  --primary: #0c7d84;
+  --primary-light: #d6ecee;
   --architecture: #2563eb;
-  --architecture-bg: #eff6ff;
-  --sunset: #f97316;
-  --sunset-bg: #fff7ed;
-  --inspect: #10b981;
-  --inspect-bg: #ecfdf5;
-  --decision: #8b5cf6;
-  --decision-bg: #f5f3ff;
-  --ab: #ef4444;
-  --ab-bg: #fef2f2;
-  --api: #14b8a6;
-  --api-bg: #f0fdfa;
-  --open: #eab308;
-  --open-bg: #fefce8;
+  --architecture-bg: #e8f0fe;
+  --sunset: #b4640f;
+  --sunset-bg: #fbeeda;
+  --inspect: #147045;
+  --inspect-bg: #e2f4ea;
+  --decision: #7c4dbd;
+  --decision-bg: #f0e9fb;
+  --ab: #c23b46;
+  --ab-bg: #fbe9e9;
+  --api: #0c7d84;
+  --api-bg: #dff1f2;
+  --open: #9a6410;
+  --open-bg: #fbeeda;
+  --info-fg: #1f5fae;
+  --warn-fg: #9a5410;
+  --key-fg: #6a3fb0;
+  --success-fg: #147045;
+  --row-hover: #f4f6f8;
+  --shadow: 0 1px 2px rgba(20,24,31,.04), 0 4px 16px rgba(20,24,31,.05);
+  --mono: "SFMono-Regular", "SF Mono", "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
   --comment-w: 320px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1319;
+    --card-bg: #171c24;
+    --text: #eef1f5;
+    --text-muted: #b7bfca;
+    --text-subtle: #8b94a0;
+    --border: #262d38;
+    --border-strong: #333c48;
+    --code-bg: #10151c;
+    --code-ink: #bcc6d2;
+    --primary: #3fb8bf;
+    --primary-light: #16323a;
+    --architecture: #77aef0;
+    --architecture-bg: #142944;
+    --sunset: #e0a15a;
+    --sunset-bg: #33260f;
+    --inspect: #6fd79b;
+    --inspect-bg: #10321f;
+    --decision: #b18ce6;
+    --decision-bg: #241834;
+    --ab: #ec8d8d;
+    --ab-bg: #3a1c1c;
+    --api: #3fb8bf;
+    --api-bg: #10302f;
+    --open: #e0a15a;
+    --open-bg: #33260f;
+    --info-fg: #77aef0;
+    --warn-fg: #e0a15a;
+    --key-fg: #c3a3ef;
+    --success-fg: #6fd79b;
+    --row-hover: #1d232c;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 22px rgba(0,0,0,.28);
+  }
+}
+/* Explicit theme override (wins over the media query in both directions) */
+:root[data-theme="light"] {
+  --bg: #eceef1; --card-bg: #ffffff; --text: #14181f; --text-muted: #3f4855;
+  --text-subtle: #6b7480; --border: #dde1e7; --border-strong: #c6ccd4;
+  --code-bg: #f0f2f5; --code-ink: #2b3542; --primary: #0c7d84; --primary-light: #d6ecee;
+  --architecture: #2563eb; --architecture-bg: #e8f0fe; --sunset: #b4640f; --sunset-bg: #fbeeda;
+  --inspect: #147045; --inspect-bg: #e2f4ea; --decision: #7c4dbd; --decision-bg: #f0e9fb;
+  --ab: #c23b46; --ab-bg: #fbe9e9; --api: #0c7d84; --api-bg: #dff1f2; --open: #9a6410; --open-bg: #fbeeda;
+  --info-fg: #1f5fae; --warn-fg: #9a5410; --key-fg: #6a3fb0; --success-fg: #147045;
+  --row-hover: #f4f6f8; --shadow: 0 1px 2px rgba(20,24,31,.04), 0 4px 16px rgba(20,24,31,.05);
+}
+:root[data-theme="dark"] {
+  --bg: #0f1319; --card-bg: #171c24; --text: #eef1f5; --text-muted: #b7bfca;
+  --text-subtle: #8b94a0; --border: #262d38; --border-strong: #333c48;
+  --code-bg: #10151c; --code-ink: #bcc6d2; --primary: #3fb8bf; --primary-light: #16323a;
+  --architecture: #77aef0; --architecture-bg: #142944; --sunset: #e0a15a; --sunset-bg: #33260f;
+  --inspect: #6fd79b; --inspect-bg: #10321f; --decision: #b18ce6; --decision-bg: #241834;
+  --ab: #ec8d8d; --ab-bg: #3a1c1c; --api: #3fb8bf; --api-bg: #10302f; --open: #e0a15a; --open-bg: #33260f;
+  --info-fg: #77aef0; --warn-fg: #e0a15a; --key-fg: #c3a3ef; --success-fg: #6fd79b;
+  --row-hover: #1d232c; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 22px rgba(0,0,0,.28);
 }
 
 * { box-sizing: border-box; }
@@ -41,16 +111,15 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Noto Sans TC", sans-serif;
+  font-family: var(--sans);
   line-height: 1.7;
   font-size: 15px;
+  -webkit-font-smoothing: antialiased;
 }
 
 .layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) var(--comment-w);
-  max-width: 1740px;
-  margin: 0 auto;
   transition: padding-left 0.22s ease;
 }
 body.sidebar-pinned .layout {
@@ -62,7 +131,7 @@ body.comment-resizing {
 }
 
 /* annotations-off mode: hide comment UI, single-column layout */
-body.annotations-off .layout { grid-template-columns: minmax(0, 1fr); max-width: 1100px; }
+body.annotations-off .layout { grid-template-columns: minmax(0, 1fr); max-width: 1100px; margin: 0 auto; }
 body.annotations-off .comment-panel,
 body.annotations-off .comment-fab,
 body.annotations-off .selection-toolbar,
@@ -122,15 +191,19 @@ body.sidebar-pinned .sidebar-toggle {
 .sidebar.hover-mode { box-shadow: 6px 0 24px rgba(0, 0, 0, 0.12); }
 .sidebar.pinned-mode { box-shadow: none; }
 .sidebar-brand {
-  font-weight: 700;
-  font-size: 15px;
+  font-family: var(--mono);
+  font-weight: 600;
+  font-size: 14px;
   color: var(--text);
   margin-bottom: 4px;
-  letter-spacing: -0.01em;
+  letter-spacing: 0.01em;
 }
+.sidebar-brand::before { content: "▚ "; color: var(--primary); }
 .sidebar-sub {
+  font-family: var(--mono);
   color: var(--text-subtle);
-  font-size: 12px;
+  font-size: 11px;
+  letter-spacing: 0.02em;
   margin-bottom: 20px;
 }
 .toc {
@@ -153,8 +226,9 @@ body.sidebar-pinned .sidebar-toggle {
 .toc-num {
   display: inline-block;
   width: 22px;
+  font-family: var(--mono);
   font-weight: 600;
-  color: var(--text-subtle);
+  color: var(--primary);
   font-feature-settings: "tnum";
   flex-shrink: 0;
 }
@@ -165,10 +239,140 @@ body.sidebar-pinned .sidebar-toggle {
   white-space: nowrap;
 }
 
+/* LEARNING PANEL (🎓 Learning Notes — optional floating panel, sibling of the TOC.
+   Violet accent to read as "calm / educational", distinct from the blue TOC/links and
+   the yellow annotation marks. All rules are inert unless the panel markup is present. */
+.learning-toggle {
+  position: fixed;
+  bottom: 14px;
+  left: 14px;
+  z-index: 75;
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  font-size: 17px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+  user-select: none;
+  font-family: inherit;
+}
+.learning-toggle:hover {
+  background: var(--decision-bg);
+  border-color: var(--decision);
+}
+body.learning-open .learning-toggle {
+  background: var(--decision);
+  border-color: var(--decision);
+  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.35);
+}
+.learning-panel {
+  position: fixed;
+  bottom: 62px;
+  left: 14px;
+  width: 340px;
+  max-width: calc(100vw - 28px);
+  max-height: min(70vh, 560px);
+  display: flex;
+  flex-direction: column;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--decision);
+  border-radius: 12px;
+  box-shadow: 0 12px 34px rgba(15, 23, 42, 0.18);
+  z-index: 74;
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+body.learning-open .learning-panel {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+.learning-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.learning-panel-title {
+  font-weight: 700;
+  font-size: 13.5px;
+  color: var(--decision);
+  letter-spacing: -0.01em;
+}
+.learning-close {
+  border: none;
+  background: transparent;
+  color: var(--text-subtle);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-family: inherit;
+}
+.learning-close:hover { background: var(--code-bg); color: var(--text); }
+.learning-panel-body {
+  overflow-y: auto;
+  padding: 8px 16px 16px;
+  font-size: 13.5px;
+  line-height: 1.65;
+}
+.learning-panel-body > *:first-child { margin-top: 4px; }
+.learning-panel-body h3 { font-size: 14.5px; margin: 16px 0 6px; }
+.learning-panel-body h4 {
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-subtle);
+  margin: 14px 0 4px;
+}
+.learning-panel-body p { margin: 6px 0; }
+.learning-panel-body ul,
+.learning-panel-body ol { padding-left: 20px; margin: 6px 0; }
+.learning-panel-body li { margin: 3px 0; }
+.learning-panel-body pre { font-size: 12px; border-radius: 8px; }
+.learning-panel-body :not(pre) > code { font-size: 12.5px; }
+@media (max-width: 480px) {
+  .learning-panel { width: calc(100vw - 28px); max-height: 74vh; }
+}
+
 /* MAIN */
 main {
   padding: 32px 56px 80px;
-  max-width: 1100px;
+  max-width: 62rem;
+  margin: 0 auto;
+}
+
+/* Reading column: flowing text + headings are capped to a comfortable measure
+   and CENTERED, so wide tables / diagrams / code break past it symmetrically
+   (shared center axis) and the text block never looks skewed. The hero stays
+   inside the same centered column. */
+.hero {
+  max-width: 46rem;
+  margin-inline: auto;
+}
+.doc-section > p,
+.doc-section > ul,
+.doc-section > ol,
+.doc-section > h3,
+.doc-section > h4,
+.doc-section > .callout,
+.doc-section > .section-head {
+  max-width: 46rem;
+  margin-inline: auto;
 }
 
 /* HERO */
@@ -179,14 +383,15 @@ main {
 }
 .status-badge {
   display: inline-block;
+  font-family: var(--mono);
   background: var(--open-bg);
-  color: #854d0e;
+  color: var(--open);
   padding: 3px 10px;
   border-radius: 999px;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
   margin-bottom: 12px;
 }
 .hero h1 {
@@ -211,23 +416,27 @@ main {
 .stat {
   background: var(--card-bg);
   border: 1px solid var(--border);
+  border-top: 3px solid var(--primary);
   border-radius: 10px;
   padding: 16px 18px;
+  box-shadow: var(--shadow);
 }
 .stat-num {
-  font-size: 28px;
-  font-weight: 700;
+  font-family: var(--mono);
+  font-size: 27px;
+  font-weight: 600;
   color: var(--primary);
   line-height: 1;
-  letter-spacing: -0.02em;
-  font-feature-settings: "tnum";
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
 }
 .stat-label {
-  font-size: 12px;
+  font-family: var(--mono);
+  font-size: 11px;
   color: var(--text-subtle);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin-top: 6px;
+  letter-spacing: 0.05em;
+  margin-top: 8px;
 }
 
 .prereq {
@@ -239,6 +448,7 @@ main {
   font-size: 13.5px;
   color: var(--text-muted);
   margin-bottom: 18px;
+  box-shadow: var(--shadow);
 }
 .research-links {
   display: flex;
@@ -250,7 +460,8 @@ main {
   align-items: center;
   background: var(--code-bg);
   color: var(--text-muted);
-  font-family: "SF Mono", Menlo, monospace;
+  border: 1px solid var(--border);
+  font-family: var(--mono);
   font-size: 11.5px;
   padding: 4px 9px;
   border-radius: 6px;
@@ -264,12 +475,13 @@ section.doc-section { margin-bottom: 56px; scroll-margin-top: 24px; }
   gap: 14px;
   margin-bottom: 20px;
   padding-bottom: 14px;
-  border-bottom: 2px solid var(--border);
+  border-bottom: 1px solid var(--border-strong);
 }
 .section-num {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text-subtle);
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary);
   font-feature-settings: "tnum";
   min-width: 28px;
 }
@@ -282,12 +494,13 @@ section.doc-section { margin-bottom: 56px; scroll-margin-top: 24px; }
 }
 .section-tag {
   display: inline-block;
-  padding: 2px 10px;
-  border-radius: 999px;
-  font-size: 11px;
+  font-family: var(--mono);
+  padding: 2px 9px;
+  border-radius: 6px;
+  font-size: 10.5px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
 }
 .tag-architecture { background: var(--architecture-bg); color: var(--architecture); }
 .tag-sunset { background: var(--sunset-bg); color: var(--sunset); }
@@ -295,7 +508,7 @@ section.doc-section { margin-bottom: 56px; scroll-margin-top: 24px; }
 .tag-decision { background: var(--decision-bg); color: var(--decision); }
 .tag-ab { background: var(--ab-bg); color: var(--ab); }
 .tag-api { background: var(--api-bg); color: var(--api); }
-.tag-open { background: var(--open-bg); color: #854d0e; }
+.tag-open { background: var(--open-bg); color: var(--open); }
 
 h3 {
   font-size: 18px;
@@ -305,12 +518,13 @@ h3 {
   color: var(--text);
 }
 h4 {
-  font-size: 15px;
+  font-family: var(--mono);
+  font-size: 12px;
   font-weight: 600;
   margin: 22px 0 10px;
-  color: var(--text-muted);
+  color: var(--primary);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
 }
 p { margin: 0 0 14px; }
 
@@ -319,9 +533,9 @@ code {
   background: var(--code-bg);
   padding: 2px 6px;
   border-radius: 4px;
-  font-family: "SF Mono", Menlo, Consolas, monospace;
-  font-size: 0.88em;
-  color: #be185d;
+  font-family: var(--mono);
+  font-size: 0.86em;
+  color: var(--code-ink);
 }
 strong { color: var(--text); font-weight: 600; }
 em { font-style: italic; color: var(--text-muted); }
@@ -332,8 +546,9 @@ pre {
   border-radius: 8px;
   padding: 16px 18px;
   overflow-x: auto;
+  font-family: var(--mono);
   font-size: 13px;
-  line-height: 1.55;
+  line-height: 1.6;
   margin: 14px 0 20px;
   border: 1px solid var(--border);
 }
@@ -351,6 +566,7 @@ pre code {
   border-radius: 8px;
   border: 1px solid var(--border);
   background: var(--card-bg);
+  box-shadow: var(--shadow);
 }
 table {
   width: 100%;
@@ -363,12 +579,13 @@ thead {
 th {
   text-align: left;
   padding: 10px 14px;
+  font-family: var(--mono);
   font-weight: 600;
   color: var(--text-muted);
-  font-size: 12.5px;
+  font-size: 11.5px;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  border-bottom: 1px solid var(--border);
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border-strong);
 }
 td {
   padding: 10px 14px;
@@ -377,7 +594,7 @@ td {
   line-height: 1.6;
 }
 tr:last-child td { border-bottom: none; }
-tbody tr:hover { background: #fcfcfd; }
+tbody tr:hover { background: var(--row-hover); }
 
 /* DECISION TABLE — colored num + larger row gap */
 .decisions-table td:first-child {
@@ -413,6 +630,7 @@ tbody tr:hover { background: #fcfcfd; }
   margin: 18px 0 24px;
   overflow-x: auto;
   text-align: center;
+  box-shadow: var(--shadow);
 }
 
 /* CALLOUT */
@@ -423,10 +641,10 @@ tbody tr:hover { background: #fcfcfd; }
   border-left: 4px solid;
   font-size: 14px;
 }
-.callout-info { background: var(--architecture-bg); border-color: var(--architecture); color: #1e3a8a; }
-.callout-warn { background: var(--sunset-bg); border-color: var(--sunset); color: #9a3412; }
-.callout-key { background: var(--decision-bg); border-color: var(--decision); color: #5b21b6; }
-.callout-success { background: var(--inspect-bg); border-color: var(--inspect); color: #064e3b; }
+.callout-info { background: var(--architecture-bg); border-color: var(--architecture); color: var(--info-fg); }
+.callout-warn { background: var(--sunset-bg); border-color: var(--sunset); color: var(--warn-fg); }
+.callout-key { background: var(--decision-bg); border-color: var(--decision); color: var(--key-fg); }
+.callout-success { background: var(--inspect-bg); border-color: var(--inspect); color: var(--success-fg); }
 .callout strong { color: inherit; }
 
 /* LISTS */
@@ -455,7 +673,9 @@ footer {
   padding-top: 24px;
   border-top: 1px solid var(--border);
   color: var(--text-subtle);
-  font-size: 13px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
   text-align: center;
 }
 
@@ -471,21 +691,21 @@ footer {
   background: var(--card-bg);
   font-size: 13px;
 }
-/* Drag handle on the panel's left edge — drag left to widen (panel grows leftward) */
+/* Drag handle tracking the panel's left edge — drag left to widen (panel grows leftward).
+   position:fixed (left set by JS) so it never scrolls away when the panel overflows. */
 .comment-resize-handle {
-  position: absolute;
+  position: fixed;
   top: 0;
-  bottom: 0;
-  left: 0;
-  width: 8px;
+  height: 100vh;
+  width: 9px;
   cursor: ew-resize;
-  z-index: 40;
+  z-index: 50;
   touch-action: none;
 }
 .comment-resize-handle::after {
   content: '';
   position: absolute;
-  left: 0;
+  left: 3px;
   top: 0;
   bottom: 0;
   width: 2px;
@@ -561,8 +781,7 @@ body.comment-resizing .comment-resize-handle::after {
   border-color: var(--primary);
 }
 .btn-action.btn-primary-action:hover {
-  background: #1d4ed8;
-  border-color: #1d4ed8;
+  filter: brightness(1.08);
   color: white;
 }
 .btn-icon {
@@ -671,10 +890,11 @@ body.comment-resizing .comment-resize-handle::after {
   text-align: center; padding: 32px 12px; line-height: 1.7;
 }
 
-/* annotation marks */
+/* annotation marks — pale highlight always carries dark ink so it stays legible
+   in dark mode (body text is light there; inherit would be unreadable on yellow). */
 mark.annot {
   background: #fef08a;
-  color: inherit;
+  color: #1a1a1a;
   padding: 1px 2px;
   border-radius: 2px;
   cursor: pointer;
@@ -690,11 +910,13 @@ mark.annot.pulse {
   50% { background: #facc15; box-shadow: 0 0 0 6px rgba(250, 204, 21, 0.35); }
 }
 
-/* selection toolbar */
+/* selection toolbar — fixed dark chip (tooltip-style) so it reads on both
+   light and dark pages; var(--text) would invert to near-white in dark mode
+   and hide the white label. */
 .selection-toolbar {
   position: absolute;
   display: none;
-  background: var(--text);
+  background: #1f2530;
   color: white;
   border-radius: 8px;
   padding: 4px;
@@ -748,7 +970,7 @@ mark.annot.pulse {
 }
 .comment-dialog textarea:focus {
   outline: none; border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  box-shadow: 0 0 0 3px rgba(12, 125, 132, 0.18);
 }
 .dialog-actions {
   display: flex; justify-content: space-between; align-items: center;
@@ -762,7 +984,7 @@ mark.annot.pulse {
   font-size: 13px; font-weight: 600;
   cursor: pointer; font-family: inherit;
 }
-.btn-primary:hover { background: #1d4ed8; }
+.btn-primary:hover { filter: brightness(1.08); }
 .btn-secondary {
   background: var(--code-bg); color: var(--text-muted);
   border: 1px solid var(--border);
@@ -793,7 +1015,7 @@ mark.annot.pulse {
   border-radius: 50%;
   background: var(--primary); color: white; border: none;
   font-size: 22px; cursor: pointer;
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+  box-shadow: 0 4px 14px rgba(12, 125, 132, 0.4);
   display: none;
   align-items: center; justify-content: center;
   z-index: 40;
@@ -885,13 +1107,13 @@ mark.annot.pulse {
 /* === RESOLVED STATE (dimmed + muted gray-green) === */
 mark.annot.resolved {
   background: #e6ede9 !important;
-  color: var(--text-muted) !important;
+  color: #5f6b66 !important;
   border-bottom-color: #c0ccc4 !important;
   opacity: 1 !important;
 }
 mark.annot.resolved:hover {
   background: #d4ddd7 !important;
-  color: var(--text) !important;
+  color: #1a1a1a !important;
 }
 
 .comment-card.resolved {
@@ -999,6 +1221,58 @@ mark.annot.resolved:hover {
   background-size: contain;
 }
 
+/* === FILE SYNC STATUS === */
+.sync-status {
+  font-size: 11.5px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  line-height: 1.5;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.sync-status.local {
+  background: var(--code-bg);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+.sync-status.synced {
+  background: var(--inspect-bg);
+  color: var(--inspect);
+  border: 1px solid #6ee7b7;
+}
+.sync-status.pending {
+  background: var(--open-bg);
+  color: #854d0e;
+  border: 1px solid #fde68a;
+}
+.sync-status.readonly {
+  background: var(--architecture-bg, #eff6ff);
+  color: var(--architecture, #1d4ed8);
+  border: 1px solid #bfdbfe;
+}
+.sync-status code {
+  background: transparent;
+  color: inherit;
+  font-size: inherit;
+  padding: 0;
+  font-weight: 600;
+}
+.btn-link {
+  background: transparent;
+  border: none;
+  color: var(--primary);
+  cursor: pointer;
+  padding: 0;
+  font-size: inherit;
+  font-family: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.btn-link:hover { color: var(--primary); }
+
 /* MOBILE */
 @media (max-width: 1100px) {
   .layout { grid-template-columns: minmax(0, 1fr); }
@@ -1044,6 +1318,28 @@ mark.annot.resolved:hover {
   </nav>
 </aside>
 
+<!--{{LEARNING_PANEL}}
+     OPTIONAL 🎓 Learning Panel — include ONLY when the source markdown has a
+     `## Learning Notes` section (matched case-insensitively, by convention the last
+     section). Replace this entire comment with the block below, filling
+     the LEARNING_CONTENT slot with the rendered Learning Notes sub-content (h3/h4, <ul>/<ol>,
+     <pre><code class="language-*">, callouts…). Do NOT wrap it in a <section id> — this
+     content is deliberately extracted out of the numbered sections and lives only here.
+     If the source has NO Learning Notes section, leave this comment exactly as-is: nothing
+     renders, no toggle appears, and the page behaves identically to before.
+
+<button class="learning-toggle" id="learning-toggle" title="🎓 Learning Notes" aria-label="Toggle Learning Notes" aria-expanded="false">🎓</button>
+<aside class="learning-panel" id="learning-panel" aria-label="Learning Notes">
+  <div class="learning-panel-header">
+    <span class="learning-panel-title">🎓 Learning Notes</span>
+    <button class="learning-close" id="learning-close" title="收合 (Esc)" aria-label="Close">×</button>
+  </div>
+  <div class="learning-panel-body">
+    {{LEARNING_CONTENT}}
+  </div>
+</aside>
+-->
+
 <div class="layout">
 
 <main>
@@ -1081,6 +1377,10 @@ mark.annot.resolved:hover {
       <span class="resolved-count-badge" id="resolved-count" title="已 resolved" style="display:none">✓ 0</span>
       <span class="outdated-count-badge" id="outdated-count" title="Outdated — doc 已修改，原文字找不到" style="display:none">0</span>
     </span>
+  </div>
+
+  <div class="sync-status local" id="sync-status">
+    <span>💾</span> Local only · checking…
   </div>
 
   <div class="comment-help" id="comment-help">
@@ -1159,22 +1459,27 @@ mark.annot.resolved:hover {
 
 <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.10.0/lib/highlight.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.10.0/lib/languages/python.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.10.0/highlight.min.js"></script>
 <script>
+// Theme-aware mermaid: use mermaid's fully-tuned built-in themes ('default'
+// light / 'dark' dark) so every diagram type (sequence, class, state, ER)
+// keeps proper contrast. Only a light accent tint is overridden — do NOT
+// switch to theme:'base' with a hand-rolled palette; base derives dozens of
+// secondary colors from the few you set and readability collapses on
+// class/sequence diagrams. (Theme read once at load — htmlify follows the OS
+// preference; there is no runtime toggle.)
+var _mmDark = (document.documentElement.getAttribute('data-theme') === 'dark') ||
+  (!document.documentElement.getAttribute('data-theme') &&
+   window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
 mermaid.initialize({
   startOnLoad: true,
-  theme: 'default',
-  themeVariables: {
-    primaryColor: '#eff6ff',
-    primaryTextColor: '#1f2937',
-    primaryBorderColor: '#2563eb',
-    lineColor: '#64748b',
-    secondaryColor: '#fef3c7',
-    tertiaryColor: '#f0fdf4',
-    fontSize: '14px'
-  },
-  flowchart: { curve: 'basis', htmlLabels: true }
+  theme: _mmDark ? 'dark' : 'default',
+  themeVariables: _mmDark
+    ? { fontSize: '14px' }
+    : { primaryColor: '#dff1f2', primaryBorderColor: '#0c7d84', lineColor: '#6b7480', fontSize: '14px' },
+  flowchart: { curve: 'basis', htmlLabels: true },
+  sequence: { useMaxWidth: true },
+  er: { useMaxWidth: true }
 });
 hljs.highlightAll();
 </script>
@@ -1185,8 +1490,34 @@ hljs.highlightAll();
 // ============================================================
 
 const STORAGE_KEY = '{{STORAGE_KEY}}';
+const STORAGE_DIRTY = STORAGE_KEY + '-dirty';
 const DOC_NAME = '{{DOC_NAME}}';
 let comments = [];
+
+// Sidecar JSON lives next to this HTML: <basename>.comments.json
+function sidecarName() {
+  const file = location.pathname.split('/').pop() || 'index.html';
+  const base = file.replace(/\.html?$/i, '') || 'index';
+  return base + '.comments.json';
+}
+function sidecarUrl() { return './' + sidecarName(); }
+
+// Dirty = in-memory edits not yet written to the sidecar file
+function markDirty() { localStorage.setItem(STORAGE_DIRTY, '1'); }
+function clearDirty() { localStorage.removeItem(STORAGE_DIRTY); }
+function isDirty() { return localStorage.getItem(STORAGE_DIRTY) === '1'; }
+
+// Zero-gesture read of the committed/deployed sidecar (source of truth in the static+git model).
+// fetch() of a relative path is blocked on file://, so this only runs when served over http(s).
+async function fetchSidecar() {
+  if (location.protocol === 'file:') return null;
+  try {
+    const res = await fetch(sidecarUrl(), { cache: 'no-store' });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return (data && Array.isArray(data.comments)) ? data : null;
+  } catch (e) { return null; }
+}
 
 function uid() {
   return 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -1341,12 +1672,53 @@ function restoreComment(c) {
 // Storage
 // ============================================================
 
-function loadComments() {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (raw) {
-    try { comments = JSON.parse(raw); }
-    catch (e) { comments = []; }
+async function loadComments() {
+  let source = null;  // 'handle' | 'fetch' | 'local-dirty' | 'local'
+
+  // 1. Linked handle (read + write authority) takes precedence over everything
+  try {
+    await fileSync.restore();
+    if (fileSync.enabled) {
+      const remote = await fileSync.loadIfLinked();
+      if (remote && Array.isArray(remote.comments)) {
+        comments = remote.comments;
+        clearDirty();
+        source = 'handle';
+      }
+    }
+  } catch (e) {
+    console.warn('[file-sync] restore/load failed', e);
   }
+
+  // 2. Auto-fetch the sidecar (read-only, zero gesture). Skip if we have unsaved local
+  //    edits — those would otherwise be clobbered by the older committed file.
+  if (!source) {
+    const fetched = await fetchSidecar();
+    if (fetched) {
+      if (isDirty()) {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        try { comments = raw ? JSON.parse(raw) : fetched.comments; }
+        catch (e) { comments = fetched.comments; }
+        source = 'local-dirty';
+      } else {
+        comments = fetched.comments;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(comments));  // refresh cache
+        source = 'fetch';
+      }
+    }
+  }
+
+  // 3. localStorage fallback (offline / file:// / sidecar not deployed yet)
+  if (!source) {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      try { comments = JSON.parse(raw); }
+      catch (e) { comments = []; }
+    }
+    source = 'local';
+  }
+  loadComments._source = source;
+
   // Migrate legacy `addressed` field → `resolved`
   comments.forEach(c => {
     if (c.addressed !== undefined && c.resolved === undefined) {
@@ -1356,7 +1728,7 @@ function loadComments() {
       delete c.addressedAt;
     }
   });
-  saveComments();
+  saveCommentsLocal();  // refresh cache only — must not mark dirty during load
   // re-wrap marks + recompute outdated state (must wait for mermaid to settle so DOM is stable)
   let outdated = 0;
   comments.forEach(c => {
@@ -1370,12 +1742,23 @@ function loadComments() {
       if (c.outdated) outdated++;
     }
   });
-  saveComments();
+  saveCommentsLocal();
   renderCommentList();
   if (outdated > 0) showToast(`⧖ ${outdated} comment outdated — 原文字已不在 doc 中`);
 }
 
 function saveComments() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(comments));
+  if (typeof fileSync !== 'undefined' && fileSync.enabled) {
+    fileSync.scheduleSave();  // clears dirty on a successful file write
+  } else {
+    markDirty();              // edits exist that aren't in the sidecar file yet
+  }
+  if (typeof updateSyncStatus === 'function') updateSyncStatus();
+}
+
+// Local-only save (no file sync trigger) — used during import/restore to avoid feedback loops
+function saveCommentsLocal() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(comments));
 }
 
@@ -1503,24 +1886,59 @@ function showCommentDialog(selectedText, callback) {
   dialogBackdrop.classList.add('show');
   setTimeout(() => dialogInput.focus(), 50);
 
+  // Track where mousedown started so a drag that starts inside the dialog
+  // and ends on the backdrop does NOT count as "click outside to dismiss".
+  let mousedownOnBackdrop = false;
+
   const cleanup = () => {
     dialogBackdrop.classList.remove('show');
     dialogSubmit.removeEventListener('click', onSubmit);
     dialogCancel.removeEventListener('click', onCancel);
+    dialogBackdrop.removeEventListener('mousedown', onBackdropDown);
     dialogBackdrop.removeEventListener('click', onBackdrop);
-    document.removeEventListener('keydown', onKey);
+    document.removeEventListener('keydown', onKey, true);
+    dialogInput.removeEventListener('compositionstart', onCompositionStart);
+    dialogInput.removeEventListener('compositionend', onCompositionEnd);
   };
   const onSubmit = () => { const v = dialogInput.value.trim(); cleanup(); callback(v); };
   const onCancel = () => { cleanup(); callback(null); };
-  const onBackdrop = (e) => { if (e.target === dialogBackdrop) onCancel(); };
+
+  // Two-step backdrop dismiss: only close if BOTH mousedown and click hit the backdrop.
+  const onBackdropDown = (e) => { mousedownOnBackdrop = (e.target === dialogBackdrop); };
+  const onBackdrop = (e) => {
+    if (e.target === dialogBackdrop && mousedownOnBackdrop) onCancel();
+    mousedownOnBackdrop = false;
+  };
+
+  // IME composition guard — CJK input methods fire Escape / keyCode 229 mid-composition;
+  // that must not close the dialog (it was silently eating half-typed comments).
+  let isComposing = false;
+  const onCompositionStart = () => { isComposing = true; };
+  // Defer clearing: a trailing keydown fires right after compositionend and is still IME noise.
+  const onCompositionEnd = () => { setTimeout(() => { isComposing = false; }, 30); };
+
   const onKey = (e) => {
-    if (e.key === 'Escape') { e.preventDefault(); onCancel(); }
+    if (isComposing || e.isComposing || e.keyCode === 229) return;
+    if (e.key === 'Escape') {
+      // Only dismiss when focus is on the textarea / body — stray OS-level Escapes
+      // (Spotlight, dictation, emoji picker) shouldn't close the dialog.
+      if (document.activeElement === dialogInput || document.activeElement === document.body) {
+        e.preventDefault();
+        onCancel();
+      }
+      return;
+    }
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); onSubmit(); }
   };
+
   dialogSubmit.addEventListener('click', onSubmit);
   dialogCancel.addEventListener('click', onCancel);
+  dialogBackdrop.addEventListener('mousedown', onBackdropDown);
   dialogBackdrop.addEventListener('click', onBackdrop);
-  document.addEventListener('keydown', onKey);
+  // Capture phase so we see the key before the textarea's own handlers.
+  document.addEventListener('keydown', onKey, true);
+  dialogInput.addEventListener('compositionstart', onCompositionStart);
+  dialogInput.addEventListener('compositionend', onCompositionEnd);
 }
 
 // ============================================================
@@ -1981,15 +2399,366 @@ sidebarEl.querySelectorAll('.toc a').forEach(a => {
 });
 
 // ============================================================
+// Learning Panel (🎓 Learning Notes)
+// ============================================================
+// Optional: only wired up when the source doc had a `## Learning Notes` section and the
+// panel markup was emitted. Fully feature-detected — when the markup is absent (still an
+// HTML comment) getElementById returns null and this block no-ops, so docs without
+// Learning Notes render and behave exactly as before. Runs top-level (outside init) so it
+// works in annotations-off mode too. Mutually exclusive with the TOC sidebar (both live on
+// the left edge) so the two panels can never overlap.
+(function () {
+  const learnToggle = document.getElementById('learning-toggle');
+  const learnEl = document.getElementById('learning-panel');
+  if (!learnToggle || !learnEl) return;
+
+  const learnClose = document.getElementById('learning-close');
+  const LEARN_OPEN_KEY = STORAGE_KEY + '-learn-open';
+
+  function safeGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function safeSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  function isLearningOpen() { return document.body.classList.contains('learning-open'); }
+
+  function setLearningOpen(open) {
+    document.body.classList.toggle('learning-open', open);
+    learnToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    safeSet(LEARN_OPEN_KEY, open ? '1' : '0');
+    if (open) {
+      // Close the TOC so the two left-edge panels never overlap.
+      try { setSidebarPinned(false); } catch (e) {}
+      try { sidebarEl.classList.remove('show', 'hover-mode', 'pinned-mode'); } catch (e) {}
+    }
+  }
+
+  learnToggle.addEventListener('click', () => setLearningOpen(!isLearningOpen()));
+  if (learnClose) learnClose.addEventListener('click', () => setLearningOpen(false));
+
+  // If the TOC is invoked (hover or click), yield to it.
+  try {
+    sidebarToggle.addEventListener('mouseenter', () => { if (isLearningOpen()) setLearningOpen(false); });
+    sidebarToggle.addEventListener('click', () => { if (isLearningOpen()) setLearningOpen(false); });
+    sidebarEl.addEventListener('mouseenter', () => { if (isLearningOpen()) setLearningOpen(false); });
+  } catch (e) {}
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && isLearningOpen()) setLearningOpen(false);
+  });
+
+  // Restore last state (default closed).
+  if (safeGet(LEARN_OPEN_KEY) === '1') setLearningOpen(true);
+})();
+
+// ============================================================
+// File Sync (File System Access API + Import JSON)
+// ============================================================
+// Persistence options, in order of preference when available:
+//   1. File System Access API — auto-sync to <doc>.comments.json (Chrome/Edge via localhost)
+//   2. Import JSON — manual file picker (all browsers, cross-browser migration)
+//   3. localStorage — always on as cache (existing behavior)
+
+const FILE_SYNC_DB = 'htmlify-file-sync-v1';
+const FILE_SYNC_STORE = 'handles';
+const FILE_SYNC_KEY = STORAGE_KEY;  // per-doc handle key (one shared DB, isolated per document)
+
+function openSyncDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(FILE_SYNC_DB, 1);
+    req.onupgradeneeded = () => req.result.createObjectStore(FILE_SYNC_STORE);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function storeFileHandle(handle) {
+  const db = await openSyncDB();
+  return new Promise((res, rej) => {
+    const tx = db.transaction(FILE_SYNC_STORE, 'readwrite');
+    tx.objectStore(FILE_SYNC_STORE).put(handle, FILE_SYNC_KEY);
+    tx.oncomplete = res;
+    tx.onerror = () => rej(tx.error);
+  });
+}
+async function retrieveFileHandle() {
+  const db = await openSyncDB();
+  return new Promise((res, rej) => {
+    const tx = db.transaction(FILE_SYNC_STORE, 'readonly');
+    const req = tx.objectStore(FILE_SYNC_STORE).get(FILE_SYNC_KEY);
+    req.onsuccess = () => res(req.result || null);
+    req.onerror = () => rej(req.error);
+  });
+}
+async function clearFileHandle() {
+  const db = await openSyncDB();
+  return new Promise((res, rej) => {
+    const tx = db.transaction(FILE_SYNC_STORE, 'readwrite');
+    tx.objectStore(FILE_SYNC_STORE).delete(FILE_SYNC_KEY);
+    tx.oncomplete = res;
+    tx.onerror = () => rej(tx.error);
+  });
+}
+
+const fileSync = {
+  handle: null,
+  enabled: false,
+  filename: null,
+  saveTimer: null,
+
+  isAvailable() { return typeof window.showSaveFilePicker === 'function'; },
+
+  async restore() {
+    if (!this.isAvailable()) return false;
+    try {
+      const h = await retrieveFileHandle();
+      if (!h) return false;
+      this.handle = h;
+      this.filename = h.name;
+      const perm = await h.queryPermission({ mode: 'readwrite' });
+      if (perm === 'granted') { this.enabled = true; return true; }
+      this.enabled = false;
+      return false;
+    } catch (e) { console.warn('[file-sync] restore', e); return false; }
+  },
+
+  async ensurePermission() {
+    if (!this.handle) return false;
+    let p = await this.handle.queryPermission({ mode: 'readwrite' });
+    if (p !== 'granted') p = await this.handle.requestPermission({ mode: 'readwrite' });
+    this.enabled = (p === 'granted');
+    return this.enabled;
+  },
+
+  async link() {
+    if (!this.isAvailable()) {
+      showToast('此 browser 不支援 File System Access API（Chrome / Edge only）— 改用 Import JSON');
+      return false;
+    }
+    try {
+      const h = await window.showSaveFilePicker({
+        suggestedName: sidecarName(),
+        types: [{ description: 'JSON', accept: { 'application/json': ['.json'] } }]
+      });
+      this.handle = h;
+      this.filename = h.name;
+      this.enabled = true;
+      await storeFileHandle(h);
+
+      // If the file already had content AND we have diverging unsaved local edits, ask which wins.
+      // When not dirty, in-memory already matches the file (we fetched it) — just save, no prompt.
+      try {
+        const file = await h.getFile();
+        const text = await file.text();
+        if (text.trim() && isDirty()) {
+          const parsed = JSON.parse(text);
+          if (Array.isArray(parsed.comments) && parsed.comments.length > 0) {
+            const useFile = confirm(
+              `檔案內已有 ${parsed.comments.length} 個 comment。\n\n` +
+              `[OK] 用檔案內容覆蓋目前 ${comments.length} 個\n` +
+              `[Cancel] 用目前 ${comments.length} 個覆蓋檔案`
+            );
+            if (useFile) {
+              comments = parsed.comments;
+              saveCommentsLocal();
+              document.querySelectorAll('mark.annot').forEach(m => m.replaceWith(document.createTextNode(m.textContent)));
+              comments.forEach(c => {
+                const ok = restoreComment(c);
+                c.outdated = !ok && !c.resolved;
+                if (ok && c.resolved) updateMarkResolvedState(c.id, true);
+              });
+              renderCommentList();
+            }
+          }
+        }
+      } catch (e) { /* new empty file, OK */ }
+
+      await this.save();
+      updateSyncStatus();
+      showToast(`📁 已連結到 ${this.filename}，後續自動同步`);
+      return true;
+    } catch (e) {
+      if (e.name !== 'AbortError') { console.warn('[file-sync] link', e); showToast('連結檔案失敗'); }
+      return false;
+    }
+  },
+
+  async unlink() {
+    this.handle = null;
+    this.filename = null;
+    this.enabled = false;
+    await clearFileHandle();
+    updateSyncStatus();
+    showToast('已解除檔案連結（改回 localStorage only）');
+  },
+
+  async save() {
+    if (!this.handle || !this.enabled) return false;
+    try {
+      const data = {
+        version: 1,
+        doc: DOC_NAME,
+        saved_at: new Date().toISOString(),
+        comment_count: comments.length,
+        comments
+      };
+      const writable = await this.handle.createWritable();
+      await writable.write(JSON.stringify(data, null, 2));
+      await writable.close();
+      clearDirty();
+      return true;
+    } catch (e) { console.warn('[file-sync] save', e); return false; }
+  },
+
+  scheduleSave() {
+    if (!this.enabled) return;
+    clearTimeout(this.saveTimer);
+    this.saveTimer = setTimeout(() => this.save(), 250);
+  },
+
+  async loadIfLinked() {
+    if (!this.handle || !this.enabled) return null;
+    try {
+      const file = await this.handle.getFile();
+      const text = await file.text();
+      if (!text.trim()) return { comments: [] };
+      return JSON.parse(text);
+    } catch (e) { console.warn('[file-sync] load', e); return null; }
+  }
+};
+
+function updateSyncStatus() {
+  const el = document.getElementById('sync-status');
+  if (!el) return;
+  const file = sidecarName();
+  const src = loadComments._source;
+  const dirty = isDirty();
+
+  if (fileSync.enabled) {
+    el.className = 'sync-status synced';
+    el.innerHTML = `<span>📁</span> Synced · <code>${escapeHtml(fileSync.filename)}</code> · 編輯自動寫入 · <button class="btn-link" data-action="unlink">unlink</button>`;
+  } else if (fileSync.handle && !fileSync.enabled) {
+    el.className = 'sync-status pending';
+    el.innerHTML = `<span>⚠</span> 已記得檔案 (<code>${escapeHtml(fileSync.filename)}</code>) · <button class="btn-link" data-action="resume">grant permission</button> · <button class="btn-link" data-action="unlink">unlink</button>`;
+  } else if (dirty) {
+    el.className = 'sync-status pending';
+    const writeBtn = fileSync.isAvailable()
+      ? `<button class="btn-link" data-action="link">save to ${escapeHtml(file)}…</button>`
+      : `<button class="btn-link" data-action="export">download ${escapeHtml(file)}…</button>`;
+    el.innerHTML = `<span>💾</span> 有未存入 <code>${escapeHtml(file)}</code> 的本機編輯 · ${writeBtn} · <button class="btn-link" data-action="import">import…</button>`;
+  } else if (src === 'fetch') {
+    el.className = 'sync-status readonly';
+    const editBtn = fileSync.isAvailable()
+      ? ` · <button class="btn-link" data-action="link">enable editing…</button>`
+      : '';
+    el.innerHTML = `<span>📄</span> 自動載入自 <code>${escapeHtml(file)}</code>（read-only）${editBtn} · <button class="btn-link" data-action="import">import…</button>`;
+  } else if (fileSync.isAvailable()) {
+    el.className = 'sync-status local';
+    el.innerHTML = `<span>💾</span> Local only · <button class="btn-link" data-action="link">link to ${escapeHtml(file)}…</button> · <button class="btn-link" data-action="import">import…</button>`;
+  } else {
+    el.className = 'sync-status local';
+    el.innerHTML = `<span>💾</span> Local only · 此 browser 不支援 File API · <button class="btn-link" data-action="import">import JSON…</button>`;
+  }
+  // Wire dynamic buttons
+  el.querySelectorAll('button[data-action]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const a = btn.dataset.action;
+      if (a === 'link') await fileSync.link();
+      else if (a === 'unlink') await fileSync.unlink();
+      else if (a === 'export') {
+        const data = { version: 1, doc: DOC_NAME, saved_at: new Date().toISOString(), comment_count: comments.length, comments };
+        downloadBlob(JSON.stringify(data, null, 2), 'application/json', file);
+        showToast(`↓ 已下載 ${file} — 放到 HTML 同層再 commit`);
+      }
+      else if (a === 'resume') {
+        const ok = await fileSync.ensurePermission();
+        if (ok) {
+          const remote = await fileSync.loadIfLinked();
+          if (remote && Array.isArray(remote.comments)) {
+            comments = remote.comments;
+            clearDirty();
+            saveCommentsLocal();
+            document.querySelectorAll('mark.annot').forEach(m => m.replaceWith(document.createTextNode(m.textContent)));
+            comments.forEach(c => {
+              const ok2 = restoreComment(c);
+              c.outdated = !ok2 && !c.resolved;
+              if (ok2 && c.resolved) updateMarkResolvedState(c.id, true);
+            });
+            renderCommentList();
+          }
+          updateSyncStatus();
+          showToast('✓ 檔案同步已重新啟用');
+        }
+      }
+      else if (a === 'import') importJsonFromFile();
+    });
+  });
+}
+
+function importJsonFromFile() {
+  return new Promise((resolve) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,application/json';
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) { resolve(null); return; }
+      try {
+        const text = await file.text();
+        const data = JSON.parse(text);
+        if (!Array.isArray(data.comments)) { showToast('JSON 格式不對（缺少 comments array）'); resolve(null); return; }
+        let take;
+        if (comments.length === 0) {
+          take = 'replace';
+        } else {
+          const ans = confirm(
+            `目前已有 ${comments.length} 個 comment，檔案內有 ${data.comments.length} 個。\n\n` +
+            `[OK] 取代（用檔案覆蓋目前）\n` +
+            `[Cancel] 合併（依 id 去重，重複的保留現有）`
+          );
+          take = ans ? 'replace' : 'merge';
+        }
+        if (take === 'replace') {
+          comments = data.comments;
+        } else {
+          const existing = new Set(comments.map(c => c.id));
+          data.comments.forEach(c => { if (!existing.has(c.id)) comments.push(c); });
+        }
+        saveComments();
+        document.querySelectorAll('mark.annot').forEach(m => m.replaceWith(document.createTextNode(m.textContent)));
+        comments.forEach(c => {
+          const ok = restoreComment(c);
+          c.outdated = !ok && !c.resolved;
+          if (ok && c.resolved) updateMarkResolvedState(c.id, true);
+        });
+        renderCommentList();
+        showToast(`✓ ${take === 'replace' ? '已取代' : '已合併'}：現在 ${comments.length} 個 comment`);
+        resolve(data);
+      } catch (err) { console.warn('import failed', err); showToast('JSON 解析失敗'); resolve(null); }
+    };
+    input.click();
+  });
+}
+
+// ============================================================
 // Comment panel resize (drag the left edge; width persists)
 // ============================================================
 const COMMENT_WIDTH_KEY = STORAGE_KEY + '-width';
 const COMMENT_W_MIN = 240;
 const COMMENT_W_MAX = 760;
 
+// Keep the fixed handle aligned with the panel's actual left edge (the layout is
+// centered with a max-width, so the edge isn't simply viewport-width − panel-width).
+function positionResizeHandle() {
+  const handle = document.getElementById('comment-resize-handle');
+  const panel = document.getElementById('comment-panel');
+  if (!handle || !panel) return;
+  if (getComputedStyle(handle).display === 'none') return;  // mobile
+  const r = panel.getBoundingClientRect();
+  if (r.width === 0) return;  // panel hidden (annotations-off)
+  handle.style.left = (r.left - 4) + 'px';
+}
+
 function applyCommentWidth(px) {
   const w = Math.round(Math.min(COMMENT_W_MAX, Math.max(COMMENT_W_MIN, px)));
   document.documentElement.style.setProperty('--comment-w', w + 'px');
+  positionResizeHandle();
   return w;
 }
 
@@ -2046,6 +2815,8 @@ function bindCommentResize() {
     applyCommentWidth(320);
     localStorage.setItem(COMMENT_WIDTH_KEY, '320');
   });
+  window.addEventListener('resize', positionResizeHandle);
+  positionResizeHandle();
 }
 
 // Apply persisted width + bind drag immediately (independent of comment loading)
@@ -2056,12 +2827,14 @@ bindCommentResize();
 // Init (wait for mermaid + hljs to finish rendering)
 // ============================================================
 
-function init() {
+async function init() {
   bindMermaidLightbox();
   // Annotation system is opt-out: skip wiring it up when body.annotations-off is set.
   if (!document.body.classList.contains('annotations-off')) {
-    loadComments();
+    await loadComments();
+    updateSyncStatus();
   }
+  positionResizeHandle();
 }
 // Wait a bit for mermaid SVG rendering to settle
 setTimeout(init, 1800);
