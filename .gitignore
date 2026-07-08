@@ -12,3 +12,7 @@ wheels/
 .env
 
 .claude
+# Skill runtime workspaces and editor backups
+*-workspace/
+*.bak
+*.bak-*
