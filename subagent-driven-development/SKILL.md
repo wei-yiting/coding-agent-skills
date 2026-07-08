@@ -32,6 +32,15 @@ Default to Normal Mode if the user doesn't specify. Switch to Sandbox Mode when 
 
 Both modes use the same implementer / spec-reviewer / code-quality-reviewer subagent prompts. The difference is *where* those subagents run and *when* commits happen.
 
+In Normal Mode, also confirm the **slice gate mode** (a slice = one `## Slice N` group in the plan = one Flow Verification group = one PR):
+
+> 每個 slice 完成後要怎麼交付？
+>
+> 1. **Blocking（預設）** — 每個 slice 通過 Flow Verification、開出 draft PR 之後就停下來等你 review，approve 才做下一個 slice。你可以逐段看到 code，不會累積成一大包。
+> 2. **Async** — 不等 review，一個 slice 接著一個 slice 往下做，每個 slice 疊在前一個 branch 上（stacked）。適合你想離開讓它一路跑完的情況；缺點是後面的 slice 之後可能要 rebase review feedback。
+
+Default to Blocking unless the user explicitly opts into async ("async", "不用等我", "一路跑完", "stacked"). Sandbox Mode always runs unattended and cannot honor a blocking slice gate (see Sandbox Mode below).
+
 ## The Process
 
 ```dot
@@ -53,20 +62,31 @@ digraph process {
         "Mark task complete in TodoWrite" [shape=box];
     }
 
-    "Read plan, extract all tasks + flow verifications, create TodoWrite" [shape=box];
+    "Read plan, extract all tasks + slices (Flow Verifications), create TodoWrite" [shape=box];
     "More items remain?" [shape=diamond];
     "Next item is Flow Verification?" [shape=diamond];
     "Controller executes Flow Verification steps" [shape=box];
     "Flow Verification passes?" [shape=diamond];
     "Dispatch fix subagent for failing task" [shape=box];
-    "Dispatch final code reviewer subagent for entire implementation" [shape=box];
+    "Slice delivery gate: lint changed files, fix errors" [shape=box style=filled fillcolor=lightyellow];
+    "Push branch, open draft PR for slice (gh pr create --draft)" [shape=box style=filled fillcolor=lightyellow];
+    "Post slice summary + Review Focus exceptions to user" [shape=box style=filled fillcolor=lightyellow];
+    "Async mode chosen up front?" [shape=diamond];
+    "STOP: wait for user approval of slice" [shape=box style=filled fillcolor=orange];
+    "Dispatch final code reviewer (last slice + cross-slice integration)" [shape=box];
     "Trigger E2E BDD validation (if configured)" [shape=box style=filled fillcolor=lightgreen];
 
-    "Read plan, extract all tasks + flow verifications, create TodoWrite" -> "More items remain?";
+    "Read plan, extract all tasks + slices (Flow Verifications), create TodoWrite" -> "More items remain?";
     "More items remain?" -> "Next item is Flow Verification?" [label="yes"];
     "Next item is Flow Verification?" -> "Controller executes Flow Verification steps" [label="yes"];
     "Controller executes Flow Verification steps" -> "Flow Verification passes?";
-    "Flow Verification passes?" -> "More items remain?" [label="yes, mark complete"];
+    "Flow Verification passes?" -> "Slice delivery gate: lint changed files, fix errors" [label="yes, mark complete"];
+    "Slice delivery gate: lint changed files, fix errors" -> "Push branch, open draft PR for slice (gh pr create --draft)";
+    "Push branch, open draft PR for slice (gh pr create --draft)" -> "Post slice summary + Review Focus exceptions to user";
+    "Post slice summary + Review Focus exceptions to user" -> "Async mode chosen up front?";
+    "Async mode chosen up front?" -> "More items remain?" [label="yes, next slice stacked on this branch"];
+    "Async mode chosen up front?" -> "STOP: wait for user approval of slice" [label="no (blocking default)"];
+    "STOP: wait for user approval of slice" -> "More items remain?" [label="user approves"];
     "Flow Verification passes?" -> "Dispatch fix subagent for failing task" [label="no"];
     "Dispatch fix subagent for failing task" -> "Controller executes Flow Verification steps" [label="re-verify"];
     "Next item is Flow Verification?" -> "Dispatch implementer subagent (./references/implementer-prompt.md)" [label="no, it's a task"];
@@ -84,8 +104,8 @@ digraph process {
     "Implementer subagent fixes quality issues" -> "Dispatch code quality reviewer subagent (./references/code-quality-reviewer-prompt.md)" [label="re-review"];
     "Code quality reviewer subagent approves?" -> "Mark task complete in TodoWrite" [label="yes"];
     "Mark task complete in TodoWrite" -> "More items remain?";
-    "More items remain?" -> "Dispatch final code reviewer subagent for entire implementation" [label="no"];
-    "Dispatch final code reviewer subagent for entire implementation" -> "Trigger E2E BDD validation (if configured)";
+    "More items remain?" -> "Dispatch final code reviewer (last slice + cross-slice integration)" [label="no"];
+    "Dispatch final code reviewer (last slice + cross-slice integration)" -> "Trigger E2E BDD validation (if configured)";
 }
 ```
 
@@ -118,7 +138,9 @@ Most implementation tasks are mechanical when the plan is well-specified.
 
 ## Flow Verification Checkpoints
 
-When extracting items from the plan into TodoWrite, also extract **Flow Verification** sections as checkpoints. These appear between task groups in the plan:
+Each `## Slice N: <flow name>` group in the plan is one **slice** — a set of tasks that complete one independently verifiable, independently mergeable end-to-end flow. One slice = one Flow Verification group = one PR. The Flow Verification checkpoint at the end of a slice is its delivery gate.
+
+When extracting items from the plan into TodoWrite, also extract **Flow Verification** sections as checkpoints. These appear at the end of each slice in the plan:
 
 ```markdown
 ### Flow Verification: {Flow Name}
@@ -139,18 +161,36 @@ When the controller reaches a Flow Verification checkpoint:
 5. Do not proceed past a failed Flow Verification checkpoint
 6. If a fix requires more than 2 iterations, surface to the human
 
+Once a slice's Flow Verification passes, do **not** immediately start the next slice — run the Slice Delivery Gate first.
+
+## Slice Delivery Gate
+
+A passing Flow Verification means the slice is done and mergeable. Before touching the next slice, deliver this one so the human sees code incrementally instead of one giant batch at the end. This gate is **mandatory** and runs after every slice.
+
+1. **Lint the slice's changed files.** Run the project's configured linter (e.g., `ruff check`, `eslint`) on the files this slice touched. Fix all errors before proceeding — do not open a PR with known lint failures.
+2. **Push the branch and open a draft PR for the slice.** Run `gh pr create --draft` with a title that names the slice (e.g., the `## Slice N: <flow name>` heading). Follow the `pull-request` skill for branch naming, PR description format, and any repo conventions. One slice = one PR — never fold multiple slices into a single PR.
+3. **Post a concise slice summary to the user**, covering:
+   - Tasks completed in this slice
+   - Flow Verification results (what was checked, what passed)
+   - **Review Focus exceptions** — deviations from convention, uncertain decisions, or anything the implementer/reviewers flagged that the human should look at closely
+   - The draft PR link
+4. **STOP and wait for the user's review (blocking — the default).** Only continue to the next slice when the user approves.
+   - **Async mode** (only if the user explicitly chose it up front): do not stop. Continue the next slice on a branch **stacked on the current slice's branch**. When posting the summary, flag that later slices may need rebasing if review feedback lands on an earlier slice.
+
 ## Post-Execution
 
-After all tasks and flow verification checkpoints are complete:
+After all slices are delivered and their gates cleared, run a final pass over the whole changeset. Because each slice was already linted, PR'd, and reviewed by the human at its gate, this is **not** the human's first look at the code — it focuses on the **last slice plus cross-slice integration** (interactions and seams between slices that no single slice's Flow Verification exercised), not a from-scratch review of everything.
 
-1. **Run linting** on all changed files. Fix any errors before proceeding — do not leave lint failures for the human to discover. If the project has a configured linter (e.g., `ruff check`, `eslint`), run it and fix all errors. Only proceed to step 2 after linting passes clean.
-2. Dispatch a final code reviewer subagent for the entire implementation
+1. **Run linting** on all changed files. Per-slice gates already linted each slice, but re-run across the full changeset to catch anything introduced at slice boundaries. Fix any errors before proceeding. Only proceed to step 2 after linting passes clean.
+2. Dispatch a final code reviewer subagent scoped to the last slice and cross-slice integration.
 3. If an E2E BDD validation skill is configured, trigger it now. Do not proceed until E2E validation passes or the human decides to skip it.
 4. If no E2E BDD validation skill is configured, report completion to the human
 
 ## Sandbox Mode
 
 When the user chose Sandbox Mode in the Execution Mode Selection step, replace the entire Normal Mode flow (Per-task loop + Flow Verifications + Post-Execution) with the sandbox flow below.
+
+**Sandbox Mode cannot honor per-slice human gates** — it runs unattended in a container and never stops for review. So it is appropriate for **single-slice plans** (one flow, one PR at the end). For **multi-slice plans**, default to Normal Mode so the human reviews each slice at its gate. If the user still wants sandbox for a multi-slice plan, run the sandbox **one slice at a time** — one sandbox launch per slice, then surface that slice for review before launching the next — rather than one unattended run over all slices.
 
 ### Contract (Sandbox Mode)
 
@@ -236,8 +276,12 @@ Host session:
 You: I'm using Subagent-Driven Development to execute this plan.
 
 [Read plan: artifacts/current/implementation.md]
-[Extract all tasks + flow verifications with full text and context]
+[Ask: Normal or Sandbox? → Normal]
+[Ask: slice gate Blocking or Async? → Blocking (default)]
+[Extract all tasks + slices (Flow Verifications) with full text and context]
 [Create TodoWrite with all items]
+
+=== Slice 1: Domain Event Pipeline ===
 
 Task 1: Hook installation script
 
@@ -271,10 +315,26 @@ Flow Verification: Domain Event Pipeline
 Result: SSE output matches expected format ✅
 [Mark Flow Verification complete]
 
+--- Slice 1 Delivery Gate ---
+[Lint changed files] ✅ clean
+[Push branch, gh pr create --draft --title "Slice 1: Domain Event Pipeline"]
+  → https://github.com/org/repo/pull/42
+[Post slice summary to user]
+  Tasks 1-2 done, Flow Verification passed.
+  Review Focus: extracted PROGRESS_INTERVAL constant (Task 2), no other deviations.
+  Draft PR: #42
+[STOP — blocking mode, wait for user review]
+
+User: LGTM, continue.
+
+=== Slice 2: ... ===
+
 Task 3: ...
 
-[After all tasks and flow verifications]
-[Final code reviewer] All requirements met ✅
+[... repeat per-task loop, Flow Verification, and Delivery Gate for Slice 2 ...]
+
+[After all slices delivered]
+[Final code reviewer — last slice + cross-slice integration] All requirements met ✅
 [Trigger E2E BDD validation if configured]
 
 Done! Awaiting human decision on next steps.
@@ -298,6 +358,9 @@ Done! Awaiting human decision on next steps.
 - Move to next task while either review has open issues
 - **Dispatch an implementer subagent for a Flow Verification checkpoint** (controller executes these directly)
 - **Skip a Flow Verification checkpoint or proceed past a failed one**
+- **Proceed past a slice's delivery gate without explicit user approval** (unless the user chose async mode up front) — the blocking gate is the whole point of incremental delivery
+- **Batch multiple slices into one PR** — one slice = one draft PR
+- **Skip the Slice Delivery Gate** (lint → draft PR → summary) after a slice's Flow Verification passes
 - **Run git commands inside Sandbox Mode** — the sandbox container must never run `git add`, `git commit`, `git status`, or any git operation. The `/workspace` mount may be a worktree with a `.git` pointer to a host path that does not exist in the container. All commits are deferred to the host after the sandbox exits.
 - **Commit before the user has reviewed the sandbox report in Sandbox Mode** — always show the summary from `sdd-sandbox-report.json` first and get explicit user approval before running `git add -A && git commit`
 
@@ -305,8 +368,9 @@ Done! Awaiting human decision on next steps.
 
 **Required workflow skills:**
 
-- **implementation-planning** — Creates the plan this skill executes
+- **implementation-planning** — Creates the plan this skill executes (labels slices as `## Slice N`)
 - **requesting-code-review** — Code review template for reviewer subagents
+- **pull-request** — PR description format and conventions for the per-slice draft PRs opened at each delivery gate
 
 **Subagents should use:**
 
