@@ -277,7 +277,6 @@ Done! Awaiting human decision on next steps.
 **Required workflow skills:**
 
 - **implementation-planning** — Creates the plan this skill executes (labels slices as `## Slice N`)
-- **requesting-code-review** — Code review template for reviewer subagents
 - **pull-request** — PR description format and conventions for the per-slice draft PRs opened at each delivery gate
 
 **Subagents should use:**

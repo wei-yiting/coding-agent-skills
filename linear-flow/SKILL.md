@@ -76,7 +76,7 @@ Skill → status auto-move map (trigger on skill START, not completion):
 - behavior-validation-plan, implementation-planning, generate-briefing, apply-briefing-update → `Planning`
 - subagent-driven-development, test-driven-development (implementation work) → `Implementation`
 - bdd-e2e-loop, verify → `Verification`
-- code-review-loop, do-i-understand, requesting-code-review → `Code Review`
+- code-review-loop, do-i-understand → `Code Review`
 - pull-request (PR opened) → `Human Code Review`
 - human approves the PR → `Ready for Merge`
 

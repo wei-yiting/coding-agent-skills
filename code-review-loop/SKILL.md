@@ -54,7 +54,7 @@ This skill promotes isolation at three levels:
 
 | Skill                               | When                            | Scope                             |
 | ----------------------------------- | ------------------------------- | --------------------------------- |
-| `requesting-code-review`            | During implementation, per-task | Single task, quick feedback       |
+| Per-task review (inside `subagent-driven-development`) | During implementation, per-task | Single task, quick feedback |
 | **This skill** (`code-review-loop`) | After ALL tasks complete        | Holistic, multi-round, exhaustive |
 
 They are complementary. Per-task reviews catch issues early; this loop catches cross-cutting
