@@ -5,6 +5,7 @@ description: >-
   directory): @cmt implements the requested code change, @qst answers the inline question. Use
   when the user asks to address comments or process inline annotation directives, or invokes
   /address-comments.
+disable-model-invocation: true
 ---
 
 # Address Comment Directives

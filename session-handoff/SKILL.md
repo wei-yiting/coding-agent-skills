@@ -4,6 +4,7 @@ description: >-
   Save, resume, split, close, or list work-session handoffs. Use when the user wants to record
   progress before stopping, resume or report an interrupted session, split current work into
   multiple handoffs, change a handoff's status, or list pending sessions.
+disable-model-invocation: true
 ---
 
 # Session Handoff

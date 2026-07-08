@@ -5,6 +5,7 @@ description: >-
   commit, and push. Use whenever the user wants reviewer feedback on a pull request handled —
   addressing PR review comments, fixing issues reviewers flagged, or processing a pasted PR URL.
 argument-hint: "[pr-number or pr-url] (omit to auto-detect from current branch)"
+disable-model-invocation: true
 ---
 
 # Address PR Review Comments
