@@ -49,6 +49,15 @@ path/
     new_file.ext
 ```
 
+---
+
+## Slice 1: {Flow Name}
+
+> **Scope:** {The end-to-end flow this slice completes}
+> **Est. diff:** {rough net lines for the whole slice, target 300–800}
+> **Delivery:** branch `{type}/{slice-name}` → draft PR, blocking human review at the Flow Verification gate.
+> **Independently mergeable because:** {feature flag / not-yet-wired code no live path calls / self-contained flow — state the mechanism}
+
 ### Task 1: {Checkpoint Name}
 
 **Files:**
@@ -57,6 +66,8 @@ path/
 - Update: `path/to/existing_file.ext`
 - Delete: `path/to/obsolete_file.ext` (if needed)
 - Tests: `path/to/test_file.ext`
+
+**Est. diff:** {rough net lines}
 
 **What & Why:** {What this checkpoint changes and why it is grouped this way}
 
@@ -101,14 +112,14 @@ path/
 
 ### Task 2: {Next Checkpoint}
 
-{Same structure as Task 1}
+{Same structure as Task 1, including its own **Est. diff:** line}
 
 ---
 
-### Flow Verification: {Flow Name}
+### Flow Verification: {Flow Name} — closes Slice 1
 
 > Tasks 1-2 complete the {describe flow} flow. All listed verifications must pass
-> before the next checkpoint that depends on this flow.
+> before this slice is pushed for review and before the next slice begins.
 
 | #   | Method                     | Step                                                                                                  | Expected Result                                           |
 | --- | -------------------------- | ----------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
@@ -123,13 +134,20 @@ path/
 
 ---
 
+## Slice 2: {Next Flow Name}
+
+> **Scope:** {The end-to-end flow this slice completes}
+> **Est. diff:** {rough net lines for the whole slice, target 300–800}
+> **Delivery:** branch `{type}/{slice-name}` → draft PR, blocking human review at the Flow Verification gate.
+> **Independently mergeable because:** {feature flag / not-yet-wired code / self-contained flow — state the mechanism}
+
 ### Task 3: {Next Checkpoint}
 
-{Continue tasks as needed using the same structure}
+{Continue tasks as needed using the same structure, each with its own **Est. diff:** line}
 
 ---
 
-### Flow Verification: {Next Flow Name}
+### Flow Verification: {Next Flow Name} — closes Slice 2
 
 > Tasks {N}-{M} complete the {describe flow} flow.
 
@@ -167,7 +185,9 @@ path/
 - **Dependencies Verification**: Include only external dependencies that materially affect API usage, configuration, runtime behavior, or integration choices for this plan. If none apply, either omit the section when allowed by your workflow or state that no external verification was required.
 - **File plan**: Use exact file paths and operation types, but do not invent speculative line-number ranges in a planning document.
 - **File naming**: File names must be self-descriptive without relying on the parent package for context. A developer seeing the name in an IDE tab, search result, or git diff should immediately know what domain/function the file covers. Bad: `models.py`, `store.py`, `converter.py`, `downloader.py`. Good: `filing_models.py`, `filing_store.py`, `html_to_md_converter.py`, `sec_downloader.py`.
-- **Critical snippets**: Include code only where a contract or architecture decision must be explicit. Do not pad the plan with filler examples.
+- **Slices**: Group tasks and their Flow Verification under `## Slice N: <flow name>`. One slice = one Flow Verification group = one PR. Each slice header states scope, a rough `Est. diff:` (target 300–800 net lines), a one-line delivery note (branch → draft PR → blocking review at the gate), and why the slice is independently mergeable. When `design.md` has a Slice Roadmap, the whole plan is one slice.
+- **Est. diff**: Every task carries a rough `Est. diff:` line. These are forcing functions for decomposition, not precise predictions — use them to keep each slice inside the size budget.
+- **Critical snippets**: Include code only where a contract, interface, schema, migration, config, or architecture boundary must be explicit. Never include full function bodies of routine logic. Do not pad the plan with filler examples.
 - **Verification**: Every verification entry must include both the command and the expected result, not just what the command is intended to prove.
 - **Commit messages**: Follow conventional commits format. Prefer one stable checkpoint per commit when practical, but do not force artificial commit boundaries.
 - **Checkbox syntax**: Always use `- [ ]` for steps — downstream execution skills depend on this for progress tracking.

@@ -1,19 +1,12 @@
 ---
 name: implementation-planning
 description: >-
-  Use this skill when design decisions are finalized and the next step is
-  converting them into an execution plan. Primary triggers: (1) user references
-  or asks to read an existing `design.md` and wants implementation steps from
-  it; (2) a brainstorming or design phase just concluded and the user wants to
-  move to building; (3) a concrete feature spec needs to be broken into
-  structured tasks a junior engineer can follow directly. Also trigger on
-  phrases like "plan this", "break into tasks", "task breakdown", "write plan",
-  "execution checklist", "implementation plan", "規劃實作", "拆成 tasks",
-  "任務拆解", "拆成 implementation plan". Output is saved to
-  `artifacts/current/implementation.md` with explicit file paths, commands,
-  tests, and commit checkpoints. Do NOT trigger when the user is still exploring
-  what to build, comparing approaches, or the scope spans multiple unrelated
-  subsystems — use `brainstorming` instead.
+  Convert finalized design decisions into an execution plan at
+  artifacts/current/implementation.md — explicit file paths, commands, tests, and commit
+  checkpoints that a junior engineer could follow directly. Use when a design.md exists and the
+  next step is building, or when a concrete feature spec needs structured task breakdown. Do NOT
+  use while the user is still exploring what to build or comparing approaches — use design-
+  brainstorming instead.
 ---
 
 # Implementation Planning
@@ -72,6 +65,25 @@ scope is not ready for implementation planning.
 - If a `design.md` exists but still covers multiple independent subsystems, stop and ask the user whether to return to `brainstorming` to split the design properly, or explicitly choose the first sub-project to plan now.
 - One `artifacts/current/implementation.md` should cover one coherent, independently testable deliverable.
 - Only keep multiple phases in one plan when they are tightly coupled parts of the same deliverable and can be verified incrementally.
+
+#### Size Budget & Slicing
+
+A **slice** is a group of plan tasks that completes one independently verifiable,
+independently mergeable end-to-end flow. One slice equals one Flow Verification
+group equals one PR.
+
+During scoping, estimate the net diff lines per task (rough is fine — this is a
+forcing function for decomposition, not a precise prediction). Then apply:
+
+- **If `design.md` has a `## Slice Roadmap`**, plan exactly **one slice per plan file** — the slice the user designates, or the next unbuilt one. Do not fold multiple roadmap slices into a single plan.
+- **If there is no roadmap and the estimated total exceeds ~1000 lines**, either:
+  - organize the plan into explicit slices, where each slice is one Flow Verification group and is independently mergeable; or
+  - stop and recommend returning to `design-brainstorming` to produce a Slice Roadmap before planning.
+- **Target 300–800 net diff lines per slice.** A slice pushing past ~800 lines is a signal to split it further; a plan whose total blows past ~1000 lines without slicing is not ready to execute.
+
+These LOC numbers are deliberately rough. Their purpose is to force early
+decomposition so changesets reach human review as small, reviewable PRs rather
+than one 3000-line batch.
 
 ### Step 4: Clarify Requirements
 
@@ -152,7 +164,7 @@ When a task involves frontend tests — React Testing Library, Vitest, Playwrigh
 
 #### Code and Test Quality Standards
 
-- Plan code snippets should show the intended final shape of the implementation, not pseudocode or throwaway hardcoded stubs.
+- Plan code snippets are reserved for contracts, interfaces, and architecture-defining shapes — a type/schema definition, an API signature, a migration, a config block, or a boundary that must be explicit. For those, show the intended final shape, not pseudocode or throwaway hardcoded stubs. Do **not** include full function bodies of routine logic; describe that behavior in prose or bullet notes and let the executor write it under TDD.
 - Prefer the smallest test scope that proves the requirement. Use unit tests for pure logic; use integration tests when the risk lives in framework wiring, database persistence, migrations, queues, external API contracts, or multi-component collaboration.
 - Do not mock away the behavior that carries the real risk. Prefer assertions on outputs, persisted state, emitted events, or user-visible behavior over internal call counts unless the interaction itself is the contract.
 - Each task should state what each new test proves: happy path, important edge case, and failure or regression path when that coverage is needed.
@@ -165,11 +177,22 @@ When a task involves frontend tests — React Testing Library, Vitest, Playwrigh
 - Once the user or approved planning discussion resolves the choice, record the chosen approach and the key rejected alternatives in the final plan. Never leave the executor to choose between unresolved options.
 - Use comparison tables in the final plan only as a decision record after the choice has already been resolved.
 
+#### Slice Boundaries in the Plan Structure
+
+Flow Verification sections already act as natural group boundaries; make that
+explicit by organizing the plan into **slices**. Each slice groups the tasks that
+complete one end-to-end flow together with that flow's Flow Verification, under a
+`## Slice N: <flow name>` heading.
+
+- One slice = one Flow Verification group = one PR.
+- Each slice must state what makes it **independently mergeable** — e.g., gated behind a feature flag, or landing as not-yet-wired code that no live path calls until a later slice. If the slice is trivially mergeable on its own (self-contained end-to-end flow), say so in one line.
+- When `design.md` has a Slice Roadmap, the single slice in this plan corresponds to one roadmap slice; carry its acceptance criteria into the Flow Verification.
+
 #### Flow Verification Placement
 
-Not every task needs behavioral verification. Add a **Flow Verification** section
-when a group of completed tasks forms a testable end-to-end flow. The verification
-must pass before proceeding to the next group of tasks.
+Not every task needs behavioral verification. Every slice ends with a **Flow
+Verification** section covering the flow its tasks complete. The verification must
+pass before proceeding to the next slice.
 
 #### Flow Verification Method Selection
 
@@ -230,7 +253,9 @@ Do not trigger any downstream skills. Do not propose same-session execution.
 6. Plan completion triggers plan review — mandatory
 7. The plan must be detailed enough for a junior engineer with no project context to follow
 8. Exact file paths always — never "somewhere in src/" or speculative line-number ranges in the planning output
-9. Include code snippets or pseudo-diffs only where a contract, interface, or architecture-defining change needs to be explicit — never vague instructions like "add validation", but do not pad the plan with filler code
+9. Include code snippets or pseudo-diffs only where a contract, interface, or architecture-defining change must be explicit (type/schema, API signature, migration, config, boundary) — never vague instructions like "add validation", and never full function bodies of routine logic; describe that behavior in prose and let the executor write it
 10. Exact commands with expected results — not "run the tests"
 11. Include build verification when the repo has a real build step
 12. DRY, YAGNI, TDD, frequent commits
+13. Respect the size budget — target 300–800 net diff lines per slice; when the estimated total exceeds ~1000 lines, organize the plan into explicit, independently mergeable slices or redirect to `design-brainstorming` for a Slice Roadmap
+14. When `design.md` has a Slice Roadmap, plan exactly one slice per plan file (one slice = one Flow Verification group = one PR)

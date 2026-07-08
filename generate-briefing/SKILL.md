@@ -1,16 +1,11 @@
 ---
 name: generate-briefing
 description: >-
-  Create the initial briefing document by aggregating implementation.md and
-  BDD artifacts (bdd-scenarios.md + verification-plan.md) into a concise
-  review document for human reviewers. Use this skill whenever:
-  both implementation.md and BDD artifacts exist and briefing.md does not,
-  user says "create briefing" / "generate briefing" / "write briefing" /
-  "briefing document",
-  or the user explicitly requests a briefing after completing planning and
-  BDD workflows.
-  Do NOT use for syncing existing briefings after changes — use
-  apply-briefing-update instead.
+  Create the initial artifacts/current/briefing.md by aggregating implementation.md and BDD
+  artifacts (bdd-scenarios.md + verification-plan.md) into a concise review document for human
+  reviewers. Use when those source artifacts exist but briefing.md does not, or when the user
+  asks for a briefing after planning completes. For syncing an existing briefing after edits,
+  use apply-briefing-update instead.
 ---
 
 # Generate Briefing
@@ -56,7 +51,7 @@ Ask the user how they want to proceed — do NOT generate a partial briefing by 
 
 ### Step 1: Load the format guide
 
-Read this skill's `references/briefing-structure.md`. This defines the 5+2 section structure. Don't improvise sections.
+Read this skill's `references/briefing-structure.md`. It defines the structure: **Section 0 (Review Focus) + 5 required + 2 conditional sections + a closing `## Learning Notes`**. The body (Section 0–7) targets **1–2 screens**; `## Learning Notes` is excluded from that budget. Don't improvise sections.
 
 ### Step 2: Check prerequisites
 
@@ -75,6 +70,11 @@ If `artifacts/current/design.md` exists, dispatch a sub-agent using this skill's
 
 Follow the structure from `references/briefing-structure.md`. For each section, the structure guide specifies exactly which source artifact to pull from and how to present it.
 
+Three sections need explicit attention:
+- **Section 2 (Overview)** — if `design.md` has a `## Slice Roadmap` and this plan covers one `## Slice N` group, name the slice in the paragraph (which slice, its roadmap position, its estimated size). No roadmap → unchanged.
+- **Section 0 (Review Focus)** — the reviewer's map of the 3–5 items genuinely needing human judgment (deviations from conventions, irreversible changes, decisions planning flagged as uncertain). Everything else is implicitly agent-gated. Keep it to 3–5 items, each pointing to where to look.
+- **`## Learning Notes`** (closing section) — aggregate the decision rationale from `design.md` and the trade-offs from `impl` into three sub-parts: engineering strategies applied, trade-offs considered, and key takeaways. This is an educational layer, excluded from the length budget; don't invent rationale that isn't in the sources.
+
 If a design-delta sub-agent was dispatched, incorporate its result into Section 1 (Design Delta) before finalizing. If it returned `NO_DELTAS`, include a one-line confirmation. If it returned `DELTAS_FOUND`, group and format the findings per `briefing-structure.md` Section 1.
 
 ### Step 5: Save the briefing
@@ -86,7 +86,9 @@ Save to `artifacts/current/briefing.md`. If an old file exists, archive it first
 ```
 Briefing 已建立：artifacts/current/briefing.md
 
-請在 VS Code 中檢閱（建議安裝 Mermaid Preview extension）。
+先看 Section 0（Review Focus）——列出真正需要你親自判斷的 3–5 件事，其餘為 agent 已把關的 routine。結尾的 Learning Notes 是教育層，可選讀。
+
+請在 VS Code 中檢閱（建議安裝 Mermaid Preview extension）。也可以用 `htmlify` 產生帶 Learning Panel 的可留言 HTML 版本。
 - 核准 → 回覆 "approved"，本次 session 結束，請開新 session 執行 implementation。
 - 有回饋 → 我會同步更新 briefing 和 plan。
 ```
