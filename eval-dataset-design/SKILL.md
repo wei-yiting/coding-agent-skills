@@ -1,6 +1,11 @@
 ---
 name: eval-dataset-design
-description: "Research-backed methodology for designing evaluation datasets for LLM and AI agent systems. Use this skill whenever designing eval datasets, choosing scoring methods (binary checklist, Likert, rubric), planning question generation pipelines, building scoring infrastructure (programmatic + LLM-as-judge), or setting up cross-version quality tracking. Also use when the user mentions evaluation rubrics, binary checkpoints, LLM judge prompts, or dataset generation strategies — even if they don't explicitly say 'evaluation dataset design.'"
+description: >-
+  Research-backed methodology for designing evaluation datasets for LLM and AI agent systems:
+  choosing scoring methods (binary checklist, Likert, rubric), question-generation pipelines,
+  programmatic + LLM-as-judge scoring infrastructure, and cross-version quality tracking. Use
+  for any eval-dataset, evaluation-rubric, or LLM-judge design work, even if the user doesn't
+  say 'evaluation dataset' explicitly.
 ---
 
 # Eval Dataset Design

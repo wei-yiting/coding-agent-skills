@@ -1,20 +1,12 @@
 ---
 name: bdd-e2e-loop
 description: >-
-  Execute BDD verification scenarios against implemented code in an automated
-  loop. Runs the verification plan from behavior-validation-plan — executing
-  curl commands, browser automation, and scripts — then dispatches a fixer for
-  implementation bugs and surfaces design issues to the user. Handles manual
-  verification via an interactive HTML checklist with screenshot support.
-  Supports Docker Sandbox Mode for permission-free automated execution.
-  Use this skill after coding is complete (subagent-driven-development finished)
-  or after code-review-loop finishes its review cycle. Also trigger on phrases
-  like "run BDD verification", "E2E verification loop", "execute test scenarios",
-  "verify the implementation", "run the verification plan", "BDD loop",
-  "run BDD", "跑 BDD", "執行驗證", "跑 E2E 測試", "驗證實作", "行為驗證",
-  "跑驗證計畫", "verification loop", "run BDD in sandbox", "sandbox 跑 BDD",
-  or "Docker BDD". This skill should also be triggered automatically by
-  code-review-loop after its review cycle completes.
+  Execute the BDD verification plan from behavior-validation-plan against implemented code in an
+  automated loop — runs curl/browser/script checks, dispatches a fixer for implementation bugs,
+  surfaces design issues to the user, and handles manual verification via an interactive HTML
+  checklist. Supports Docker sandbox mode for permission-free runs. Use after implementation
+  completes (e.g., after subagent-driven-development or code-review-loop) or whenever the user
+  asks to run BDD/E2E verification.
 ---
 
 # BDD End-to-End Verification Loop

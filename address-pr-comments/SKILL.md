@@ -1,12 +1,9 @@
 ---
 name: address-pr-comments
-description: |
-  Fetch GitHub PR review comments, triage them, address each with code changes, validate, commit, and push.
-  Use this skill whenever the user wants to address PR review comments, handle reviewer feedback, fix things
-  reviewers flagged, respond to PR threads, or process any GitHub pull request review feedback.
-  Trigger on phrases like: "address PR comments", "fix the review feedback", "handle PR review",
-  "處理 PR comment", "回覆 review", "看一下 review 的意見", "PR 被 comment 了", "address review".
-  Also use when the user pastes a PR URL and asks to address or fix something from it.
+description: >-
+  Fetch GitHub PR review comments, triage them, address each with code changes, validate,
+  commit, and push. Use whenever the user wants reviewer feedback on a pull request handled —
+  addressing PR review comments, fixing issues reviewers flagged, or processing a pasted PR URL.
 argument-hint: "[pr-number or pr-url] (omit to auto-detect from current branch)"
 ---
 

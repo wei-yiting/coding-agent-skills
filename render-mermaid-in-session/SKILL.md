@@ -1,6 +1,10 @@
 ---
 name: render-mermaid-in-session
-description: "Render Mermaid diagrams as PNG images and open in macOS Preview. MUST use this skill whenever you want to show a Mermaid diagram in conversation — whether for architecture diagrams, flowcharts, sequence diagrams, ER diagrams, state diagrams, class diagrams, or any other Mermaid-supported visualization. Never output raw Mermaid code blocks (```mermaid) in chat as a substitute; always render them as images through this skill. Use this any time you would otherwise write a Mermaid code fence, or when a visual diagram would help explain a concept to the user."
+description: >-
+  Render Mermaid diagrams as PNG images and open them in macOS Preview. MUST use whenever
+  showing any Mermaid diagram in conversation (architecture, flowchart, sequence, ER, state,
+  class diagrams, etc.) — never output raw ```mermaid code blocks in chat; always render to an
+  image instead.
 ---
 
 # Render Mermaid Diagram

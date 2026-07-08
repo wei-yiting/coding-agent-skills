@@ -1,6 +1,10 @@
 ---
 name: address-comments
-description: Find and process @cmt and @qst directives in specified files/folders (or the working directory if unspecified). Use this skill whenever the user mentions addressing comments, processing directives, handling @cmt or @qst annotations, or asks to "address comments" / "process comment directives" / "handle code annotations". Also use when the user invokes the /address-comments command. This skill handles two directive types — @cmt for implementing code changes and @qst for answering inline questions.
+description: >-
+  Find and process @cmt and @qst directives in the specified files/folders (or the working
+  directory): @cmt implements the requested code change, @qst answers the inline question. Use
+  when the user asks to address comments or process inline annotation directives, or invokes
+  /address-comments.
 ---
 
 # Address Comment Directives

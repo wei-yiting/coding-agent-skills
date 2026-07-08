@@ -1,17 +1,11 @@
 ---
 name: apply-briefing-update
 description: >-
-  Apply user's briefing edits back to source artifacts (implementation.md,
-  bdd-scenarios.md, verification-plan.md). The briefing is the sole human
-  review surface — all plan feedback flows through it. Direction is always
-  briefing → source artifacts. Use this skill whenever:
-  user edits or comments on briefing.md,
-  user gives feedback that requires changes to the underlying plan or BDD artifacts,
-  or user says "apply changes", "apply briefing", "apply feedback", "update plan",
-  "sync", "同步", "套用修改", "更新 plan", "apply update".
-  Do NOT use for initial briefing creation — use generate-briefing instead.
-  Do NOT use when the user is editing source artifacts directly — they edit the
-  briefing, not the plan or BDD files.
+  Apply the user's edits to artifacts/current/briefing.md back to the source artifacts
+  (implementation.md, bdd-scenarios.md, verification-plan.md). The briefing is the sole human
+  review surface; direction is always briefing → sources. Use whenever the user edits or
+  comments on the briefing, or gives plan feedback to sync. Do NOT use for initial briefing
+  creation (use generate-briefing) or when the user edits source artifacts directly.
 ---
 
 # Apply Briefing Update
@@ -19,6 +13,8 @@ description: >-
 The briefing is the human's review surface for the entire development plan. When the user edits the briefing, those changes must propagate back to the source artifacts so the coding agent executes the updated intent.
 
 **Direction is always: Briefing → Source Artifacts.** There is no reverse flow.
+
+**The briefing is exception-based.** Section 0 (Review Focus) and Section 5's sampled scenarios are still real review surfaces — user edits there sync back to source artifacts as usual (a changed Review Focus item maps to the relevant `impl` constraint/risk; a changed sampled scenario maps to `bdd-scenarios.md`). The **`## Learning Notes`** section is different: it is an **educational layer only**. User edits inside `## Learning Notes` must **NOT** propagate to any plan or BDD artifact — skip that section entirely when mapping changes.
 
 ## Target Artifacts
 

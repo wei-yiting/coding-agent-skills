@@ -1,6 +1,10 @@
 ---
 name: git-worktree
-description: "Git worktree lifecycle manager for isolated development. MUST use this skill whenever users mention worktrees, isolated branches, feature isolation, or parallel development. Also invoke it proactively after complex plans (3+ files, refactors, architecture changes) or whenever risky/experimental work should be isolated. This skill handles detection, proposal, confirmation, creation, working-in-worktree guidance, and cleanup via the bundled scripts/manage_worktree.sh workflow."
+description: >-
+  Git worktree lifecycle manager for isolated development: detection, proposal, confirmation,
+  creation, in-worktree guidance, and cleanup via the bundled manage_worktree.sh. Use whenever
+  the user mentions worktrees, isolated branches, or parallel development — and proactively when
+  risky, experimental, or large multi-file work should be isolated.
 ---
 
 # Git Worktree Lifecycle Manager

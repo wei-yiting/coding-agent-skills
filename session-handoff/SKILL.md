@@ -1,6 +1,9 @@
 ---
 name: session-handoff
-description: "Use when the user wants to save current progress before stopping, resume or report an interrupted session, split one current session into multiple handoffs before saving, close a completed handoff, change handoff status, or list pending sessions. Trigger on phrases like 'save handoff', 'session handoff', '記錄進度', '明天繼續', '昨天做到哪', 'report handoff', 'close handoff', 'show pending', '改成 pending', '拆成兩個 handoff', '分成多個 session', or similar requests about saving, resuming, or managing interrupted work sessions."
+description: >-
+  Save, resume, split, close, or list work-session handoffs. Use when the user wants to record
+  progress before stopping, resume or report an interrupted session, split current work into
+  multiple handoffs, change a handoff's status, or list pending sessions.
 ---
 
 # Session Handoff

@@ -1,6 +1,12 @@
 ---
 name: interactive-slide-builder
-description: "Use this skill whenever the user wants to design a PPT slide with a diagram (boxes, arrows, flowcharts), animations in a specific order, or careful per-slide composition — not just plain bullets. Drives an interactive per-slide planning conversation: ASCII layout sketch, element inventory, grouping plan, numbered animation order — all confirmed before any code runs. Builds with native PowerPoint shapes and proper grouping, never pasted single-image slides. Trigger on phrases like 做 PPT / 做投影片 / 做簡報 / 設計一頁投影片 / 這頁要這樣排 / 帶動畫 / 動畫順序 / 一張一張規劃 / 流程圖投影片 / 架構圖投影片 / one slide at a time / design this slide / slide with animation / diagram on a slide / flowchart slide. Prefer over the generic `pptx` skill when the user wants to carefully design a slide's visuals or control animations. Skip if the user only wants to extract text, bulk-generate a deck without per-slide attention, or make quick bullet-only slides."
+description: >-
+  Design PowerPoint slides interactively, one slide at a time: ASCII layout sketch, element
+  inventory, grouping plan, and numbered animation order — all confirmed with the user before
+  any code runs. Builds with native PowerPoint shapes and proper grouping, never pasted single-
+  image slides. Use when the user wants careful per-slide composition, slide diagrams (boxes,
+  arrows, flowcharts), or ordered animations; prefer over the generic pptx skill for visual
+  slide design. Skip for bulk bullet-only decks or text extraction.
 ---
 
 # Interactive Slide Builder

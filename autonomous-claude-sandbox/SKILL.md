@@ -1,19 +1,12 @@
 ---
 name: autonomous-claude-sandbox
 description: >-
-  Generic Docker sandbox infrastructure for running Claude Code with
-  --dangerously-skip-permissions in an unattended, isolated container.
-  Auto-detects project runtimes (Python / Node / Playwright), builds an
-  ephemeral image, safely provisions credentials via a selective copy of
-  ~/.claude (never mounts the host directory), runs `claude -p` with
-  stream-json monitoring, and cleans up on exit. This is a utility skill
-  meant to be leveraged by other skills — bdd-e2e-loop uses it for
-  automated BDD verification, subagent-driven-development uses it for
-  autonomous implementation runs. Trigger on phrases like "run in
-  sandbox", "Docker claude", "autonomous run", "sandbox mode",
-  "sandboxed execution", "跑 sandbox", "在 container 裡跑",
-  "無人值守執行", or when any other skill needs unattended Claude Code
-  execution with permission prompts disabled.
+  Docker sandbox infrastructure for running Claude Code unattended with --dangerously-skip-
+  permissions in an isolated container: auto-detects project runtimes (Python/Node/Playwright),
+  builds an ephemeral image, provisions credentials via a selective copy of ~/.claude (never
+  mounts the host directory), monitors via stream-json, and cleans up on exit. A utility skill
+  leveraged by bdd-e2e-loop and subagent-driven-development; also use when the user asks for
+  sandboxed or unattended Claude Code execution.
 ---
 
 # Autonomous Claude Sandbox

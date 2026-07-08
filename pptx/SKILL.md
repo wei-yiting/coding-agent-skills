@@ -1,6 +1,11 @@
 ---
 name: pptx
-description: "Use this skill any time a .pptx file is involved in any way — as input, output, or both. This includes: creating slide decks, pitch decks, or presentations; reading, parsing, or extracting text from any .pptx file (even if the extracted content will be used elsewhere, like in an email or summary); editing, modifying, or updating existing presentations; combining or splitting slide files; working with templates, layouts, speaker notes, or comments. Trigger whenever the user mentions \"deck,\" \"slides,\" \"presentation,\" or references a .pptx filename, regardless of what they plan to do with the content afterward. If a .pptx file needs to be opened, created, or touched, use this skill."
+description: >-
+  Use any time a .pptx file is involved in any way — as input, output, or both: creating slide
+  decks or presentations, reading or extracting content from a .pptx, editing existing
+  presentations, combining or splitting slide files, or working with templates, layouts, speaker
+  notes, and comments. Trigger whenever the user mentions decks, slides, presentations, or a
+  .pptx filename.
 license: Proprietary. LICENSE.txt has complete terms
 ---
 
@@ -13,7 +18,6 @@ license: Proprietary. LICENSE.txt has complete terms
 | Read/analyze content | `python -m markitdown presentation.pptx` |
 | Edit or create from template | Read [editing.md](editing.md) |
 | Create from scratch | Read [pptxgenjs.md](pptxgenjs.md) |
-
 ---
 
 ## Reading Content

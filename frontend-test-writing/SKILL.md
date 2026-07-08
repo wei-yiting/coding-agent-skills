@@ -1,6 +1,11 @@
 ---
 name: frontend-test-writing
-description: Best practices for writing React Testing Library (Vitest) unit/integration tests and Playwright E2E tests. Enforces the testing-library guiding principle (test what users see, not implementation details), web-first Playwright assertions, correct query priority, state-based UI coverage, and the correct layer split between RTL and E2E. Use this skill whenever writing, editing, reviewing, or auditing frontend tests — component tests, integration tests, E2E specs — planning test coverage, or debugging flaky tests. Also trigger when the user mentions React Testing Library, RTL, vitest, vi.mock, vi.spyOn, vi.hoisted, vi.useFakeTimers, fake timers, renderHook, testing hooks, custom hook tests, MSW, mock service worker, msw handlers, setupServer, server.use, jest-dom, Playwright, E2E, snapshot testing, getByTestId, getByRole, findByRole, waitFor, toHaveAttribute, toContainText, test selectors, test flakiness, fixtures, tags like @smoke/@critical, axe, jest-axe, a11y testing, accessibility testing, or asks what to test / what not to test in a frontend component.
+description: >-
+  Best practices for React Testing Library (Vitest) unit/integration tests and Playwright E2E
+  tests: test user-visible behavior over implementation details, correct query priority, web-
+  first assertions, MSW mocking, fake timers, a11y checks, and the RTL-vs-E2E layer split. Use
+  whenever writing, editing, reviewing, or debugging frontend tests, planning test coverage, or
+  deciding what (not) to test in a component.
 ---
 
 # Frontend Test Writing

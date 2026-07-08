@@ -1,6 +1,11 @@
 ---
 name: behavior-validation-plan
-description: Generate behavior test scenarios and verification plans from design documents using Three Amigos multi-perspective discovery. Produces illustrative scenarios (per-rule behavior tests) and journey scenarios (end-to-end flow tests) with concrete verification steps. Use this skill after design-brainstorming produces a design.md, when the user wants to create acceptance test scenarios, write behavior test scenarios, plan E2E verification, generate test cases from a design, prepare verification criteria before coding, create a test plan, build a QA plan, figure out what to test, or verify a design. Also trigger on phrases like "BDD", "behavior test", "acceptance tests", "E2E test plan", "test plan", "QA plan", "what should I test", "how to verify this design", "scenario generation", "behavior validation", "驗收測試", "測試情境", "驗證計畫", "寫測試案例", "測試計畫", or "行為驅動".
+description: >-
+  Generate behavior test scenarios and verification plans from design documents using Three
+  Amigos multi-perspective discovery — illustrative per-rule scenarios plus end-to-end journey
+  scenarios, each with concrete verification steps. Use after design-brainstorming produces a
+  design.md, or whenever the user wants acceptance-test scenarios, an E2E test/QA plan, or
+  verification criteria before coding.
 ---
 
 # Behavior Test Scenario Generation
