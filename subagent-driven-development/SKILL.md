@@ -19,27 +19,16 @@ Use when you have an implementation plan with mostly independent tasks and want 
 - Tasks are mostly independent (can be implemented sequentially without tight coupling)
 - Subagent support available (Claude Code, Codex)
 
-## Execution Mode Selection
+## Slice Gate Mode Selection
 
-At the very start of the skill, before reading the plan, ask the user which execution mode to use:
-
-> 要用哪一種執行模式？
->
-> 1. **Normal Mode** — 在目前 session 用 Agent tool dispatch implementer / reviewer subagents。每個 task 完成後 commit 一次，可以逐步 review。
-> 2. **Sandbox Mode** — 把整個實作流程放在一個 Docker 容器裡 autonomous 執行。整個過程不需要 human approval，跑完才一次 commit。適合長時間無人值守的大量 task。
-
-Default to Normal Mode if the user doesn't specify. Switch to Sandbox Mode when the user explicitly asks for "sandbox", "autonomous", "unattended", "在 container 裡跑", "無人值守", or when the plan is very large (e.g., 10+ tasks) and the user wants to walk away while it runs.
-
-Both modes use the same implementer / spec-reviewer / code-quality-reviewer subagent prompts. The difference is *where* those subagents run and *when* commits happen.
-
-In Normal Mode, also confirm the **slice gate mode** (a slice = one `## Slice N` group in the plan = one Flow Verification group = one PR):
+At the very start of the skill, before reading the plan, confirm the **slice gate mode** (a slice = one `## Slice N` group in the plan = one Flow Verification group = one PR):
 
 > 每個 slice 完成後要怎麼交付？
 >
 > 1. **Blocking（預設）** — 每個 slice 通過 Flow Verification、開出 draft PR 之後就停下來等你 review，approve 才做下一個 slice。你可以逐段看到 code，不會累積成一大包。
 > 2. **Async** — 不等 review，一個 slice 接著一個 slice 往下做，每個 slice 疊在前一個 branch 上（stacked）。適合你想離開讓它一路跑完的情況；缺點是後面的 slice 之後可能要 rebase review feedback。
 
-Default to Blocking unless the user explicitly opts into async ("async", "不用等我", "一路跑完", "stacked"). Sandbox Mode always runs unattended and cannot honor a blocking slice gate (see Sandbox Mode below).
+Default to Blocking unless the user explicitly opts into async ("async", "不用等我", "一路跑完", "stacked").
 
 ## The Process
 
@@ -186,89 +175,11 @@ After all slices are delivered and their gates cleared, run a final pass over th
 3. If an E2E BDD validation skill is configured, trigger it now. Do not proceed until E2E validation passes or the human decides to skip it.
 4. If no E2E BDD validation skill is configured, report completion to the human
 
-## Sandbox Mode
-
-When the user chose Sandbox Mode in the Execution Mode Selection step, replace the entire Normal Mode flow (Per-task loop + Flow Verifications + Post-Execution) with the sandbox flow below.
-
-**Sandbox Mode cannot honor per-slice human gates** — it runs unattended in a container and never stops for review. So it is appropriate for **single-slice plans** (one flow, one PR at the end). For **multi-slice plans**, default to Normal Mode so the human reviews each slice at its gate. If the user still wants sandbox for a multi-slice plan, run the sandbox **one slice at a time** — one sandbox launch per slice, then surface that slice for review before launching the next — rather than one unattended run over all slices.
-
-### Contract (Sandbox Mode)
-
-- The whole implementation runs inside an `autonomous-claude-sandbox` Docker container
-- The container dispatches its own subagents (implementer → spec review → quality review → flow verification) — same review loop, just running inside the container instead of on the host
-- **No commits happen inside the container.** The container never runs any git command. All changes stay uncommitted on the host.
-- The container writes `artifacts/current/temp/sdd-sandbox-report.json` before exiting. Schema: `references/sdd-sandbox-report-schema.md`.
-- After the container exits, the host session reads the report, summarizes for the user, and **asks the user before making a single commit for the entire changeset.**
-
-### Sandbox Mode Flow
-
-1. **Verify prerequisites:**
-   - `artifacts/current/implementation.md` exists
-   - Docker is running (`docker info`)
-   - `autonomous-claude-sandbox` skill is installed at `~/.claude/skills/autonomous-claude-sandbox/`
-
-2. **Prepare the orchestrator prompt:**
-   - Copy `references/sandbox-orchestrator-prompt.md` to `artifacts/current/temp/orchestrator-prompt.md`
-   - The orchestrator prompt has no template variables — everything is static
-
-3. **Dispatch the sandbox launcher:**
-
-   ```bash
-   bash ~/.claude/skills/autonomous-claude-sandbox/scripts/run-sandbox.sh \
-     --project-dir "$PROJECT_DIR" \
-     --prompt-file "$PROJECT_DIR/artifacts/current/temp/orchestrator-prompt.md" \
-     --expect-output "artifacts/current/temp/sdd-sandbox-report.json" \
-     --progress-pattern 'Task [0-9]+:|Flow verification:|SDD Sandbox' \
-     --image-prefix "sdd-sandbox" \
-     --timeout 7200
-   ```
-
-   - `--timeout 7200` is 2 hours; adjust if the plan is very large
-   - Progress pattern matches the status lines the orchestrator prompt is instructed to print
-
-4. **While the sandbox runs:** the launcher streams progress via `--progress-pattern`. You (the host controller) just watch for completion — do NOT attempt to inspect the container state, do NOT dispatch more subagents on the host, do NOT make any commits.
-
-5. **When the sandbox exits:**
-   - Read `artifacts/current/temp/sdd-sandbox-report.json`
-   - If the file is missing, the sandbox failed catastrophically. Read the stream log at `artifacts/current/temp/sandbox-stream.jsonl` and surface the last 50 lines to the user.
-   - If the file exists, parse `status`, `tasks`, `flow_verifications`, `final_review`, `summary`
-
-6. **Summarize for the user:**
-   - Show per-task status (completed / failed)
-   - Show flow verification outcomes
-   - Show final review concerns (if any)
-   - Show remaining linting errors (if any)
-   - List all files changed
-
-7. **Ask the user about committing:**
-   - If `status == SUCCESS`: "全部 task 都完成了，sandbox 沒有 commit。要不要現在用一個 commit 把所有改動包起來？先 review 一下 `git diff`。"
-   - If `status == PARTIAL`: Surface the failed tasks and concerns first. Then ask: "Sandbox 完成了部分 task，有 N 個失敗。要 commit 已完成的部分、還是整個丟掉？"
-   - If `status == ERROR`: "Sandbox 沒有跑完整個流程就中斷了。建議先 reset 工作區再看下一步。"
-
-8. **When the user approves commit:** run `git add -A && git commit -m "<message>"` with a commit message that lists the completed tasks (derived from `tasks[*].title` where `status == completed`). One commit for the whole changeset.
-
-### Sandbox Mode Flow Diagram
-
-```
-Host session:
-  1. Ask user: sandbox or normal?
-  2. [sandbox] Verify prerequisites
-  3. Copy orchestrator prompt to temp
-  4. Dispatch autonomous-claude-sandbox launcher
-  5. Wait for launcher exit (progress streams to terminal)
-  6. Read sdd-sandbox-report.json
-  7. Summarize to user
-  8. Ask for commit approval
-  9. [user approves] One git commit, done
-```
-
 ## Prompt Templates
 
 - `./references/implementer-prompt.md` — Dispatch implementer subagent
 - `./references/spec-reviewer-prompt.md` — Dispatch spec compliance reviewer subagent
 - `./references/code-quality-reviewer-prompt.md` — Dispatch code quality reviewer subagent
-- `./references/sandbox-orchestrator-prompt.md` — Sandbox Mode: full prompt sent to Claude inside the `autonomous-claude-sandbox` container
-- `./references/sdd-sandbox-report-schema.md` — JSON schema for the sandbox completion report
 
 ## Example Workflow
 
@@ -276,7 +187,6 @@ Host session:
 You: I'm using Subagent-Driven Development to execute this plan.
 
 [Read plan: artifacts/current/implementation.md]
-[Ask: Normal or Sandbox? → Normal]
 [Ask: slice gate Blocking or Async? → Blocking (default)]
 [Extract all tasks + slices (Flow Verifications) with full text and context]
 [Create TodoWrite with all items]
@@ -361,8 +271,6 @@ Done! Awaiting human decision on next steps.
 - **Proceed past a slice's delivery gate without explicit user approval** (unless the user chose async mode up front) — the blocking gate is the whole point of incremental delivery
 - **Batch multiple slices into one PR** — one slice = one draft PR
 - **Skip the Slice Delivery Gate** (lint → draft PR → summary) after a slice's Flow Verification passes
-- **Run git commands inside Sandbox Mode** — the sandbox container must never run `git add`, `git commit`, `git status`, or any git operation. The `/workspace` mount may be a worktree with a `.git` pointer to a host path that does not exist in the container. All commits are deferred to the host after the sandbox exits.
-- **Commit before the user has reviewed the sandbox report in Sandbox Mode** — always show the summary from `sdd-sandbox-report.json` first and get explicit user approval before running `git add -A && git commit`
 
 ## Integration
 

@@ -4,9 +4,8 @@ description: >-
   Execute the BDD verification plan from behavior-validation-plan against implemented code in an
   automated loop — runs curl/browser/script checks, dispatches a fixer for implementation bugs,
   surfaces design issues to the user, and handles manual verification via an interactive HTML
-  checklist. Supports Docker sandbox mode for permission-free runs. Use after implementation
-  completes (e.g., after subagent-driven-development or code-review-loop) or whenever the user
-  asks to run BDD/E2E verification.
+  checklist. Use after implementation completes (e.g., after subagent-driven-development or
+  code-review-loop) or whenever the user asks to run BDD/E2E verification.
 ---
 
 # BDD End-to-End Verification Loop
@@ -17,11 +16,7 @@ At the start, let the user know you're using this skill and what to expect — t
 
 Execute the verification plan produced by behavior-validation-plan against the implemented code. This skill reads `bdd-scenarios.md` and `verification-plan.md`, resolves post-coding placeholders, runs all automated verifications, fixes failures in a loop, and presents manual verification to the user.
 
-Two execution modes:
-- **Standard Mode** — Run everything in the current session. Suitable when the user has configured permission allowlists or is willing to approve commands interactively.
-- **Docker Sandbox Mode** — Run the automated loop inside an ephemeral Docker container with `--dangerously-skip-permissions`. The manual phase runs on the host. Use when the user wants zero-prompt automated verification.
-
-Three phases regardless of mode:
+Three phases:
 1. **Automated Verification Loop** (max 5 rounds) — Execute scenarios, classify failures, fix implementation bugs, surface design issues
 2. **Manual Verification Phase** — After all automated scenarios pass, present manual tests via an interactive HTML checklist on the host
 3. **Final Report** — Generate a comprehensive report with full test history and fix journey
@@ -31,39 +26,23 @@ Three phases regardless of mode:
 - `artifacts/current/bdd-scenarios.md` exists (from behavior-validation-plan)
 - `artifacts/current/verification-plan.md` exists (from behavior-validation-plan)
 - Implementation is complete (from subagent-driven-development or after code-review-loop)
-- **Docker Sandbox Mode only**: Docker installed and running, `~/.claude/.credentials.json` exists (macOS: export from Keychain with `security find-generic-password -s "Claude Code-credentials" -w > ~/.claude/.credentials.json && chmod 600 ~/.claude/.credentials.json`), `~/.claude.json` exists. The container lifecycle (runtime detection, Dockerfile generation, credential copy, stream monitoring, cleanup) is provided by the `autonomous-claude-sandbox` skill — `bdd-sandbox.sh` is a thin BDD-specific wrapper around its `run-sandbox.sh` launcher.
 
 If either BDD file is missing, tell the user and suggest running behavior-validation-plan first. Do not attempt to derive scenarios on the fly — baseless scenarios give false confidence.
 
 ## Process
 
 ```
-Step 0: Preparation + Mode selection
+Step 0: Preparation
          │
-         ├── Standard Mode ──────────────────┐
-         │                                    │
-         │   ╔══════════════════════════════╗ │
-         │   ║  AUTOMATED LOOP (local)      ║ │
-         │   ║  Subagent Verifier/Fixer     ║ │
-         │   ╚══════════════════════════════╝ │
-         │                                    │
-         ├── Docker Sandbox Mode ────────────┐│
-         │                                   ││
-         │   ╔══════════════════════════════╗ ││
-         │   ║  STAGE 1 (Docker container)  ║ ││
-         │   ║  bdd-sandbox.sh → claude -p  ║ ││
-         │   ║  → auto-stage-report.json    ║ ││
-         │   ╚══════════════════════════════╝ ││
-         │            │                       ││
-         │   ╔══════════════════════════════╗ ││
-         │   ║  STAGE 2 (host session)      ║ ││
-         │   ║  Read report → Design issues ║ ││
-         │   ╚══════════════════════════════╝ ││
-         │                                    ││
-         ├────────────────────────────────────┘│
-         ▼                                     │
-╔════════════════════════════════════╗          │
-║  MANUAL PHASE (always on host)    ║ ◄────────┘
+         ▼
+╔══════════════════════════════════╗
+║  AUTOMATED LOOP                  ║
+║  Subagent Verifier/Fixer         ║
+╚══════════════════════════════════╝
+         │
+         ▼
+╔════════════════════════════════════╗
+║  MANUAL PHASE                     ║
 ║  HTML checklist → User tests →    ║
 ║  Fix if needed → Re-verify auto   ║
 ║  (max 3 rounds) → Repeat manual   ║
@@ -76,22 +55,16 @@ Step 0: Preparation + Mode selection
 ### Step 0: Preparation
 
 1. Read `artifacts/current/verification-plan.md`
-2. **Select execution mode**: Ask the user if they want Docker Sandbox Mode. Trigger sandbox if: user mentions "sandbox", "Docker", or the session is not running with `--dangerously-skip-permissions` and there are many automated scenarios.
-3. If **Standard Mode** → continue to Step 0a
-4. If **Docker Sandbox Mode** → jump to Docker Sandbox Automated Verification
-
-#### Step 0a: Standard Mode Preparation
-
-1. Resolve all `[POST-CODING: ...]` placeholders by inspecting the codebase — find the specific file paths, function names, CLI arguments, log patterns, or entry points described in each placeholder
-2. If a placeholder cannot be resolved (expected code structure doesn't exist), flag it to the user immediately rather than guessing
-3. Separate automated scenarios (Deterministic + Browser Automation) from manual scenarios (Manual Behavior Test + User Acceptance Test)
-4. Create `artifacts/current/temp/` directory if it doesn't exist
-5. Write `artifacts/current/executable-verification.md` — the verification plan with all placeholders resolved
-6. Proceed to Standard Mode Automated Verification Loop
+2. Resolve all `[POST-CODING: ...]` placeholders by inspecting the codebase — find the specific file paths, function names, CLI arguments, log patterns, or entry points described in each placeholder
+3. If a placeholder cannot be resolved (expected code structure doesn't exist), flag it to the user immediately rather than guessing
+4. Separate automated scenarios (Deterministic + Browser Automation) from manual scenarios (Manual Behavior Test + User Acceptance Test)
+5. Create `artifacts/current/temp/` directory if it doesn't exist
+6. Write `artifacts/current/executable-verification.md` — the verification plan with all placeholders resolved
+7. Proceed to the Automated Verification Loop
 
 ---
 
-## Standard Mode: Automated Verification Loop
+## Automated Verification Loop
 
 ```
 ROUND = 1
@@ -179,101 +152,16 @@ If any scenarios were classified as Level 3 design issues:
 
 ---
 
-## Docker Sandbox Mode: Automated Verification
-
-### Prerequisites (Docker-specific)
-
-- Docker installed and running
-- `~/.claude/.credentials.json` exists. On macOS, OAuth tokens are stored in Keychain and must be exported to a file for Docker access:
-  ```bash
-  security find-generic-password -s "Claude Code-credentials" -w > ~/.claude/.credentials.json
-  chmod 600 ~/.claude/.credentials.json
-  ```
-  The Keychain service name is `"Claude Code-credentials"` (capital C, space, hyphen). If the token rotates (e.g., after re-auth), re-run this export.
-- `~/.claude.json` exists (Claude Code state file — created automatically by any Claude Code session)
-
-### Stage 1: Run Automated Loop in Docker
-
-1. Run the launcher script:
-   ```bash
-   bash ~/.claude/skills/bdd-e2e-loop/scripts/bdd-sandbox.sh <project-dir> [--max-rounds 5] [--browser-use]
-   ```
-
-2. The script auto-detects and configures:
-   - **Python**: version from `pyproject.toml` `requires-python`, package manager from lock files (`uv.lock` → uv, `poetry.lock` → poetry, `Pipfile.lock` → pipenv, `requirements.txt` → pip)
-   - **Node**: version from `.nvmrc` / `.node-version` / `package.json` `engines.node`, package manager from lock files (`pnpm-lock.yaml` → pnpm, `yarn.lock` → yarn, `package-lock.json` → npm)
-   - Generates an ephemeral Dockerfile with a **non-root user** (required — Claude Code refuses `--dangerously-skip-permissions` as root)
-   - Mounts `~/.claude/` and `~/.claude.json` to the non-root user's home directory
-   - Runs `claude -p --dangerously-skip-permissions --output-format stream-json --verbose` for real-time progress monitoring
-   - Streams scenario progress to terminal while Docker runs in background
-   - Writes results to `artifacts/current/temp/auto-stage-report.json`
-   - Preserves stream log at `artifacts/current/temp/docker-stream.jsonl` for debugging
-   - Cleans up Docker image and generated Dockerfile on exit
-
-3. If `artifacts/current/executable-verification.md` already exists (from a previous Standard Mode run or manual preparation), the Docker Claude reuses it instead of re-resolving POST-CODING placeholders.
-
-4. **Monitor the sandbox while it runs.** The script runs Docker in the background and streams progress to terminal, but the orchestrating agent (you) must also actively monitor via the stream log. Run the launcher script itself in the background (`run_in_background`), then periodically check progress:
-
-   **How to monitor:**
-   - The stream log is at `artifacts/current/temp/docker-stream.jsonl` (newline-delimited JSON, one event per line).
-   - Check which scenario is currently running:
-     ```bash
-     grep '"name":"Bash"' artifacts/current/temp/docker-stream.jsonl | grep -o '"command":"# [SJ]-[^\\]*"' | tail -3
-     ```
-   - Check total progress (line count grows as scenarios execute):
-     ```bash
-     wc -l artifacts/current/temp/docker-stream.jsonl
-     ```
-   - Check if Docker is still running:
-     ```bash
-     docker ps --filter ancestor=bdd-sandbox --format '{{.Status}}'
-     ```
-   - Check if the final report has been written:
-     ```bash
-     ls -la artifacts/current/temp/auto-stage-report.json 2>/dev/null
-     ```
-
-   **Monitoring cadence:** Check every 2–5 minutes. Report the current scenario group (Discovery / CSV / Scorer / Runner / Result / Braintrust / Journey) to the user so they know progress is being made. Do not poll in a tight loop — the sandbox may run for 30+ minutes for large scenario sets.
-
-   **If the container exits without producing `auto-stage-report.json`:** Read the tail of the stream log to diagnose. Common causes: context window exhaustion (too many scenarios), authentication failure, missing dependencies. Report the findings to the user.
-
-### Stage 2: Process Results on Host
-
-1. Read `artifacts/current/temp/auto-stage-report.json` (schema: `references/auto-stage-report-schema.md`)
-
-2. Based on `status`:
-
-   **`ALL_AUTO_PASS`** → Proceed to Manual Verification Phase
-
-   **`DESIGN_ISSUES`**:
-   - Present each design issue from `design_issues[]` where `user_decision` is null
-   - Show: scenario ID, title, conflict analysis, consecutive failure count
-   - Wait for user judgment: adjust design / adjust scenario / accept current behavior
-   - If design changes affect the verification plan:
-     1. Update `artifacts/current/verification-plan.md` and/or `bdd-scenarios.md`
-     2. Re-run Stage 1: `bash bdd-sandbox.sh <project-dir> --max-rounds 5`
-     3. Read updated report
-   - If all remaining issues are accepted → proceed to Manual Verification Phase
-
-   **`MAX_ROUNDS_HIT`**:
-   - Present remaining failures from scenarios where `final_status` is FAIL/ERROR
-   - Show the fix history from `fix_history[]` so the user can see what was already tried
-   - Ask user: continue fixing manually? Adjust scenarios? Accept current state?
-
-3. For regressions (from `regressions[]`): highlight to the user — these indicate fix instability
-
----
-
 ## Manual Verification Phase
 
-Enter this phase only when all automated scenarios pass (from either mode). Only **Manual Behavior Test** scenarios are tested in this loop — these assist automated verification where technical limitations prevent the Coding Agent from testing directly (e.g., physical devices, high-concurrency environments).
+Enter this phase only when all automated scenarios pass. Only **Manual Behavior Test** scenarios are tested in this loop — these assist automated verification where technical limitations prevent the Coding Agent from testing directly (e.g., physical devices, high-concurrency environments).
 
 **User Acceptance Test** scenarios are NOT part of this loop. They are listed in the final report as pending items for the user to verify at PR review time. Acceptance testing is a product-level check that happens at delivery, not during the fix cycle.
 
 ### Present Manual Behavior Test Checklist
 
 1. Read `assets/manual-verification.html` template
-2. Extract **only Manual Behavior Test** scenarios from `executable-verification.md` (Standard Mode) or from the `scenarios` object in `auto-stage-report.json` where `type` is `Manual Behavior Test` (Docker Sandbox Mode)
+2. Extract **only Manual Behavior Test** scenarios from `executable-verification.md`
 3. Construct scenario JSON array with fields: `id`, `title`, `type` ("technical"), `steps` (array), `expected`
    - **Command formatting**: When a step includes a terminal command the user must run, wrap it in a `<pre>` tag (rendered as a dark code block in the HTML). Use `<code>` for short inline references (file paths, variable names). Never embed long commands as plain text in a step — always use `<pre>`. For multi-line commands, include line breaks inside the `<pre>` block.
    - **Output-only print**: When the step involves running a Python script, print only a concise summary (e.g., status, key fields, lengths) — never `print()` the full result object, which may dump thousands of lines.
@@ -294,9 +182,7 @@ If all Manual Behavior Tests pass → Final Report.
 If any Manual Behavior Test fails:
 1. Dispatch Fixer with failure descriptions and screenshots from the JSON
 2. Fixer fixes → runs unit tests → records fixes in fix-history.json
-3. Re-run ALL automated verification with a **separate round limit of 3**:
-   - **Standard Mode**: Run Steps 1-5 locally with MAX_ROUNDS = 3
-   - **Docker Sandbox Mode**: `bash bdd-sandbox.sh <project-dir> --max-rounds 3`
+3. Re-run ALL automated verification with a **separate round limit of 3** (MAX_ROUNDS = 3)
 4. If automated passes → present Manual Behavior Test checklist again to user
 5. If automated fails after 3 rounds → stop, report, prompt user
 
@@ -311,8 +197,7 @@ The report has two parts:
 2. **最終狀態** — Final pass/fail for each scenario (only those that ever failed), manual test results, pending UAT items, summary statistics
 
 Data sources:
-- **Standard Mode**: Aggregate from `artifacts/current/temp/bdd-verification-round-{N}.md` files and `artifacts/current/temp/fix-history.json`
-- **Docker Sandbox Mode**: Read from `artifacts/current/temp/auto-stage-report.json` which already contains structured per-round data
+- **Automated rounds**: Aggregate from `artifacts/current/temp/bdd-verification-round-{N}.md` files and `artifacts/current/temp/fix-history.json`
 - **Manual results**: From `manual-results-round-{N}.json`
 
 Temp files in `artifacts/current/temp/` remain for reference but the report is the permanent record.
@@ -327,7 +212,7 @@ Temp files in `artifacts/current/temp/` remain for reference but the report is t
 
 4. **Unit tests gate fix acceptance.** The Fixer cannot proceed if tests fail. This prevents cascading breakage that makes later rounds harder to debug.
 
-5. **No git operations.** The BDD loop never runs git commands (no commit, no init, no add). All fix tracking is file-based. The host session commits changes after the loop completes. This avoids destructive git operations in Docker containers and keeps the loop isolated from version control concerns.
+5. **No git operations.** The BDD loop never runs git commands (no commit, no init, no add). All fix tracking is file-based. The host session commits changes after the loop completes. This keeps the loop isolated from version control concerns.
 
 6. **Manual Behavior Tests in the loop, User Acceptance Tests at delivery.** Manual Behavior Test scenarios (assisting where automation has technical limitations) are part of the verification loop — they must pass for E2E completeness. User Acceptance Test scenarios are listed in the report as pending items for PR review, not tested in this loop.
 
@@ -335,14 +220,9 @@ Temp files in `artifacts/current/temp/` remain for reference but the report is t
 
 8. **Placeholders re-verified after changes.** When user decisions modify the design or plan, re-check `executable-verification.md` for stale placeholders.
 
-9. **Docker sandbox for autonomous execution.** When the user wants zero-prompt automated verification, use Docker Sandbox Mode. The container isolates filesystem access to the mounted project directory only. The manual phase always runs on the host where the browser is available.
-
 ## Reference Files
 
-- `references/verifier-prompt.md` — Verifier subagent dispatch template (Standard Mode Step 1)
-- `references/fixer-prompt.md` — Fixer subagent dispatch template (Standard Mode Step 3)
-- `references/stage1-prompt.md` — Stage 1 automated verification prompt (Docker Sandbox Mode)
-- `references/auto-stage-report-schema.md` — JSON interface between Stage 1 and Stage 2
+- `references/verifier-prompt.md` — Verifier subagent dispatch template
+- `references/fixer-prompt.md` — Fixer subagent dispatch template
 - `references/report-template.md` — Final report template
-- `scripts/bdd-sandbox.sh` — Docker sandbox launcher script
 - `assets/manual-verification.html` — Interactive HTML template for manual testing
