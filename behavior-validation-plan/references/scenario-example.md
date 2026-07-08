@@ -309,7 +309,7 @@ Origin: Multiple
 
 **Discovery narrative shows how scenarios emerge.** Step 1.5 demonstrates that the most valuable scenarios (context window divergence, server restart as user-visible) came from cross-perspective challenges, not from any single agent working alone. The challenge format — concrete counter-examples, not abstract concerns — is what forces genuine dialectic.
 
-**Backend vs frontend Rules determine verification method.** S-chat-01 (conversation persistence) is a backend behavior — verified via API calls. S-chat-05 (streaming text renders incrementally) is a frontend behavior — verified via Browser-Use CLI. The scenario text doesn't dictate the verification method; the layer where the Rule operates does.
+**Backend vs frontend Rules determine verification method.** S-chat-01 (conversation persistence) is a backend behavior — verified via API calls. S-chat-05 (streaming text renders incrementally) is a frontend behavior — verified via a Playwright script (`webapp-testing` skill). The scenario text doesn't dictate the verification method; the layer where the Rule operates does.
 
 **Behavior test vs unit test.** Every scenario here has a behavior trigger (user sends message, clicks button), state flow (conversation history, tool card transitions), and an observable outcome (sees text, sees tool card change color). None of them test a single API endpoint's response format — that's unit test territory.
 

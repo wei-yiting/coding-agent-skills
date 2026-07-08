@@ -51,77 +51,98 @@ Backend behaviors verified via curl/script. Each entry chains state between step
 
 ## Automated Verification — Browser Automation
 
-Frontend behaviors verified via Browser-Use CLI. These behaviors only exist in the UI layer.
+Frontend behaviors verified via Playwright scripts (webapp-testing skill). These behaviors only exist in the UI layer. Each snippet runs inside the standard boilerplate — `sync_playwright()`, headless chromium, `page.wait_for_load_state('networkidle')` after `page.goto`, with `expect` imported from `playwright.sync_api`.
 
 #### S-chat-05: User sees text appear progressively during streaming
-- **Method**: Browser-Use CLI
+- **Method**: Browser automation (Playwright script)
 - **Steps**:
-  1. `browser-use open http://localhost:5173/chat`
-  2. `browser-use state` → find chat input element index
-  3. `browser-use input {index} "Tell me about stock market trends"`
-  4. `browser-use click {send-button-index}`
-  5. `browser-use wait text "stock"` → first content appears
-  6. `browser-use screenshot /tmp/s-chat-05-partial.png` → capture partial response
-  7. Wait 3 seconds: `browser-use wait selector "[data-status='ready']"` → stream completes
-  8. `browser-use screenshot /tmp/s-chat-05-complete.png` → capture complete response
-  9. Assert: complete screenshot shows more text than partial screenshot
+  ```python
+  page.goto("http://localhost:5173/chat")
+  page.wait_for_load_state("networkidle")
+  page.get_by_role("textbox").fill("Tell me about stock market trends")
+  page.get_by_role("button", name="Send").click()
+  page.wait_for_selector("text=stock")                     # first content appears
+  page.screenshot(path="/tmp/s-chat-05-partial.png")       # capture partial response
+  page.wait_for_selector("[data-status='ready']")          # stream completes
+  page.screenshot(path="/tmp/s-chat-05-complete.png")      # capture complete response
+  # Assert: complete screenshot shows more text than partial screenshot
+  ```
 - **Expected**: Text appears progressively — partial screenshot shows beginning of response, complete screenshot shows the full response
 
 #### S-chat-06: Tool card transitions from executing to completed
-- **Method**: Browser-Use CLI
+- **Method**: Browser automation (Playwright script)
 - **Steps**:
-  1. `browser-use open http://localhost:5173/chat`
-  2. Send a message that triggers a tool call: `browser-use input {index} "What is the current price of AAPL?"`
-  3. `browser-use click {send-button-index}`
-  4. `browser-use wait selector "[data-tool-state='input-available']"` → tool card appears in executing state
-  5. `browser-use screenshot /tmp/s-chat-06-executing.png` → capture amber state
-  6. `browser-use wait selector "[data-tool-state='output-available']"` → tool completes
-  7. `browser-use screenshot /tmp/s-chat-06-completed.png` → capture green state
-  8. Assert: executing screenshot shows amber indicator, completed screenshot shows green indicator
+  ```python
+  page.goto("http://localhost:5173/chat")
+  page.wait_for_load_state("networkidle")
+  # Message that triggers a tool call
+  page.get_by_role("textbox").fill("What is the current price of AAPL?")
+  page.get_by_role("button", name="Send").click()
+  page.wait_for_selector("[data-tool-state='input-available']")   # tool card appears in executing state
+  page.screenshot(path="/tmp/s-chat-06-executing.png")            # capture amber state
+  page.wait_for_selector("[data-tool-state='output-available']")  # tool completes
+  page.screenshot(path="/tmp/s-chat-06-completed.png")            # capture green state
+  # Assert: executing screenshot shows amber indicator, completed screenshot shows green indicator
+  ```
 - **Expected**: Tool card visually transitions from amber (executing) to green (completed)
 
 #### S-chat-08: Stream error displays error block with working Retry
-- **Method**: Browser-Use CLI
+- **Method**: Browser automation (Playwright script)
 - **Steps**:
-  1. `browser-use open http://localhost:5173/chat`
-  2. `[POST-CODING: trigger an error condition — e.g., temporarily stop the backend, send a message, then restart]`
-  3. `browser-use wait selector "[data-testid='stream-error-block']"` → error block appears
-  4. `browser-use screenshot /tmp/s-chat-08-error.png`
-  5. `browser-use click {retry-button-index}` → click Retry
-  6. `browser-use wait text` → new response starts streaming
-  7. `browser-use wait selector "[data-status='ready']"` → stream completes
-  8. `browser-use screenshot /tmp/s-chat-08-recovered.png`
-  9. Assert: error screenshot shows error block + Retry button; recovered screenshot shows a complete response with no error block
+  ```python
+  page.goto("http://localhost:5173/chat")
+  page.wait_for_load_state("networkidle")
+  # [POST-CODING: trigger an error condition — e.g., temporarily stop the backend, send a message, then restart]
+  page.wait_for_selector("[data-testid='stream-error-block']")    # error block appears
+  page.screenshot(path="/tmp/s-chat-08-error.png")
+  page.get_by_role("button", name="Retry").click()
+  page.wait_for_selector("[data-status='streaming']")             # new response starts streaming
+  page.wait_for_selector("[data-status='ready']")                 # stream completes
+  page.screenshot(path="/tmp/s-chat-08-recovered.png")
+  expect(page.locator("[data-testid='stream-error-block']")).not_to_be_visible()
+  # Assert: error screenshot shows error block + Retry button; recovered screenshot shows a complete response with no error block
+  ```
 - **Expected**: Error shows with Retry → clicking Retry produces a successful new response
 
 #### S-chat-09: Clear Session starts a fresh conversation
-- **Method**: Browser-Use CLI
+- **Method**: Browser automation (Playwright script)
 - **Steps**:
-  1. `browser-use open http://localhost:5173/chat`
-  2. Send a message: `browser-use input {index} "Remember this: the code is 42"`
-  3. `browser-use click {send-button-index}` → wait for response
-  4. `browser-use wait selector "[data-status='ready']"`
-  5. `browser-use click {clear-session-button-index}` → click Clear Session
-  6. `browser-use screenshot /tmp/s-chat-09-cleared.png` → message list should be empty
-  7. Send follow-up: `browser-use input {index} "What was the code?"`
-  8. `browser-use click {send-button-index}` → wait for response
-  9. `browser-use wait selector "[data-status='ready']"`
-  10. `browser-use get text {response-element-index}` → extract response text
-  11. Assert: cleared screenshot shows empty message list; response text does NOT contain "42"
+  ```python
+  page.goto("http://localhost:5173/chat")
+  page.wait_for_load_state("networkidle")
+  page.get_by_role("textbox").fill("Remember this: the code is 42")
+  page.get_by_role("button", name="Send").click()
+  page.wait_for_selector("[data-status='ready']")                 # wait for response
+  page.get_by_role("button", name="Clear Session").click()
+  page.screenshot(path="/tmp/s-chat-09-cleared.png")              # message list should be empty
+  page.get_by_role("textbox").fill("What was the code?")
+  page.get_by_role("button", name="Send").click()
+  page.wait_for_selector("[data-status='ready']")                 # wait for response
+  # Extract response text (adjust locator to the app's assistant-message element)
+  response_text = page.locator("{response-element-selector}").last.inner_text()
+  assert "42" not in response_text
+  # Assert: cleared screenshot shows empty message list; response text does NOT contain "42"
+  ```
 - **Expected**: Clear Session wipes visible history AND creates a new session — agent has no memory of previous conversation
 
 #### S-chat-10: Stop button interrupts streaming and preserves partial response
-- **Method**: Browser-Use CLI
+- **Method**: Browser automation (Playwright script)
 - **Steps**:
-  1. `browser-use open http://localhost:5173/chat`
-  2. Send a message that produces a long response: `browser-use input {index} "Write a detailed analysis of recent market trends"`
-  3. `browser-use click {send-button-index}`
-  4. `browser-use wait selector "[data-status='streaming']"` → streaming begins
-  5. Wait 2 seconds for partial content
-  6. `browser-use click {stop-button-index}` → click Stop
-  7. `browser-use screenshot /tmp/s-chat-10-stopped.png`
-  8. `browser-use state` → check that input is re-enabled (send button visible, not stop button)
-  9. Assert: screenshot shows partial response text; input area is re-enabled for new messages
+  ```python
+  page.goto("http://localhost:5173/chat")
+  page.wait_for_load_state("networkidle")
+  # Message that produces a long response
+  page.get_by_role("textbox").fill("Write a detailed analysis of recent market trends")
+  page.get_by_role("button", name="Send").click()
+  page.wait_for_selector("[data-status='streaming']")             # streaming begins
+  page.wait_for_timeout(2000)                                     # deliberate mid-stream pause for partial content
+  page.get_by_role("button", name="Stop").click()
+  page.screenshot(path="/tmp/s-chat-10-stopped.png")
+  # Input re-enabled: Send button visible again, Stop button gone
+  expect(page.get_by_role("button", name="Send")).to_be_visible()
+  expect(page.get_by_role("button", name="Stop")).not_to_be_visible()
+  # Assert: screenshot shows partial response text; input area is re-enabled for new messages
+  ```
 - **Expected**: Streaming stops, partial text remains visible, input re-enables — user is not stuck
 
 ---
@@ -158,22 +179,25 @@ Journey scenarios chain the full flow via API. Each step's output feeds the next
 
 ## Automated Verification — Journey Scenarios (Browser Automation)
 
-Same journeys verified through the UI to prove frontend integration works.
+Same journeys verified through the UI to prove frontend integration works. Same Playwright conventions as the section above.
 
 #### J-chat-03: Full UI lifecycle — send, stream, tool card, complete
-- **Method**: Browser-Use CLI
+- **Method**: Browser automation (Playwright script)
 - **Steps**:
-  1. `browser-use open http://localhost:5173/chat`
-  2. `browser-use state` → identify input element
-  3. `browser-use input {index} "What is the current price of AAPL?"`
-  4. `browser-use click {send-button-index}`
-  5. `browser-use wait selector "[data-status='streaming']"` → streaming starts
-  6. `browser-use screenshot /tmp/j03-streaming.png`
-  7. `browser-use wait selector "[data-tool-state]"` → tool card appears
-  8. `browser-use screenshot /tmp/j03-tool-executing.png`
-  9. `browser-use wait selector "[data-status='ready']"` → response complete
-  10. `browser-use screenshot /tmp/j03-complete.png`
-  11. Assert: streaming screenshot shows partial text; tool screenshot shows tool card; complete screenshot shows full response with tool card in final state
+  ```python
+  page.goto("http://localhost:5173/chat")
+  page.wait_for_load_state("networkidle")
+  page.get_by_role("textbox").fill("What is the current price of AAPL?")
+  page.get_by_role("button", name="Send").click()
+  page.wait_for_selector("[data-status='streaming']")   # streaming starts
+  page.screenshot(path="/tmp/j03-streaming.png")
+  page.wait_for_selector("[data-tool-state]")           # tool card appears
+  page.screenshot(path="/tmp/j03-tool-executing.png")
+  page.wait_for_selector("[data-status='ready']")       # response complete
+  page.screenshot(path="/tmp/j03-complete.png")
+  # Assert: streaming screenshot shows partial text; tool screenshot shows tool card;
+  # complete screenshot shows full response with tool card in final state
+  ```
 - **Expected**: Full lifecycle visible: streaming text → tool card appears → response completes with tool result integrated
 
 ---
@@ -197,7 +221,7 @@ Same journeys verified through the UI to prove frontend integration works.
 
 1. **Backend scenarios use API with state chaining.** S-chat-01 sends two requests to the same session ID — the second request's assertion proves the first request's state was preserved. S-chat-03 captures a message ID from the first response and feeds it into the regenerate request.
 
-2. **Frontend scenarios use Browser-Use CLI.** S-chat-05 through S-chat-10 test behaviors that only exist in the UI — streaming rendering, tool card transitions, error display, button interactions. Curl cannot observe these.
+2. **Frontend scenarios use Playwright scripts (webapp-testing skill).** S-chat-05 through S-chat-10 test behaviors that only exist in the UI — streaming rendering, tool card transitions, error display, button interactions. Curl cannot observe these.
 
 3. **Journey scenarios get both layers.** J-chat-01 has a deterministic API version (fast, proves pipeline works) and J-chat-03 has a browser version (slower, proves UI renders correctly). They test different failure modes of the same flow.
 

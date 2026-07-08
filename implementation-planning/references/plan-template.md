@@ -127,7 +127,7 @@ path/
 | 2   | Script / CLI               | `{repo-specific verification command}`                                                                | Assertions pass and output matches expectations           |
 | 3   | trace                      | Check LangSmith/Langfuse for trace of above request                                                   | Trace shows: retriever → llm → tool_call in correct order |
 | 4   | browser                    | Open localhost:3000, submit "test query"                                                              | Response renders within 3s, shows expected content        |
-| 5   | MCP (Playwright/Puppeteer) | Use MCP to open the page, perform the flow, and capture a screenshot                                  | Screenshot and observed UI state match the expected flow  |
+| 5   | Browser automation (Playwright script) | Playwright script (`webapp-testing` skill) opens the page, performs the flow, and captures a screenshot | Screenshot and observed UI state match the expected flow  |
 | 6   | Database / State Check     | {Read-only query or inspection step}                                                                  | Persisted state matches the expected side effect          |
 
 - [ ] All flow verifications pass

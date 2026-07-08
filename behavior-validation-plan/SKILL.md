@@ -210,7 +210,7 @@ With scenarios finalized, plan how to verify each one. All teammates stay alive 
 **Task assignment by verification type:**
 
 - **Deterministic** (curl, script, log grep, DB query) → Dev leads, because it requires knowledge of entry points and tooling
-- **Browser Automation** (Browser-Use CLI, screenshot comparison) → Dev + QA collaborate; Dev knows feasibility, QA knows what to check
+- **Browser Automation** (Playwright script via the `webapp-testing` skill, screenshot comparison) → Dev + QA collaborate; Dev knows feasibility, QA knows what to check
 - **Manual Behavior Test** (assists automated verification where technical limitations prevent automation) → QA + Dev; QA identifies gaps, Dev confirms technical constraints
 - **User Acceptance Test** → PO + QA; PO defines "what done looks like" from the user's perspective, QA structures the checklist
 
@@ -222,7 +222,7 @@ Manual verification splits into two categories because they serve different purp
 **Choosing the verification method — match where the behavior lives:**
 
 - **Behavior is in backend logic** (state persistence, pipeline stage ordering, async task lifecycle, rate limiting, error handling flows) → **Deterministic** (curl/script). Chain state between steps: output from step N feeds step N+1. The final assertion proves the behavioral outcome, not just an API response code.
-- **Behavior is in the UI** (streaming rendering, progress indicators, interactive controls, error display, visual state transitions) → **Browser Automation** (Browser-Use CLI). These behaviors only exist in the frontend — curl cannot observe them.
+- **Behavior is in the UI** (streaming rendering, progress indicators, interactive controls, error display, visual state transitions) → **Browser Automation** (Playwright script via the `webapp-testing` skill). These behaviors only exist in the frontend — curl cannot observe them.
 - **Journey scenarios** get **both**: a deterministic API chain (proves the pipeline works) and a browser flow (proves the UI renders it correctly). These test different failure modes of the same behavior.
 
 **Behavior test vs unit test boundary:** A scenario belongs in behavior testing if it has a behavior trigger, state flow across steps, and an observable outcome. "SSE endpoint returns correct headers" is a unit test (single call, technical contract). "User retries after error and sees a new streamed response" is a behavior test (state flow, behavior trigger, observable outcome).

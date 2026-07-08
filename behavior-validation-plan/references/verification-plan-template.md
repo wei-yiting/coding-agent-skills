@@ -34,7 +34,7 @@ Follow this template exactly when writing `artifacts/current/verification-plan.m
 
 #### S-{id}: {scenario title}
 
-- **Method**: Browser-Use CLI
+- **Method**: Browser automation (Playwright script)
 - **Steps**:
   1. {navigation or action}
   2. {next step}
@@ -43,7 +43,7 @@ Follow this template exactly when writing `artifacts/current/verification-plan.m
 
 #### J-{id}: {journey scenario — full UI flow}
 
-- **Method**: Browser-Use CLI
+- **Method**: Browser automation (Playwright script)
 - **Steps**:
   1. {first stage of the journey}
   2. {next stage}
@@ -93,7 +93,7 @@ Every scenario ID (`S-` or `J-`) in this file must correspond to a scenario in `
 Write concrete commands, URLs, and payloads for everything derivable from the design:
 
 - API paths defined in the design → write the full curl command
-- UI routes defined in the design → write the Browser-Use CLI steps
+- UI routes defined in the design → write the Playwright script steps (`webapp-testing` skill)
 - CLI commands defined in the design → write the complete invocation
 
 Use `[POST-CODING: {description}]` only for information that genuinely requires the codebase after implementation:

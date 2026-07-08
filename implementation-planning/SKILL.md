@@ -203,7 +203,7 @@ traceability.
 | ----------------------------- | ---------------------------------------------------- | -------------------------------------------------------- |
 | curl / httpie                 | API endpoint testing                                 | `curl -X POST /api/chat` → check status + response body  |
 | Browser                       | Human-visible UI behavior                            | Open page, interact, confirm rendered state              |
-| MCP (Playwright/Puppeteer)    | Repeatable browser automation or screenshot evidence | Use MCP to submit a form and capture the resulting page  |
+| Browser automation (Playwright script) | Repeatable browser automation or screenshot evidence | Playwright script (`webapp-testing` skill) submits a form and captures the resulting page |
 | Assertion script              | Programmatic checks on response structure/content    | Script checks JSON schema, field values                  |
 | Trace inspection              | LLM chain / agent internals                          | Check LangSmith/Langfuse trace for correct tool calls    |
 | LLM-as-Judge                  | Output quality (semantic)                            | Another LLM scores relevancy/coherence                   |
