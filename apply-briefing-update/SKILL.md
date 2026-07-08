@@ -20,13 +20,15 @@ The briefing is the human's review surface for the entire development plan. When
 
 | Briefing Section | Target Artifact | Format Reference |
 |-----------------|-----------------|------------------|
-| Section 1 (摘要) | `implementation.md` | `implementation-planning/references/plan-template.md` |
-| Section 2 (File Impact) | `implementation.md` | `implementation-planning/references/plan-template.md` |
-| Section 3 (Task 清單) | `implementation.md` | `implementation-planning/references/plan-template.md` |
-| Section 4 (BDD Verification Scenarios) | `bdd-scenarios.md` + `verification-plan.md` | `behavior-validation-plan` SKILL.md |
-| Section 5 (Test Safety Net) | `implementation.md` | `implementation-planning/references/plan-template.md` |
-| Section 6 (Design 未覆蓋的新發現) | `implementation.md` | `implementation-planning/references/plan-template.md` |
-| Section 7 (Environment / Config) | `implementation.md` | `implementation-planning/references/plan-template.md` |
+| Section 0 (Review Focus) | `implementation.md` (risk / constraint items) | `implementation-planning/references/plan-template.md` |
+| Section 1 (Design Delta, conditional) | `implementation.md` (approach decisions deviating from design.md) | `implementation-planning/references/plan-template.md` |
+| Section 2 (Overview) | `implementation.md` | `implementation-planning/references/plan-template.md` |
+| Section 3 (File Impact) | `implementation.md` | `implementation-planning/references/plan-template.md` |
+| Section 4 (Task 清單) | `implementation.md` | `implementation-planning/references/plan-template.md` |
+| Section 5 (Behavior Verification) | `bdd-scenarios.md` + `verification-plan.md` | `behavior-validation-plan` SKILL.md |
+| Section 6 (Test Safety Net) | `implementation.md` | `implementation-planning/references/plan-template.md` |
+| Section 7 (Environment / Config, conditional) | `implementation.md` | `implementation-planning/references/plan-template.md` |
+| `## Learning Notes` | — never synced (educational layer) | — |
 
 ## Workflow
 
@@ -42,8 +44,8 @@ Use the Target Artifacts table above to determine which source files need updati
 
 Only read the references needed for the specific changes:
 
-- **If sections 1-3, 5-7 changed** → read `implementation-planning/references/plan-template.md`, then read `artifacts/current/implementation.md`
-- **If section 4 changed** → read `behavior-validation-plan/SKILL.md` for incremental update guidelines, then read `artifacts/current/bdd-scenarios.md` and/or `artifacts/current/verification-plan.md`
+- **If sections 0-4 or 6-7 changed** → read `implementation-planning/references/plan-template.md`, then read `artifacts/current/implementation.md`
+- **If section 5 changed** → read `behavior-validation-plan/SKILL.md` for incremental update guidelines, then read `artifacts/current/bdd-scenarios.md` and/or `artifacts/current/verification-plan.md`
 
 Do not load all references upfront — only load what the change requires.
 
@@ -76,11 +78,11 @@ After user confirmation, update only the affected sections in each target artifa
 Key rules:
 - **Surgical updates** — touch only what changed. Don't rewrite unaffected sections.
 - **Preserve structure** — each target has its own format (plan uses plan-template structure, BDD uses Given/When/Then). Transform the briefing's narrative back into the target's native format.
-- **Section 4 → BDD**: When the user changes a scenario's behavior description, update `bdd-scenarios.md` in Given/When/Then format. When they change a verification method, update `verification-plan.md`. Use the incremental update approach from `behavior-validation-plan`.
+- **Section 5 → BDD**: When the user changes a scenario's behavior description, update `bdd-scenarios.md` in Given/When/Then format. When they change a verification method, update `verification-plan.md`. Use the incremental update approach from `behavior-validation-plan`.
 
 ### Step 6: Run sync checklist
 
-Read this skill's `references/sync-policy.md` and run the 7-point sync checklist. Every item must pass.
+Read this skill's `references/sync-policy.md` and run the 8-point sync checklist. Every item must pass.
 
 If any check fails: identify the discrepancy → fix → re-run the full checklist. Changes can cascade.
 
@@ -93,7 +95,7 @@ Update 完成。
 變更內容：
 - {list specific changes per file}
 
-Sync checklist: 7/7 passed.
+Sync checklist: 8/8 passed.
 ```
 
 ## Key Principles

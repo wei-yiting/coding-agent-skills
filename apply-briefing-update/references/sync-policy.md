@@ -20,19 +20,21 @@ When a briefing section changes, these are the affected targets:
 
 | Briefing Section | Target | What to update |
 |-----------------|--------|---------------|
-| Section 1 (摘要) | `implementation.md` | Goal, constraints, or risk description |
-| Section 2 (File Impact) | `implementation.md` | File Plan (create/update/delete operations, file structure) |
-| Section 3 (Task 清單) | `implementation.md` | Task scope, ordering, or rationale |
-| Section 4 (BDD Scenarios) — behavior change | `bdd-scenarios.md` | Scenario descriptions in Given/When/Then format |
-| Section 4 (BDD Scenarios) — verification change | `verification-plan.md` | Verification method, commands, or expected results |
-| Section 4 (BDD Scenarios) — both | Both BDD files | Update both following `behavior-validation-plan` guidelines |
-| Section 5 (Test Safety Net) | `implementation.md` | Test strategy sections across affected tasks |
-| Section 6 (Design 未覆蓋的新發現) | `implementation.md` | Constraints or approach decisions |
-| Section 7 (Environment / Config) | `implementation.md` | Dependencies, env vars, CI/CD configuration |
+| Section 0 (Review Focus) | `implementation.md` | Risk items, constraints, review-focus exceptions |
+| Section 1 (Design Delta, conditional) | `implementation.md` | Approach decisions that deviate from design.md |
+| Section 2 (Overview) | `implementation.md` | Goal, constraints, or risk description |
+| Section 3 (File Impact) | `implementation.md` | File Plan (create/update/delete operations, file structure) |
+| Section 4 (Task 清單) | `implementation.md` | Task scope, ordering, or rationale |
+| Section 5 (Behavior Verification) — behavior change | `bdd-scenarios.md` | Scenario descriptions in Given/When/Then format |
+| Section 5 (Behavior Verification) — verification change | `verification-plan.md` | Verification method, commands, or expected results |
+| Section 5 (Behavior Verification) — both | Both BDD files | Update both following `behavior-validation-plan` guidelines |
+| Section 6 (Test Safety Net) | `implementation.md` | Test strategy sections across affected tasks |
+| Section 7 (Environment / Config, conditional) | `implementation.md` | Dependencies, env vars, CI/CD configuration |
+| `## Learning Notes` | — | Never synced — educational layer only |
 
-### Section 4 special handling
+### Section 5 special handling
 
-Section 4 merges two source files into narrative format. When the user edits a scenario in the briefing, you need to reverse-transform the change:
+Section 5 merges two source files into narrative format. When the user edits a scenario in the briefing, you need to reverse-transform the change:
 
 1. **Behavior description changed** (the sentence after the scenario ID):
    - Maps back to `bdd-scenarios.md` → update the Given/When/Then for that scenario ID
@@ -71,25 +73,25 @@ Not every briefing edit requires propagation. The key question: **does this edit
 
 ## Scenarios
 
-### User edits task scope (Sections 1-3)
+### User edits plan-side sections (Sections 0-4)
 
-User changes what a task does, adds/removes tasks, or modifies the overall goal.
+User changes review-focus items, design-delta decisions, the overall goal, the file plan, or what a task does.
 
 1. Read `implementation-planning/references/plan-template.md` for format.
 2. Read `artifacts/current/implementation.md`.
 3. Update affected task sections, file plan, and goal as needed.
 4. Run sync checklist.
 
-### User edits BDD scenarios (Section 4)
+### User edits BDD scenarios (Section 5)
 
 User changes a scenario's behavior, verification method, or adds/removes scenarios.
 
 1. Read `behavior-validation-plan/SKILL.md` for incremental update guidelines.
 2. Read `artifacts/current/bdd-scenarios.md` and/or `artifacts/current/verification-plan.md`.
-3. Apply changes following the Section 4 special handling rules above.
+3. Apply changes following the Section 5 special handling rules above.
 4. Run sync checklist.
 
-### User edits test safety net (Section 5)
+### User edits test safety net (Section 6)
 
 User modifies the assessment of existing test coverage or risk.
 
@@ -97,9 +99,9 @@ User modifies the assessment of existing test coverage or risk.
 2. Update the test strategy sections in affected tasks.
 3. Run sync checklist.
 
-### User edits conditional sections (Sections 6-7)
+### User edits conditional sections (Sections 1, 7)
 
-User adds, modifies, or removes discoveries or environment changes.
+User adds, modifies, or removes Design Delta decisions or environment changes.
 
 1. Read `artifacts/current/implementation.md`.
 2. Update constraints, approach decisions, or dependency/env sections.
@@ -113,13 +115,14 @@ After every update, all applicable items must pass. Skip items for conditional s
 
 | # | Check | How to Verify |
 |---|-------|---------------|
-| 1 | 摘要 matches implementation goal + task count + risk | Compare briefing paragraph against plan header |
-| 2 | File Impact matches plan's file plan | Every file in plan appears in briefing tree with correct annotation |
-| 3 | Task 清單 matches plan's task list | Every plan task has a briefing row; every briefing row maps to a plan task |
-| 4 | BDD scenarios match source artifacts | Every scenario ID in briefing exists in `bdd-scenarios.md`; verification methods match `verification-plan.md` |
-| 5 | Test Safety Net reflects plan's test strategy | Guardrail, adjust, and new test descriptions align with plan's test sections |
-| 6 | Design 未覆蓋的新發現 still accurate (if present) | Discoveries match plan's constraints and approach decisions |
-| 7 | Environment / Config still accurate (if present) | Env vars and dependencies match plan's dependency table |
+| 1 | Review Focus matches plan's risks and constraints | Every review-focus exception traces to a plan risk/constraint item |
+| 2 | Design Delta still accurate (if present) | Delta items match plan's approach decisions vs design.md |
+| 3 | Overview matches implementation goal + task count + risk | Compare briefing paragraph against plan header |
+| 4 | File Impact matches plan's file plan | Every file in plan appears in briefing tree with correct annotation |
+| 5 | Task 清單 matches plan's task list | Every plan task has a briefing row; every briefing row maps to a plan task |
+| 6 | BDD scenarios match source artifacts | Every scenario ID in briefing exists in `bdd-scenarios.md`; verification methods match `verification-plan.md` |
+| 7 | Test Safety Net reflects plan's test strategy | Guardrail, adjust, and new test descriptions align with plan's test sections |
+| 8 | Environment / Config still accurate (if present) | Env vars and dependencies match plan's dependency table |
 
 ### When a Check Fails
 
