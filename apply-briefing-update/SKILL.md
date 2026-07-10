@@ -34,7 +34,16 @@ The briefing is the human's review surface for the entire development plan. When
 
 ### Step 1: Read the briefing and identify changes
 
-Read `artifacts/current/briefing.md`. Identify which sections the user modified — through direct edits, inline comments, or verbal feedback in the conversation.
+Read `artifacts/current/briefing.md`. Identify which sections the user modified — through direct edits, inline comments, verbal feedback in the conversation, or HTML review comments.
+
+**HTML comment channel** — when the briefing is reviewed as HTML (htmlify), comments live in the sidecar `artifacts/current/briefing.comments.json`, or arrive pasted as a `Copy JSON` export:
+
+1. Read the sidecar and keep only comments with status `active` (a pasted export already contains only active ones).
+2. Anchor each comment: `sectionLabel` names the briefing section (→ its Target Artifacts row); `selectedText` locates the passage inside `briefing.md`.
+3. Classify each comment: a **question** is answered in the chat and never enters the sync; an **edit intent** becomes a proposed `briefing.md` change carried through Steps 2–5. Comments anchored inside `## Learning Notes` are educational-layer feedback — respond in chat, never sync.
+4. Never write to the sidecar JSON. Resolving comments is the user's action in the browser — the open page may hold unsaved edits, and "addressed to my satisfaction" is the human's call.
+
+If the user says they commented but no active comments are found, ask them to press the comment panel's save action (💾) or paste the `Copy JSON` export — unsaved comments exist only in the browser's localStorage.
 
 ### Step 2: Map changes to target artifacts
 
@@ -97,6 +106,10 @@ Update 完成。
 
 Sync checklist: 8/8 passed.
 ```
+
+### Step 8: Regenerate the HTML (comment channel only)
+
+If the changes came in via HTML comments, regenerate `briefing.html` with `htmlify` after the sync — keep the same `STORAGE_KEY` and sidecar so existing comments survive. Then tell the user to ✓ Resolve the addressed comments in the browser; comments whose anchored text changed will auto-flag as `outdated`.
 
 ## Key Principles
 
