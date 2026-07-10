@@ -24,7 +24,7 @@ import sys
 import time
 import webbrowser
 from functools import partial
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 
 # Files to exclude from output listings
@@ -276,7 +276,9 @@ def generate_html(
     if benchmark:
         embedded["benchmark"] = benchmark
 
-    data_json = json.dumps(embedded)
+    # Escape "</" so embedded file contents containing "</script>" can't
+    # terminate the inline <script> block ("<\/" is a valid JSON escape).
+    data_json = json.dumps(embedded).replace("</", "<\\/")
 
     return template.replace("/*__EMBEDDED_DATA__*/", f"const EMBEDDED_DATA = {data_json};")
 
@@ -440,10 +442,10 @@ def main() -> None:
     _kill_port(port)
     handler = partial(ReviewHandler, workspace, skill_name, feedback_path, previous, benchmark_path)
     try:
-        server = HTTPServer(("127.0.0.1", port), handler)
+        server = ThreadingHTTPServer(("127.0.0.1", port), handler)
     except OSError:
         # Port still in use after kill attempt — find a free one
-        server = HTTPServer(("127.0.0.1", 0), handler)
+        server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
         port = server.server_address[1]
 
     url = f"http://localhost:{port}"
