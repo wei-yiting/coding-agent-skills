@@ -4,10 +4,10 @@ description: >-
   Linear-driven issue lifecycle protocol: /issue-start (check out issue context into a session),
   /issue-sync (checkpoint progress + session resume info to Linear), /issue-ship (verify, deliver,
   hand off to the human gate), /issue-close (post-completion cleanup). Auto-advances the Linear
-  issue status to match the work stage. Two project profiles: dev (FinLab-X / DONG-XX — worktrees,
-  PRs, Design→…→Ready for Merge) and content (Interview Preparation / PREP-XX — articles, videos,
-  interview practice, Idea→…→Published). Use whenever work corresponds to a Linear issue, when the
-  user says issue-start/sync/ship/close, mentions a DONG-XX or PREP-XX id, or asks to update
+  issue status to match the work stage. Two project profiles: dev (FinLab-X / DEV-XX — worktrees,
+  PRs, Design→…→Merge & Deployed) and content (HQ / HQ-XX — articles, presentations, skill/workflow
+  improvements, interview practice, Idea→…→Published/Done). Use whenever work corresponds to a Linear issue, when the
+  user says issue-start/sync/ship/close, mentions a DEV-XX or HQ-XX id, or asks to update
   Linear progress.
 ---
 
@@ -36,8 +36,8 @@ issue's team key.
 
 | | dev profile | content profile |
 |---|---|---|
-| Team / prefix | `DongWYT` / `DONG-XX` | `Interview Prep` / `PREP-XX` |
-| Projects | `FinLab-X` | `Interview Preparation`（文章、YouTube、面試練習、portfolio） |
+| Team / prefix | `Project-Dev` / `DEV-XX` | `HQ` / `HQ-XX` |
+| Projects | `FinLab-X` | `Interview Preparation`（面試準備系列）；其餘 issue 不掛 project，用 label 分類（`article` / `presentation` / `workflow` / `interview-practice` …） |
 | Work medium | git worktree + branch | 文章草稿、影片腳本/剪輯、練習紀錄——存放處寫在 issue description |
 | Durable storage | git remote (push) | git repo push（若是 repo 內檔案）或雲端文件連結（Google Docs / Heptabase / Notion）貼進 issue |
 | "Ship" means | open PR → human review → merge | 完稿 → Ready to Publish → 實際發佈 → Published（附公開 URL） |
@@ -63,7 +63,6 @@ cancellations, and merges you notice that GitHub automation already marked compl
 | `Verification` | started | proving it works | `bdd-e2e-loop` / `verify` / test-suite passes being established |
 | `Code Review` | started | agent quality gates before PR | `code-review-loop` / `do-i-understand` starts |
 | `Human Code Review` | started | PR open, human reviewing | PR opened (also set by the team's GitHub automation "On PR open") |
-| `Ready for Merge` | started | human review passed, awaiting merge | human signs off on the PR |
 | `Merge & Deployed` | completed | merged + worktree cleaned | after merge (GitHub automation sets this on PR merge) |
 | `Canceled` | canceled | dropped | user decision |
 
@@ -78,9 +77,11 @@ Skill → status auto-move map (trigger on skill START, not completion):
 - bdd-e2e-loop, verify → `Verification`
 - code-review-loop, do-i-understand → `Code Review`
 - pull-request (PR opened) → `Human Code Review`
-- human approves the PR → `Ready for Merge`
+- human approves the PR → no status move; approval and merge are one gate in this solo flow —
+  the issue stays in `Human Code Review` until the merge automation (or /issue-close) sets
+  `Merge & Deployed`
 
-## Content profile status model (team `Interview Prep`)
+## Content profile status model (team `HQ`)
 
 | Status | Type | Meaning | Move here when… |
 |---|---|---|---|
@@ -120,7 +121,7 @@ Caveats: run this from the session's primary working directory (the one Claude C
 in — not a `cd`-ed subdirectory). The newest `.jsonl` is the current session. If the user renamed
 the session (`/rename`), include that name too — it is what shows in the `claude --resume` picker.
 
-## /issue-start <DONG-XX>
+## /issue-start <DEV-XX>
 
 1. **Read state**: `get_issue` (with `includeRelations: true`) + `list_comments`. The latest
    `🔄 Sync` comment is the authoritative "where we left off" — it contains the previous session's
@@ -130,6 +131,9 @@ the session (`/rename`), include that name too — it is what shows in the `clau
 3. **Worktree**: find the branch's worktree (`git worktree list`); the issue description usually
    names it. If none exists, create one via the `git-worktree` skill — prefer the branch name the
    issue description specifies, else Linear's suggested `gitBranchName`.
+   Branch names follow the `git-worktree` skill's clean `<type>/<description>` convention — no
+   issue id needed; the PR ↔ issue link comes from the PR body instead
+   (see「PR ↔ Issue auto-linking」below).
 4. **Status**: move the issue to the stage status matching the work about to happen (see map).
 5. **Start comment** (`save_comment` on the issue):
 
@@ -175,20 +179,41 @@ be able to act on it without re-doing archaeology.
 2. **Commit + push** everything, including `artifacts/current/` planning docs (commit them on the
    branch; git history preserves them even if untracked later pre-merge).
 3. **Understanding check**: run the `do-i-understand` skill on the slice diff — interview the
-   human, put the resulting Author's understanding block into the PR description, and carry the
-   `⚠ Not yet accounted for` regions into the ship comment's review-focus list (they are the
-   抽查 targets for the Slice PR gate). Skip when the slice is trivial (docs, config,
+   human. The attestation block stays with the author (relay it in conversation; the author
+   decides where to keep it privately) — **never write it into the PR description or any other
+   public surface**. Carry the `⚠ Not yet accounted for` regions into the ship comment's
+   review-focus list (they are the 抽查 targets for the Slice PR gate). Skip when the slice is trivial (docs, config,
    one-liners) or only touches patterns the human has already attested to — but say the check
    was skipped and why. Never skip when the diff contains concepts new to the human, or touches
-   auth / money / migrations / concurrency.
+   auth / money / migrations / concurrency. **When the check is skipped, the learning-record
+   read/write below is skipped with it.** Wrap the interview with the persistent learning layer:
+
+   - **Before the interview** — read `~/.claude/learning-records/` (format per its `FORMAT.md`;
+     tolerate the dir being empty or missing). Build two lists scoped to this slice, pulling the
+     concept names from the diff plus any `## Learning Notes` sections in
+     `artifacts/current/`'s code-review report and briefing: (a) `status: verified` records →
+     already-proven background, tell do-i-understand NOT to re-test them, unless this slice
+     applies the concept in a materially new way; (b) `status: encountered` records this slice
+     touches → **PRIORITY interview targets** — this is where design-stage learning gets its
+     evidence while memory is fresh.
+   - **After the interview** — for each concept the human explained accurately, upgrade its record
+     to `status: verified` and append an `**Evidence:**` line (one sentence: what they explained,
+     the date, the issue ID); create the record directly as `verified` if none existed. Concepts
+     that surfaced as `⚠` gaps stay/become `encountered` — upgrade only later, when the human
+     proves understanding during gap-resolution. Iron rule: coverage is not learning; only
+     interview evidence upgrades to `verified`.
 4. **PR**: open via the `pull-request` skill.
 5. **Linear**: attach the PR URL to the issue (`save_issue` `links`), move status to
    `Human Code Review`, and post a ship comment: verification evidence (test counts, what was
    run), PR link, anything the human reviewer should focus on, plus session/resume info as in
-   sync. When the human signs off, move to `Ready for Merge`.
+   sync. The issue stays in `Human Code Review` through approval; the merge (automation or
+   /issue-close) moves it to `Merge & Deployed`.
+   **Integration-link requirement**: the PR body passed to `gh pr create` MUST already end with
+   a `Linear: DEV-XX` line — that line is what links the PR to the issue and enables every
+   automation. Verify the link right after creation. See「PR ↔ Issue auto-linking」.
 6. Tell the user what is now waiting on them (review + merge).
 
-## /issue-close <DONG-XX>
+## /issue-close <DEV-XX>
 
 Only after the PR is actually merged (check with `gh pr view`):
 
@@ -209,10 +234,10 @@ automation 已標 completed 而你剛注意到。The sweep is part of the comple
 Steps — fetch the completed issue's relations (`get_issue` with `includeRelations: true`), then
 for **every issue in `blocks` that now has no other open blockers**:
 
-1. **🔓 comment**: 「🔓 已解鎖（blocker DONG-XX 完成）」+ 這次完成對它的具體意義（交付物在哪個
+1. **🔓 comment**: 「🔓 已解鎖（blocker DEV-XX 完成）」+ 這次完成對它的具體意義（交付物在哪個
    branch/SHA、哪個前置條件已滿足、下一步是誰的）.
 2. **Description de-stale**: search its description for blocked-claims about the completed
-   issue（「前置條件：…完成後才能動手」「先完成 DONG-XX」「⚠️ 尚未 commit」等 prose）and rewrite
+   issue（「前置條件：…完成後才能動手」「先完成 DEV-XX」「⚠️ 尚未 commit」等 prose）and rewrite
    them to reflect reality（已完成、交付物位置）. The board reads descriptions, not comment
    threads — a swept issue whose description still says "blocked" is a failed sweep.
 3. **Checklist**: check off any of its `- [ ]` items this completion satisfied (e.g., 「等 X
@@ -227,6 +252,36 @@ for **every issue in `blocks` that now has no other open blockers**:
 
 Before ending the turn, verify: no issue formerly blocked by this one still *reads* blocked —
 relations cleared (Linear does this automatically), description prose updated, status truthful.
+
+## PR ↔ Issue auto-linking (GitHub integration)
+
+Every status automation（PR opened → `Human Code Review`、merged → `Merge & Deployed`）only
+fires when Linear's GitHub integration has linked the PR to the issue. The MCP `links`
+attachment is **display-only** — it never creates the integration link.
+
+Linear recognizes a PR as belonging to an issue via any of:
+
+1. **Issue id in the PR body**（THE STANDARD in this flow）— a trailing `Linear: DEV-XX` line
+   links it; `Fixes DEV-XX` / `Closes DEV-XX` additionally auto-closes per team automation
+   settings. Branch names stay clean（`bugfix/<description>` per the `git-worktree` convention —
+   the user prefers no issue ids in branch names）.
+2. **Branch name contains the lowercase issue id** — works, but not used here（noisy names）.
+3. **Issue id in the PR title** — avoid; pollutes the title.
+4. **Manual link from inside the issue**（Linear UI: ⌘K → "Link pull request" / paste the PR
+   URL）— human-only fallback; not reachable via MCP.
+
+Rules:
+
+- **At issue-ship, the PR body MUST be created with the trailing `Linear: DEV-XX` line already
+  in it**（part of the body passed to `gh pr create`, not patched in afterwards）. This is the
+  single point that makes every downstream automation work.
+- **Right after `gh pr create`**: verify the link — `get_issue` should show a
+  GitHub-integration PR attachment（not just the manual `links` one）, or the "PR opened"
+  automation should have moved the status. If not linked, PATCH the PR body immediately.
+- **Timing matters**: automations fire on the GitHub event, not retroactively. Adding the magic
+  word after the PR is merged does NOT trigger the merge automation（learned on DEV-70 — the
+  word landed 4 minutes after the merge and the agent had to close out manually）. Link before
+  the event you want automated.
 
 ## General rules
 
