@@ -46,7 +46,7 @@ Reading order: PR descriptions + review threads → design docs (design.md, impl
 - A PR with a long review thread → the objection and its resolution is a ready-made trade-off answer.
 - A config/dependency swap (ORM, queue, framework) → alternatives were weighed; find where.
 - Large squashed agent-generated commits → presumed-weak area for the user (see Principles in SKILL.md).
-- Commits referencing issue IDs (DONG-XX etc.) → the issue carries intent the commit message dropped.
+- Commits referencing issue IDs (DEV-XX, or legacy DONG-XX, etc.) → the issue carries intent the commit message dropped.
 
 ## Recording provenance
 

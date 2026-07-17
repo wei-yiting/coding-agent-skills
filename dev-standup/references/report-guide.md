@@ -29,7 +29,7 @@ place. Every issue narrative must answer: 這是什麼、為什麼重要、現�
 
 ## Writing rules for narratives
 
-- **No bare IDs.** Never write "DONG-63 的 P0-1" as the whole explanation. Write what the
+- **No bare IDs.** Never write "DEV-63 的 P0-1" as the whole explanation. Write what the
   thing actually is: "eval loader 把 CSV list 欄位當字串處理，導致 sec_retrieval 指標全是雜訊"。
   IDs appear *after* the description, as anchors — not instead of it.
 - **2–4 sentences per issue card narrative**, in 台灣繁中, technical nouns in English.
@@ -38,11 +38,11 @@ place. Every issue narrative must answer: 這是什麼、為什麼重要、現�
 - **Next step must be imperative and concrete**: who does it, what exactly, and the command
   if one exists.
 - **Every issue id is a link to Linear.** Build the URL from the `url` field `list_issues`
-  returns (short form `https://linear.app/<workspace>/issue/DONG-XX` redirects fine):
-  `<a class="issue-link" href="…" target="_blank">DONG-60</a>`. Apply everywhere —
+  returns (short form `https://linear.app/<workspace>/issue/DEV-XX` redirects fine):
+  `<a class="issue-link" href="…" target="_blank">DEV-60</a>`. Apply everywhere —
   section `<h2>` titles, queue items, prose, focus list — **except** inside mermaid node
   labels, inside `resume-cmd` code, and sidebar TOC labels (nested `<a>` is invalid). The
-  easiest way is to write plain `DONG-XX` everywhere and run one linkify pass at the end
+  easiest way is to write plain `DEV-XX` everywhere and run one linkify pass at the end
   (regex over the `<main>` region, skipping mermaid blocks / `resume-cmd` / `toc-label`
   lines).
 
@@ -50,11 +50,11 @@ place. Every issue narrative must answer: 這是什麼、為什麼重要、現�
 
 | Placeholder | Fill with |
 |---|---|
-| `{{DOC_TITLE}}` | `Dev Standup — YYYY-MM-DD`（focused mode: `Standup — DONG-63 — YYYY-MM-DD`）|
+| `{{DOC_TITLE}}` | `Dev Standup — YYYY-MM-DD`（focused mode: `Standup — DEV-63 — YYYY-MM-DD`）|
 | `{{DOC_SUBTITLE}}` | one-line state of the world, e.g. "10 issues in flight · 2 human decisions blocking · 37 dirty files at risk" |
 | `{{STATUS_BADGE}}` | omit |
 | `{{HERO_STATS}}` | `stats-grid` with 4 stats: in-flight issues / human actions pending / agent-ready items / at-risk file count |
-| `{{HERO_META}}` | omit, or one `.prereq` callout if a single fact dominates the day (e.g. "所有 P1 都卡在 DONG-64 的決策") |
+| `{{HERO_META}}` | omit, or one `.prereq` callout if a single fact dominates the day (e.g. "所有 P1 都卡在 DEV-64 的決策") |
 | `{{SIDEBAR_BRAND}}` | `Dev Standup` |
 | `{{SIDEBAR_SUB}}` | the date |
 | `{{SIDEBAR_TOC}}` | one `<li>` per section (see skeleton) |
@@ -101,7 +101,7 @@ Order by the prioritization rubric in SKILL.md. Each item: what + why-now.
     <li>
       <div>
         <span class="badge badge-human">HUMAN</span>
-        <span class="q-title">回覆 repo 稽核的 6 個決策點（DONG-64）</span>
+        <span class="q-title">回覆 repo 稽核的 6 個決策點（DEV-64）</span>
         <div class="focus-why">純人工決策、零程式工作，但它卡住 eval 修復的 E1/E3、
         5-batch plan、和 Finnhub PR 的 merge 策略 — 回覆後三條線同時解鎖。</div>
       </div>
@@ -124,7 +124,7 @@ Order by the prioritization rubric in SKILL.md. Each item: what + why-now.
       <div class="queue-item">
         <span class="badge badge-p0">P0</span>
         <span class="q-title">決策點 3 &amp; 6 — language-policy 收斂、eval 單跑</span>
-        <div class="q-why">DONG-63 的 session 今早已開工，E1/E3 兩項修法完全取決於此。</div>
+        <div class="q-why">DEV-63 的 session 今早已開工，E1/E3 兩項修法完全取決於此。</div>
       </div>
     </div>
     <div class="queue queue-agent">
@@ -133,7 +133,7 @@ Order by the prioritization rubric in SKILL.md. Each item: what + why-now.
         <span class="badge badge-agent">READY</span>
         <span class="q-title">quant-yfinance：commit 已驗證的 404 fix → 開 PR</span>
         <div class="q-why">審查已放行（187 tests passed），純機械收割。</div>
-        <code class="resume-cmd">cd …/quant-yfinance-ingestion && claude "執行 DONG-61 收尾"</code>
+        <code class="resume-cmd">cd …/quant-yfinance-ingestion && claude "執行 DEV-61 收尾"</code>
       </div>
     </div>
   </div>
@@ -159,11 +159,11 @@ unblock.
   </div>
   <div class="mermaid">
 graph LR
-  D64["DONG-64<br/>稽核決策"]:::human --> D63["DONG-63<br/>eval 修復"]:::active
-  D60["DONG-60<br/>streaming PR"]:::harvest --> D75["DONG-75<br/>frontend"]:::backlog
-  D60 --> D76["DONG-76<br/>docs 重寫"]:::backlog
-  D61["DONG-61<br/>quant PR"]:::harvest --> D74["DONG-74<br/>config 收斂"]:::backlog
-  D63 --> D62["DONG-62<br/>eval PR"]:::active
+  D64["DEV-64<br/>稽核決策"]:::human --> D63["DEV-63<br/>eval 修復"]:::active
+  D60["DEV-60<br/>streaming PR"]:::harvest --> D75["DEV-75<br/>frontend"]:::backlog
+  D60 --> D76["DEV-76<br/>docs 重寫"]:::backlog
+  D61["DEV-61<br/>quant PR"]:::harvest --> D74["DEV-74<br/>config 收斂"]:::backlog
+  D63 --> D62["DEV-62<br/>eval PR"]:::active
   classDef human fill:#fbeeda,stroke:#b4640f,color:#9a5410
   classDef active fill:#d6ecee,stroke:#0c7d84,color:#0c7d84
   classDef harvest fill:#e2f4ea,stroke:#147045,color:#147045
@@ -184,7 +184,7 @@ One `<section>` per in-flight issue. Title row = §N + issue id + title + badges
 <section id="s4" class="doc-section">
   <div class="section-head">
     <span class="section-num">§4</span>
-    <h2>DONG-63 — eval pipeline 修復</h2>
+    <h2>DEV-63 — eval pipeline 修復</h2>
     <span class="badge badge-agent">AGENT 進行中</span>
     <span class="badge badge-stage">Implementation</span>
     <span class="badge badge-block">部分卡決策</span>
@@ -215,9 +215,9 @@ concrete fix action. Delta section:
 
 ```html
 <ul class="delta-list">
-  <li><span class="delta-tag done">DONE</span> DONG-58 救援完成 — 三個 local-only branch 都已 push</li>
-  <li><span class="delta-tag new">NEW</span> DONG-70~76 新開 7 張稽核修復 issues</li>
-  <li><span class="delta-tag moved">MOVED</span> DONG-63 Backlog → Implementation（session 今早開工）</li>
+  <li><span class="delta-tag done">DONE</span> DEV-58 救援完成 — 三個 local-only branch 都已 push</li>
+  <li><span class="delta-tag new">NEW</span> DEV-70~76 新開 7 張稽核修復 issues</li>
+  <li><span class="delta-tag moved">MOVED</span> DEV-63 Backlog → Implementation（session 今早開工）</li>
   <li><span class="delta-tag risk">RISK</span> multi-provider worktree dirty 從 12 → 27</li>
 </ul>
 ```
@@ -232,7 +232,7 @@ standup diffs against the most recent one. Keep it small and stable:
   "generated_at": "2026-07-07T10:30:00+08:00",
   "mode": "full",
   "issues": {
-    "DONG-63": { "status": "Implementation", "owner_next": "agent", "priority_rank": 3 }
+    "DEV-63": { "status": "Implementation", "owner_next": "agent", "priority_rank": 3 }
   },
   "worktrees": {
     "eval-pipeline-fixes": { "branch": "fix/eval-pipeline-sec-retrieval", "dirty": 7, "unpushed": "NO-UPSTREAM(0)", "last_commit": "5 weeks ago" }

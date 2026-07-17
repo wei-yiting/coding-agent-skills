@@ -6,7 +6,7 @@ description: >-
   (dependency graph, human-vs-agent action queues, per-issue narrative cards, text-selection
   comments) plus an optional spoken briefing with voice Q&A. Two modes: all-issues standup, or a
   deep-dive on one issue/worktree. Use when the user asks where things stand, what to work on,
-  says "standup", asks to be briefed on a specific issue or worktree ("brief me on DONG-63",
+  says "standup", asks to be briefed on a specific issue or worktree ("brief me on DEV-63",
   "幫我 standup", "語音跟我報告"), or returns to a project after time away — instead of
   re-deriving state from git archaeology.
 ---
@@ -25,7 +25,7 @@ writing rules in `references/report-guide.md`.
 ## Modes
 
 - **Full standup** (default): all in-flight issues + all worktrees → dashboard + briefing.
-- **Focused** (`/dev-standup DONG-63`, a worktree name, or "brief me on X"): one issue or
+- **Focused** (`/dev-standup DEV-63`, a worktree name, or "brief me on X"): one issue or
   worktree, at greater depth — full issue history, diff summary vs main, artifacts on disk,
   PR state, its dependency neighborhood. Same pipeline, different section skeleton
   (see report-guide.md).
@@ -35,10 +35,10 @@ writing rules in `references/report-guide.md`.
 Load Linear tools if deferred (one ToolSearch call):
 `select:mcp__claude_ai_Linear__list_issues,mcp__claude_ai_Linear__list_comments,mcp__claude_ai_Linear__get_issue`
 
-1. **Linear issues** — `list_issues` for the relevant projects (default: `FinLab-X` and
-   `Interview Preparation`), all non-completed. For issues in started states,
+1. **Linear issues** — `list_issues` for the relevant teams (default: `Project-Dev` and
+   `HQ`), all non-completed. For issues in started states,
    `list_comments` and extract the **latest `🔄 Sync` / `▶️ Session start` comment** (last
-   progress, next steps, `claude --resume` command). Content-profile issues (`PREP-XX`)
+   progress, next steps, `claude --resume` command). Content-profile issues (`HQ-XX`)
    have no worktree — their risk check is "does the latest sync flag local-only material?"
 2. **Dependencies** — `list_issues` truncates descriptions and hides relations, and the
    dependency graph is a core deliverable: call `get_issue` for every in-flight issue and
