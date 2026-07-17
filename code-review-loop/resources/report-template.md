@@ -117,19 +117,22 @@ Replace all `{variables}` with actual data from all rounds.
 
 ## Learning Notes
 
-> 教學性總結，供邊做邊學時回顧。內容須從各 review round **實際發現**的 pattern、issue 與取捨蒸餾而來，不是通用原則的照抄。以 `htmlify` 轉檔後，本節會呈現為浮動側欄，方便對照 diff 閱讀。
+> 三個時間點視角的第三站——post-implementation、結果已知，回答「做完後實際學到什麼?」（design.md 🎓 問「探索中我學到什麼?」、briefing.md 🎓 問「這個 slice 我將練習什麼?」）。內容須從本 slice 各 review round **實際發現**的 pattern、issue 與取捨蒸餾而來，不是通用原則的照抄。
+> **概念進程，非重複：** design.md / briefing.md 的 Learning Notes 已教過的概念，只寫一行 recap + 指回原處，接著只補本階段的新角度；不重教。
+> **Slice scoping：** 只涵蓋本 slice changeset 實際觸及的概念。
+> 本節同時是 `/issue-ship` do-i-understand interview 的素材來源——這裡浮現的概念會成為訪談驗證的候選目標。以 `htmlify` 轉檔後，本節會呈現為浮動側欄，方便對照 diff 閱讀。
 
 ### 採用的工程策略
 
-- {本次 review 實際強制或確立的 pattern，例如某個 boundary 的處理方式、error handling 慣例、測試分層策略。連到促成它的 issue ID。}
+- {哪些計畫中的策略在實作中存活下來；實作時發現的概念理解修正（不重教概念——指回 design.md / briefing.md Learning Notes），連到促成它的 issue ID。}
 
 ### 權衡取捨
 
-- {以「選了 A 而非 B，因為 C」的形式描述。例如：為了 {目標} 接受了 {代價} 的 trade-off，放棄了 {被否決的方案}。}
+- {expected-vs-actual：plan / briefing 預期的 trade-off 對照實際發生的狀況，偏差扣回 review issue ID（CR-x.x / SP-x.x）。}
 
 ### 關鍵收穫
 
-- {2–4 條 takeaway，每條扣回一個 issue ID 及其背後的原則（issue 錯在哪、修正遵循什麼原則）。}
+- {2–4 條 verified takeaway：review rounds 暴露的盲點，generalize 成原則，每條扣回揭露它的 issue ID。}
 ```
 
 ---

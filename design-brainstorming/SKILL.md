@@ -26,7 +26,7 @@ You MUST create a task for each of these items and complete them in order:
 3. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria
 4. **Propose 2-3 approaches** — with trade-offs and your recommendation
 5. **Present design** — in sections scaled to their complexity, get user approval after each section
-6. **Write design doc** — save to `artifacts/current/design.md` (per Artifact Contract in CLAUDE.md)
+6. **Write design doc** — save to `artifacts/current/design.md` (per Artifact Contract in CLAUDE.md), ending with the `## Learning Notes` section; then write `encountered` learning records
 7. **Spec review loop** — dispatch spec-document-reviewer subagent with precisely crafted review context (never your session history); fix issues and re-dispatch until approved (max 3 iterations, then surface to human)
 8. **User reviews written spec** — ask user to review the spec file before proceeding
 9. **Transition to implementation** — invoke implementation-planning skill to create implementation plan (per slice if a Slice Roadmap exists)
@@ -84,6 +84,7 @@ digraph brainstorming {
 - For each question, provide your recommended answer and why — the recommendation reduces decision fatigue, and its trade-off reasoning is itself useful to the user
 - If a *fact* can be found by exploring the codebase, look it up rather than asking. The *decisions* are the user's — put each one to them and wait
 - Focus on understanding: purpose, constraints, success criteria
+- **Track new-concept signals:** as you talk, keep a running note of concepts the user asks you to explain, asks about, or is clearly meeting for the first time. These signals are the raw material for the design doc's Learning Notes and the learning records written afterward — capture them as they surface, since you can't reconstruct them later.
 
 **Exploring approaches:**
 
@@ -107,7 +108,7 @@ It does NOT answer "HOW is each component implemented internally."
 **Length guidance:** the design doc body should normally fit in ~150 lines
 excluding diagrams. Exceeding it is a signal that implementation detail has
 leaked in — treat it as a prompt to move content into the implementation plan,
-not as a hard cap to pad up to. (The optional Learning Notes section below is
+not as a hard cap to pad up to. (The Learning Notes section below is
 excluded from this budget.)
 
 Include in the design doc:
@@ -144,14 +145,27 @@ Each slice then goes through its own plan → briefing → implementation → PR
 cycle. A small design that fits in a single slice (≤ ~1000 lines) may omit the
 roadmap.
 
-**Learning Notes (optional):**
+**Learning Notes (educational layer):**
 
-The design doc MAY end with a `## Learning Notes` section — educational content
-for the user, who learns while building. It aggregates engineering strategies
-applied, trade-offs considered (what was chosen over what and why), and key
-generalizable takeaways. Write it in zh-TW prose with English technical terms.
-This section is explicitly excluded from the ~150-line length budget and from
-spec review scope.
+The design doc ends with a `## Learning Notes` section — an educational layer for
+the user, who learns while building. It answers 「探索中我學到什麼?」and contains
+exactly three subsections:
+
+- `### 探索的領域概念` — new domain knowledge encountered this time (the
+  understanding itself, not the decisions; sourced from the tracked new-concept signals)
+- `### 評估過的方案與取捨` — alternatives evaluated and why rejected
+  (rejected-alternative understanding is still learning, and it evaporates fastest)
+- `### 關鍵收穫與資源` — generalizable principles + references worth revisiting
+
+Rules:
+- zh-TW prose with English technical terms; full-feature scope, written ONCE here.
+  Downstream per-slice artifacts (briefing 🎓, code-review 🎓) recap + point back
+  to these concepts — they never re-teach them.
+- Excluded from the ~150-line length budget and from the design gate's review scope
+  (the gate stays 「方向、邊界、slice 拆分對嗎?」). htmlify renders it as the
+  floating 🎓 Learning Panel automatically. Edits to it never propagate back to source artifacts.
+- Don't invent learning that didn't happen. If the ground was familiar, keep the
+  section minimal or note there was little new.
 
 **Design for isolation and clarity:**
 
@@ -174,6 +188,18 @@ spec review scope.
 - 主要用繁體中文撰寫，terminology 用英文。用 Mermaid 圖取代 ASCII art。
 - Ensure `artifacts/` is tracked by git during planning and implementation. If `.gitignore` excludes it, temporarily remove that rule first.
 - Commit the design document to git
+
+**Learning records (persistent):**
+
+After saving design.md, for each genuinely new concept from 探索的領域概念, write
+or update `~/.claude/learning-records/<topic>.md` (kebab-case topic filename) with
+`status: encountered`, following `~/.claude/learning-records/FORMAT.md`. Check for
+an existing record first: if one exists with `status: verified`, the concept wasn't
+new — don't recreate it and don't list it under 探索的領域概念; if an `encountered`
+record already exists, update its body/source instead of duplicating. These records
+live OUTSIDE the skills repo — learning follows the person, not the project. Only a
+`/issue-ship` do-i-understand interview upgrades a record to `verified`; writing
+notes never does.
 
 **Spec Review Loop:**
 After writing the spec document:

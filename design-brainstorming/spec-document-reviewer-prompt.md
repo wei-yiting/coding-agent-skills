@@ -27,7 +27,7 @@ Task tool (general-purpose):
     | Missing Slice Roadmap | The design clearly exceeds the ~1000-net-line size budget but has no `## Slice Roadmap` section decomposing it into ordered, independently mergeable slices |
     | Litmus test | Any section where removing it would NOT change the reader's ability to evaluate whether the architecture decisions are correct — that section belongs in the implementation plan |
 
-    Note: a `## Learning Notes` section (if present) is educational content for the user and is OUT of review scope — do not flag it for leakage, length, or detail.
+    Note: the closing `## Learning Notes` section is an educational layer for the user and is OUT of review scope — do not flag it for leakage, length, or detail, and do not count it toward any length/detail limit.
 
     ## Calibration
 

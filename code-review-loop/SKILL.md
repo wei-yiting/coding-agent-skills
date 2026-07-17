@@ -318,7 +318,7 @@ Fill in all sections with data collected across rounds:
 - Unaddressed suggestions
 - Final verification results
 - Complete changed files manifest
-- Learning Notes (engineering strategies applied, trade-offs accepted, key takeaways — distilled from what the rounds surfaced)
+- Learning Notes (post-implementation 🎓 視角，回答「做完後實際學到什麼?」：計畫中存活的策略、expected-vs-actual 取捨、review rounds 驗證的收穫，每條扣回 issue ID)。已在 design.md / briefing.md Learning Notes 教過的概念只做一行 recap + 指回，只涵蓋本 slice 觸及的概念；本節同時是 `/issue-ship` do-i-understand interview 的素材來源
 
 Write to `artifacts/current/code-review-improvement-report.md`.
 

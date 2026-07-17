@@ -316,30 +316,35 @@ When included:
 
 ## Learning Notes（教育層 — 排除在 length budget 之外）
 
-**Reviewer question**: _"這次的做法，我能學到什麼可以帶走的東西?"_
+**Reviewer question**: _"這個 slice 我將練習什麼?"_
 
-**Source**: `design`（decision rationale）+ `impl`（trade-offs、risks、constraints 背後的理由）
+**Source**: `design` 的 `## Learning Notes`（存在時為主要來源）+ `impl`（trade-offs、risks、constraints 背後的理由）
 
-This is an **educational layer**, not review content. The reviewer learns while building, so this section aggregates the reasoning already recorded in the source artifacts into a form worth keeping. It sits at the **end** of the briefing and is **excluded from the 1–2 screen length budget**. It never affects scope/risk judgment — those live in Section 0–7.
+This is the **pre-implementation** learning perspective for this slice: the strategy is already committed, so this section previews what the reviewer will practice and consciously observe while building — not the decision story (that lives in design.md's Learning Notes). It sits at the **end** of the briefing and is **excluded from the 1–2 screen length budget**. It never affects scope/risk judgment — those live in Section 0–7.
+
+When `design.md` has its own `## Learning Notes`, pull from it directly rather than re-deriving rationale from design.md's body. Two integration rules:
+- **Concept progression, not repetition** — a concept already taught in design.md's Learning Notes gets a one-line recap + pointer back（→ design.md Learning Notes）, then only this slice's new angle. Never re-teach.
+- **Slice scoping** — cover only concepts THIS slice touches. A later slice's briefing doesn't repeat earlier slices' content unless this slice applies the concept in a materially new way.
 
 Write three sub-parts, zh-TW prose with English terms:
 
 ### (a) Engineering strategies applied
 
-本次採用的工程策略（patterns、techniques、architectural choices）與它們解決的問題。從 `design` 的決策與 `impl` 的做法中萃取——不是列出所有用到的東西，而是點出「值得記住的做法」。
+design 選定的工程策略（patterns、techniques、architectural choices）將如何落在**這個 slice** 的實作——講 application level，不是 decision story。從 `design` 的 Learning Notes 與 `impl` 的做法萃取。
 
 ### (b) Trade-offs considered
 
-選了什麼、放棄了什麼、為什麼。每一項用「A over B，因為…」的形式，讓 reviewer 看到被否決的選項與判準。來源是 `design` 的 decision rationale 和 `impl` 的 trade-off 記錄。
+這個 slice 實作層預期要做的取捨（implementation-level trade-offs）。每一項用「A over B，因為…」的形式。來源是 `design` Learning Notes 的 rationale 和 `impl` 的 trade-off 記錄。
 
 ### (c) Key takeaways
 
-可以推廣到其他情境的原則（generalizable principles）。把這次的具體決策抽象成一句能帶到下一個任務的 takeaway。
+一份「學習預告」：實作這個 slice 時值得刻意觀察的點。把這次要練習的具體決策抽象成一句能帶到下一個任務的 takeaway。
 
 **Rules for this section**:
-- **Aggregate, don't invent** — every note must trace back to rationale already in `design` or `impl`. 若 source 沒有記錄理由，就不要編造。
+- **Aggregate, don't invent** — every note must trace back to rationale already in `design` 的 Learning Notes 或 `impl`. 若 source 沒有記錄理由，就不要編造。
 - **Excluded from length budget** — this section does not count toward the 1–2 screen target.
 - **Not review content** — edits the user makes inside Learning Notes are educational only; `apply-briefing-update` must NOT propagate them back to source artifacts.
+- **Document layer stays complete-but-slice-scoped** — do NOT filter content by `~/.claude/learning-records/`（what the user already knows）; the artifact must still make sense months later. Personalization happens only at the interview layer, never in the document.
 - **Render note** — the `htmlify` skill renders this section as a floating side panel, so keep it self-contained (readable out of the briefing's linear flow).
 
 ---
