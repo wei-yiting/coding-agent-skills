@@ -68,7 +68,12 @@ Conventional commit style. Imperative mood.
 
 Core sections: **Purpose**, **Solution**, **Key Changes**, **Validation**, **User Acceptance Test**.
 
-Scale the depth to the PR's complexity — a one-file config fix doesn't need the same treatment as a multi-module architecture change. But the first four sections always apply, even if some are one-liners. User Acceptance Test is included when manual verification steps exist for the reviewer.
+**Before writing, size up the diff and pick the depth deliberately.** The section list is a menu of questions to answer, not a form to fill — every section must earn its depth from *this* diff. The first four sections always apply, but their weight scales:
+
+- **Small / focused PR** (few files, one concern — config fix, infra tweak, isolated bugfix): Purpose is 1–2 sentences; Solution is a short paragraph with only the non-obvious decisions inlined (skip the "Key decisions" list if there's only one); Key Changes is flat bullets, one per file; Validation is a compact 2-column table (Check / Result).
+- **Medium / large PR** (multi-module, new architecture, behavior redesign): full treatment — decisions list, module-grouped Key Changes, 3-column Validation, diagrams where flow is complex.
+
+The self-check while drafting each section: *"would the reviewer of this specific diff need this at this depth, or am I filling in a template?"* If a structure element (subheader, decisions list, UAT) exists only because the format suggests it, drop it.
 
 ### Two global rules that apply to every section
 
@@ -140,6 +145,8 @@ For simple PRs (typo fix, dependency bump), a single sentence suffices — don't
 Group by **module/area**, not by commit. Reviewers navigate by file path, not by git history.
 
 **Formatting:** Use a clean subheader for the module/area name. List the relevant file paths as a blockquote (`>`) on the first line under the subheader, then bullet points for the changes. Keep file paths out of the subheader itself — subheaders should be human-readable area names.
+
+The subheader + blockquote structure is for PRs spanning **multiple modules/areas**. When the PR touches only a handful of files in one area, skip the structure entirely — a flat bullet list (`` `path` — what and why ``, one line per file) reads faster than three one-bullet subsections.
 
 **Granularity guideline:** Each module gets 1–2 bullet points summarizing _what_ it does and _why_ it exists, not an exhaustive list of every function or method added. The reviewer can see the full details in the diff — the Key Changes section tells them where to look and what to expect, not everything that happened.
 
@@ -217,7 +224,9 @@ Present validation results as a **table** for quick scanning. The table should c
 
 ### User Acceptance Test — What should the reviewer manually verify?
 
-Include this section when there are manual verification steps the reviewer should perform during review. This is the reviewer's hands-on checklist.
+Include this section when manual verification gives the reviewer something **beyond what the Validation table already shows** — a judgment call only a human can make (UX feel, output quality, workflow ergonomics), or a multi-step flow worth walking through hands-on. This is the reviewer's hands-on checklist.
+
+**Omit it when it would only repeat the Validation table's commands.** If "UAT" would be re-running the same checks the author already ran and tabled, the section is pure duplication — the reviewer can copy commands from Validation if they want to reproduce. The self-check: *"does this UAT ask the reviewer to judge something, or just to re-execute my validation?"* Only the former earns the section.
 
 Structure:
 1. **Acceptance question** — what is being validated (framed as a question)
@@ -297,9 +306,18 @@ gh pr create --base main --head <branch-name> \
 
 ## Known Limitations / Open Issues / Future Improvements (optional — pick one if needed)
 ...
+
+---
+Linear: DEV-XX
 EOF
 )"
 ```
+
+**Linear linking**: when the work corresponds to a Linear issue, the body MUST end with a
+trailing `Linear: <ISSUE-ID>` line (as shown above) — Linear's GitHub integration links the PR
+to the issue by that mention, and all status automations (PR opened / merged) depend on the
+link. It must be present at creation time; adding it after a GitHub event (e.g. post-merge)
+does not fire that event's automation. Omit the line only when there is no corresponding issue.
 
 After creation, report the PR URL to the user.
 
